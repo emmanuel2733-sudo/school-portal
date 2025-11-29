@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Admin Analytics</title>
+  <link rel="stylesheet" href="/style.css">
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; background: #f9f9f9; }
+    h1, h2 { color: #2c3e50; }
+    .msg { padding: 12px; margin: 10px 0; border-radius: 4px; }
+    .success { background: #d4edda; color: #155724; }
+    .error { background: #f8d7da; color: #721c24; }
+    .nav a { display: inline-block; padding: 10px 20px; background: #007bff; color: white; text-decoration: none; border-radius: 4px; margin-right: 10px; }
+    .nav a:hover { background: #0056b3; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+    th { background: #007bff; color: white; }
+  </style>
+</head>
+<body>
+  <h1>Analytics</h1>
+  <% if (successMsg) { %>
+    <div class="msg success"><%= successMsg %></div>
+  <% } %>
+  <% if (errorMsg) { %>
+    <div class="msg error"><%= errorMsg %></div>
+  <% } %>
+  <h2>Grade Distribution</h2>
+  <p>Total Grades: <%= totalGrades %></p>
+  <p>Overall Average Score: <%= overallAvgScore %></p>
+  <table>
+    <tr>
+      <th>Grade</th>
+      <th>Count</th>
+    </tr>
+    <% for (let grade in gradeCounts) { %>
+      <tr>
+        <td><%= grade %></td>
+        <td><%= gradeCounts[grade] %></td>
+      </tr>
+    <% } %>
+  </table>
+  <h2>Course Averages</h2>
+  <table>
+    <tr>
+      <th>Course</th>
+      <th>Average Score</th>
+      <th>Grade Count</th>
+    </tr>
+    <% courseAverages.forEach(course => { %>
+      <tr>
+        <td><%= course.course_name %></td>
+        <td><%= course.avg_score ? course.avg_score.toFixed(2) : 'N/A' %></td>
+        <td><%= course.grade_count %></td>
+      </tr>
+    <% }) %>
+  </table>
+  <div class="nav">
+    <a href="/dashboard">Back to Dashboard</a>
+    <a href="/logout">Logout</a>
+  </div>
+</body>
+</html>

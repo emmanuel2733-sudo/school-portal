@@ -1,0 +1,44 @@
+<!-- <!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Grade <%= studentName %></title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+  <div class="container mt-5">
+    <div class="card p-4">
+      <h3>Grade Student: <%= studentName %></h3>
+      <p class="text-muted">Course: [Course Name will be here]</p>
+
+      <form method="POST" action="/teacher/grade/<%= courseId %>/student/<%= studentId %>/save">
+        <div class="mb-3">
+          <label class="form-label">Score (0-100)</label>
+          <input type="number" name="score" class="form-control" value="<%= currentGrade.score %>" min="0" max="100" required>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">Grade</label>
+          <select name="grade" class="form-control">
+            <option value="">Select Grade</option>
+            <option value="A" <%= currentGrade.grade === 'A' ? 'selected' : '' %>>A</option>
+            <option value="B" <%= currentGrade.grade === 'B' ? 'selected' : '' %>>B</option>
+            <option value="C" <%= currentGrade.grade === 'C' ? 'selected' : '' %>>C</option>
+            <option value="D" <%= currentGrade.grade === 'D' ? 'selected' : '' %>>D</option>
+            <option value="F" <%= currentGrade.grade === 'F' ? 'selected' : '' %>>F</option>
+          </select>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">Comments</label>
+          <textarea name="comments" class="form-control" rows="3"><%= currentGrade.comments %></textarea>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Save Grade</button>
+        <a href="/teacher/course/<%= courseId %>/students" class="btn btn-secondary">Backggg</a>
+      </form>
+    </div>
+  </div>
+</body>
+</html> -->

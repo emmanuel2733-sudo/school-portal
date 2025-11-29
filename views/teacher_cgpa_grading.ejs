@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>CGPA Grading: <%= course.course_name %> - <%= course.class_name %></title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #4e73df;
+      --success: #28a745;
+    }
+    body {
+      background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+      font-family: 'Segoe UI', sans-serif;
+      min-height: 100vh;
+    }
+    .card {
+      background: white;
+      border-radius: 18px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+      padding: 30px;
+      margin: 20px auto;
+      max-width: 1150px;
+    }
+    .table th {
+      background: var(--primary);
+      color: white;
+      font-weight: 600;
+    }
+    .score-input {
+      width: 80px;
+      text-align: center;
+      font-weight: 600;
+    }
+    .total { font-weight: 700; color: var(--primary); }
+    .grade-A { background: #d4edda; color: #155724; font-weight: 700; }
+    .grade-B { background: #fff3cd; color: #856404; }
+    .grade-C { background: #d1ecf1; color: #0c5460; }
+    .grade-D { background: #f8d7da; color: #721c24; }
+    .grade-F { background: #f5c6cb; color: #721c24; }
+
+    /* EXACT SAME STYLE AS IN teacher_courses.ejs */
+    .btn-dashboard {
+      background: #6366f1;
+      color: white;
+      padding: 12px 32px;
+      border-radius: 10px;
+      font-weight: 600;
+      font-size: 1.1rem;
+      box-shadow: 0 5px 15px rgba(99,102,241,0.4);
+      transition: all 0.3s;
+      min-width: 200px;
+    }
+    .btn-dashboard:hover {
+      background: #4f46e5;
+      transform: translateY(-3px);
+      box-shadow: 0 8px 25px rgba(99,102,241,0.5);
+      color: white;
+    }
+    .btn-back {
+      background: transparent;
+      color: #6366f1;
+      border: 2px solid #6366f1;
+    }
+    .btn-back:hover {
+      background: #6366f1;
+      color: white;
+    }
+
+    
+  </style>
+</head>
+<body>
+
+  <div class="card">
+    <div class="text-center mb-4">
+      <h3 style="color: var(--primary);"><%= course.course_name %> - <%= course.class_name %></h3>
+      <p class="text-muted fs-5">CA (30) + Exam (70) = Total (100) → GPA Points</p>
+
+      <% if (typeof saved !== 'undefined' && saved) { %>
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+          Grades saved successfully!
+          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+      <% } %>
+      <% if (error) { %>
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+          <%= error %>
+          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+      <% } %>
+    </div>
+
+    <form method="POST" action="/teacher/grade/course/<%= course.id %>/save" id="gradeForm">
+      <input type="hidden" name="courseId" value="<%= course.id %>">
+
+      <div class="table-responsive">
+        <table class="table table-bordered table-hover align-middle">
+         <thead>
+  <tr>
+    <th width="60" class="text-center">S/N</th>
+    <th width="280">Student Name</th>   <!-- MADE MUCH WIDER -->
+    <th width="120" class="text-center">CA (30)</th>
+    <th width="120" class="text-center">Exam (70)</th>
+    <th width="100" class="text-center">Total</th>
+    <th width="100" class="text-center">Grade</th>
+    <th width="100" class="text-center">GPA</th>
+  </tr>
+</thead>
+          <tbody>
+            <% students.forEach((s, i) => { 
+              const g = gradeMap[s.student_id] || { ca: '', exam: '', total: 0, grade: 'F', gpa_points: 0 };
+            %>
+              <tr>
+                <td class="text-center"><%= i + 1 %></td>
+                <td><strong><%= s.name %></strong></td>
+                <td><input type="number" name="ca_<%= s.student_id %>" class="form-control ca-input score-input" value="<%= g.ca %>" min="0" max="30"></td>
+                <td><input type="number" name="exam_<%= s.student_id %>" class="form-control exam-input score-input" value="<%= g.exam %>" min="0" max="70"></td>
+                <td class="total text-center fw-bold"><%= g.total %></td>
+                <td class="grade text-center <%= g.grade === 'A' ? 'grade-A' : g.grade === 'B' ? 'grade-B' : g.grade === 'C' ? 'grade-C' : g.grade === 'D' ? 'grade-D' : 'grade-F' %>"><%= g.grade %></td>
+                <td class="text-center fw-bold text-success"><%= g.gpa_points %></td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- EXACT SAME BUTTONS AS IN teacher_courses.ejs -->
+      <div class="text-center my-5">
+        <button type="submit" class="btn btn-dashboard btn-back">
+          Save All Grades
+        </button>
+        <a href="/teacher/courses" class="btn btn-dashboard btn-back">
+          Back to Courses
+        </a>
+      </div>
+    </form>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const form = document.getElementById('gradeForm');
+
+      form.addEventListener('input', (e) => {
+        const row = e.target.closest('tr');
+        if (!row) return;
+
+        const ca = parseInt(row.querySelector('.ca-input').value) || 0;
+        const exam = parseInt(row.querySelector('.exam-input').value) || 0;
+        const total = ca + exam;
+
+        row.querySelector('.total').textContent = total;
+
+        let grade = 'F', gpa = 0;
+        if (total >= 70) { grade = 'A'; gpa = 5; }
+        else if (total >= 60) { grade = 'B'; gpa = 4; }
+        else if (total >= 50) { grade = 'C'; gpa = 3; }
+        else if (total >= 40) { grade = 'D'; gpa = 1; }
+
+        const gradeCell = row.querySelector('.grade');
+        const gpaCell = row.querySelector('td:nth-child(7)');
+        gradeCell.textContent = grade;
+        gpaCell.textContent = gpa;
+
+        gradeCell.className = 'grade text-center';
+        if (grade === 'A') gradeCell.classList.add('grade-A');
+        else if (grade === 'B') gradeCell.classList.add('grade-B');
+        else if (grade === 'C') gradeCell.classList.add('grade-C');
+        else if (grade === 'D') gradeCell.classList.add('grade-D');
+        else gradeCell.classList.add('grade-F');
+      });
+    });
+  </script>
+</body>
+</html>

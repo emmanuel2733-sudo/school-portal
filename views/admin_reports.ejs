@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Term Report • Admin</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, sans-serif;
+      background: #f8fafc;
+      margin: 0;
+      padding: 30px;
+      color: #2d3748;
+    }
+    .container {
+      max-width: 1200px;
+      margin: auto;
+      background: white;
+      border-radius: 16px;
+      padding: 40px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+      text-align: center;
+    }
+    h1 {
+      color: #1e40af;
+      font-size: 2.1rem;
+      margin-bottom: 8px;
+    }
+    .term-name {
+      font-size: 1.5rem;
+      color: #3b82f6;
+      font-weight: 600;
+      margin: 10px 0 40px;
+      padding: 12px 24px;
+      background: #eff6ff;
+      border-radius: 12px;
+      display: inline-block;
+    }
+    .awaiting {
+      font-size: 1.6rem;
+      color: #f59e0b;
+      background: #fffbeb;
+      padding: 40px;
+      border-radius: 16px;
+      border: 2px dashed #fbbf24;
+      margin: 60px auto;
+      max-width: 600px;
+    }
+    .subtitle {
+      color: #64748b;
+      font-size: 1.1rem;
+      margin: 20px 0 50px;
+    }
+
+    .class-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+      gap: 28px;
+      margin-top: 30px;
+    }
+    .class-card {
+      background: #f8f9fc;
+      border-radius: 14px;
+      overflow: hidden;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.06);
+    }
+    .class-title {
+      background: #1e40af;
+      color: white;
+      padding: 16px;
+      font-size: 1.25rem;
+      font-weight: 600;
+    }
+    .performers {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+    }
+    .best, .worst {
+      padding: 20px;
+    }
+    .best { background: #f0fdf4; border-left: 6px solid #22c55e; }
+    .worst { background: #fef2f2; border-left: 6px solid #ef4444; }
+    .section-title {
+      font-weight: 700;
+      margin-bottom: 12px;
+      color: #1e40af;
+      font-size: 1.1rem;
+    }
+    .list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      text-align: left;
+    }
+    .list li {
+      padding: 11px 0;
+      border-bottom: 1px solid #e2e8f0;
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.98rem;
+    }
+    .list li:last-child { border-bottom: none; }
+    .rank { font-weight: bold; color: #1e40af; width: 32px; }
+    .gpa { font-weight: bold; color: #dc2626; }
+
+    .back {
+      display: block;
+      width: fit-content;
+      margin: 50px auto 0;
+      padding: 14px 36px;
+      background: #1e293b;
+      color: white;
+      border-radius: 12px;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 1.05rem;
+    }
+    .back:hover { background: #0f172a; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Term Performance Report</h1>
+
+    <% if (!hasData) { %>
+      <div class="awaiting">
+        <strong>Awaiting Results</strong><br><br>
+        <%= message || "Grading for the current term is not complete yet." %><br><br>
+        <%= subtitle || "Report will be available once teachers submit all grades." %>
+      </div>
+    <% } else { %>
+      <div class="term-name"><%= term_name %> Results</div>
+      <p class="subtitle">Top 5 Best & Worst Performers • Per Class</p>
+
+      <div class="class-grid">
+        <% classPerformance.forEach(cls => { %>
+          <div class="class-card">
+            <div class="class-title"><%= cls.class_name %></div>
+            <div class="performers">
+              <div class="best">
+                <div class="section-title">Top 5 Performers</div>
+                <ol class="list">
+                  <% cls.best.forEach((s, i) => { %>
+                    <li>
+                      <span class="rank"><%= i + 1 %>.</span>
+                      <%= s.student_name %> <%= s.username ? `(${s.username})` : '' %>
+                      <span class="gpa"><%= parseFloat(s.gpa).toFixed(2) %></span>
+                    </li>
+                  <% }) %>
+                </ol>
+              </div>
+              <div class="worst">
+                <div class="section-title">Lowest 5 Performers</div>
+                <ol class="list">
+                  <% cls.worst.forEach((s, i) => { %>
+                    <li>
+                      <span class="rank"><%= (cls.best.length - cls.worst.indexOf(s)) %>.</span>
+                      <%= s.student_name %> <%= s.username ? `(${s.username})` : '' %>
+                      <span class="gpa"><%= parseFloat(s.gpa).toFixed(2) %></span>
+                    </li>
+                  <% }) %>
+                </ol>
+              </div>
+            </div>
+          </div>
+        <% }) %>
+      </div>
+    <% } %>
+
+    <a href="/dashboard" class="back">Back to Dashboard</a>
+  </div>
+</body>
+</html>

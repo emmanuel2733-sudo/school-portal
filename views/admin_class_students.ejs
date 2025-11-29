@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Students in <%= className %> – <%= termName %></title>
+  <link rel="stylesheet" href="/style.css">
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; background: #f8f9fa; }
+    .container { max-width: 1000px; margin: 30px auto; background: white; padding: 25px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+    h1 { color: #2c3e50; margin-bottom: 8px; }
+    .subtitle { color: #555; font-size: 1.1em; margin-bottom: 20px; }
+
+    .flash {
+      padding: 15px 20px; margin: 15px 0; border-radius: 8px; font-weight: bold; animation: fadeIn 0.5s;
+    }
+    .flash-success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+    .flash-error   { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+
+    table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+    th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+    th { background: #f2f2f2; font-weight: bold; }
+    tr:hover { background: #f8f9fa; }
+
+    .btn {
+      padding: 9px 16px; border: none; border-radius: 6px; color: white; cursor: pointer; font-size: 14px;
+      transition: background 0.2s;
+    }
+    .btn-danger { background: #dc3545; }
+    .btn-danger:hover { background: #c82333; }
+    .btn-primary { background: #007bff; }
+    .btn-primary:hover { background: #0056b3; }
+
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Students in <%= className %></h1>
+    <p class="subtitle"><strong><%= termName %></strong> • <%= year %></p>
+
+    <!-- Flash Messages with Auto-Hide -->
+    <% if (successMsg) { %>
+      <div class="flash flash-success" id="flash">
+        Success: <%= successMsg %>
+      </div>
+    <% } %>
+    <% if (errorMsg) { %>
+      <div class="flash flash-error" id="flash">
+        Error: <%= errorMsg %>
+      </div>
+    <% } %>
+
+    <!-- Auto-hide flash after 5 seconds -->
+    <script>
+      setTimeout(() => {
+        const flash = document.getElementById('flash');
+        if (flash) {
+          flash.style.transition = 'opacity 0.8s';
+          flash.style.opacity = '0';
+          setTimeout(() => flash.remove(), 800);
+        }
+      }, 5000);
+    </script>
+
+    <% if (students.length === 0) { %>
+      <p style="text-align:center; color:#888; font-size:1.2em; padding:50px; background:#f0f0f0; border-radius:10px;">
+        No students enrolled in this class for this term.
+      </p>
+    <% } else { %>
+      <table>
+        <thead>
+          <tr>
+            <th>S/N</th>
+            <th>Full Name</th>
+            <th>Username</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% students.forEach((s, index) => { %>
+            <tr>
+              <td><%= index + 1 %></td>
+              <td><strong><%= s.name %></strong></td>
+              <td>@<%= s.username %></td>
+              <td>
+                <button onclick="confirmDelete('<%= s.name %>', <%= s.id %>)" class="btn btn-danger">
+                  Remove from Class
+                </button>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    <% } %>
+
+    <br>
+    <a href="/admin/term/<%= termId %>/classes" class="btn btn-primary">Back to Classes</a>
+  </div>
+
+  <!-- Delete Confirmation Modal -->
+  <script>
+    function confirmDelete(name, studentId) {
+      if (confirm(`⚠️ DANGER ZONE ⚠️\n\nYou are about to PERMANENTLY DELETE:\n\n• All grades & results of "${name}"\n• Their enrollment in this class & term\n\nThis action CANNOT be undone.\n\nAre you absolutely sure?`)) {
+        // Create hidden form and submit
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '/admin/class/<%= classId %>/remove-student';
+
+        const inputId = document.createElement('input');
+        inputId.type = 'hidden';
+        inputId.name = 'studentId';
+        inputId.value = studentId;
+
+        const inputTerm = document.createElement('input');
+        inputTerm.type = 'hidden';
+        inputTerm.name = 'termId';
+        inputTerm.value = '<%= termId %>';
+
+        form.appendChild(inputId);
+        form.appendChild(inputTerm);
+        document.body.appendChild(form);
+        form.submit();
+      }
+    }
+  </script>
+</body>
+</html>

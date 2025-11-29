@@ -1,0 +1,86 @@
+<!-- <!DOCTYPE html>
+<html>
+<head>
+    <title>Teacher Assignments</title>
+    <link rel="stylesheet" href="/style.css">
+    <style>
+        table { border-collapse: collapse; width: 100%; margin: 20px 0; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        .form-group { margin: 20px 0; }
+        select { padding: 5px; width: 200px; }
+        button { padding: 5px 10px; background: #28a745; color: white; border: none; cursor: pointer; }
+        .delete-btn { background: #dc3545 !important; }
+        .error { color: red; }
+        a { display: inline-block; padding: 10px; margin: 5px; background: #007bff; color: white; text-decoration: none; }
+    </style>
+</head>
+<body>
+    <h1>Teacher Course Assignments</h1>
+    
+    <ul class="error">
+        <% errors.forEach(error => { %>
+            <li><%= error.msg %></li>
+        <% }) %>
+    </ul>
+    
+    <!-- Assign Teacher Form -->
+    <div class="form-group">
+        <h3>Assign Teacher to Course</h3>
+        <form method="POST" action="/admin/teacher-assignments">
+            <select name="teacher_id" required>
+                <option value="">Select Teacher</option>
+                <% if (teachers && teachers.length > 0) { %>
+                    <% teachers.forEach(teacher => { %>
+                        <option value="<%= teacher.id %>"><%= teacher.username %> - <%= teacher.name %></option>
+                    <% }) %>
+                <% } else { %>
+                    <option disabled>No approved teachers found</option>
+                <% } %>
+            </select>
+            <select name="course_id" required>
+                <option value="">Select Course</option>
+                <% if (courses && courses.length > 0) { %>
+                    <% courses.forEach(course => { %>
+                        <option value="<%= course.id %>"><%= course.name %> (Class: <%= course.class_id %>)</option>
+                    <% }) %>
+                <% } else { %>
+                    <option disabled>No courses found</option>
+                <% } %>
+            </select>
+            <button type="submit">Assign Teacher</button>
+        </form>
+    </div>
+    
+    <!-- Assignments Table -->
+    <h3>Current Assignments</h3>
+    <% if (!assignments || assignments.length === 0) { %>
+        <p>No teacher assignments found.</p>
+    <% } else { %>
+        <table>
+            <tr>
+                <th>ID</th>
+                <th>Teacher</th>
+                <th>Course</th>
+                <th>Actions</th>
+            </tr>
+            <% assignments.forEach(assignment => { %>
+                <tr>
+                    <td><%= assignment.id %></td>
+                    <td><%= assignment.teacher_name %></td>
+                    <td><%= assignment.course_name %></td>
+                    <td>
+                        <form method="POST" action="/admin/teacher-assignments/delete/<%= assignment.id %>" 
+                              onsubmit="return confirm('Unassign <%= assignment.teacher_name %> from <%= assignment.course_name %>?')" 
+                              style="display: inline;">
+                            <button type="submit" class="delete-btn">Unassign</button>
+                        </form>
+                    </td>
+                </tr>
+            <% }) %>
+        </table>
+    <% } %>
+    
+    <a href="/dashboard">Back to Dashboard</a>
+</body>
+</html> -->

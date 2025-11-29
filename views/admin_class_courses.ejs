@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Courses – <%= className %></title>
+  <link rel="stylesheet" href="/style.css">
+  <style>
+    table { border-collapse: collapse; width: 100%; margin: 20px 0; }
+    th, td { border: 1px solid #ddd; padding: 10px; }
+    th { background: #f2f2f2; }
+    .btn { display: inline-block; padding: 6px 10px; margin: 2px; font-size: 0.9em; text-decoration: none; border-radius: 4px; color: #fff; }
+    .btn-primary { background: #007bff; }
+    .btn-primary:hover { background: #0056b3; }
+    .btn-success { background: #28a745; }
+    .btn-success:hover { background: #218838; }
+    .btn-warning { background: #ffc107; color: #212529; }
+    .btn-warning:hover { background: #e0a800; }
+    .btn-danger { background: #dc3545; }
+    .btn-danger:hover { background: #c82333; }
+  </style>
+</head>
+<body>
+
+  <h1>Courses for <%= className %></h1>
+<p style="color:#666;font-size:0.9em;margin-top:-10px;">
+  <%= termName %>
+</p>
+
+<% if (classTeacher) { %>
+  <p style="background:#e8f5e9;padding:10px;border-radius:4px;margin:10px 0;">
+    <strong>Class Teacher:</strong> <%= classTeacher.name %> (@<%= classTeacher.username %>)
+  </p>
+<% } else { %>
+  <p style="background:#fff3e0;padding:10px;border-radius:4px;margin:10px 0;">
+    <strong>No Class Teacher</strong> – 
+    <a href="/admin/class/<%= classId %>/class-teacher?termId=<%= termId %>">Assign Now</a>
+  </p>
+<% } %>
+
+  <h3>Bulk Add Courses</h3>
+  <form method="POST" action="/admin/class/<%= classId %>/courses">
+    <input type="hidden" name="termId" value="<%= termId %>">
+    <textarea name="courses_list" placeholder="Math, English, Science (comma separated)" required style="width:100%;height:80px;"></textarea><br>
+    <button type="submit" class="btn btn-success">Add Courses</button>
+  </form>
+
+  <h3>Existing Courses</h3>
+  <% if (courses && courses.length) { %>
+    <table>
+      <tr><th>Course</th><th>Teacher</th><th>Actions</th></tr>
+      <% courses.forEach(c => { %>
+        <tr>
+          <td><%= c.name %></td>
+          <td id="teacher-<%= c.id %>">
+            <% if (c.teacher_name) { %>
+              <%= c.teacher_name %>
+            <% } else { %>
+              <em>None</em>
+            <% } %>
+          </td>
+          <td>
+            <a href="/admin/course/<%= c.id %>/edit?classId=<%= classId %>&termId=<%= termId %>" class="btn btn-warning">Edit</a>
+            <form method="POST" action="/admin/course/<%= c.id %>/delete" style="display:inline;" onsubmit="return confirm('Delete <%= c.name %>?')">
+              <input type="hidden" name="classId" value="<%= classId %>">
+              <input type="hidden" name="termId" value="<%= termId %>">
+              <button type="submit" class="btn btn-danger">Delete</button>
+            </form>
+          
+            <% if (c.teacher_name) { %>
+              <button onclick="unassignCourseTeacher(<%= c.id %>)" class="btn btn-danger" style="font-size:0.8em;">Remove Teacher</button>
+            <% } else { %>
+              <button onclick="assignCourseTeacher(<%= c.id %>)" class="btn btn-primary" style="font-size:0.8em;">Assign Teacher</button>
+            <% } %>
+          </td>
+        </tr>
+      <% }) %>
+    </table>
+  <% } else { %>
+    <p>No courses yet. Use the bulk-add form above.</p>
+  <% } %>
+
+  <a href="/admin/term/<%= termId %>/classes" class="btn btn-primary" style="margin-top:20px;">Back to Classes</a>
+
+  <script>
+   
+  function assignCourseTeacher(courseId) {
+  const uname = prompt('Enter teacher username:');
+  if (!uname || !uname.trim()) {
+    alert('Username is required');
+    return;
+  }
+
+  fetch(`/admin/course/${courseId}/assign-teacher`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ teacher_username: uname.trim() })
+  })
+  .then(r => r.json())
+  .then(d => {
+    if (d.success) {
+      const cell = document.getElementById('teacher-' + courseId);
+      cell.innerHTML = d.teacher_name;
+
+      // Update button
+      const btn = cell.parentElement.querySelector('button[onclick^="assignCourseTeacher"]');
+      if (btn) {
+        btn.outerHTML = `<button onclick="unassignCourseTeacher(${courseId})" class="btn btn-danger" style="font-size:0.8em;">Remove Teacher</button>`;
+      }
+    } else {
+      alert(d.error || 'Assignment failed');
+    }
+  })
+  .catch(() => alert('Network error'));
+}
+
+    function unassignCourseTeacher(courseId) {
+  if (!confirm('Remove teacher from this course?')) return;
+
+  fetch(`/admin/course/${courseId}/assign-teacher`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ remove: true })  // ← This must be true
+  })
+  .then(r => r.json())
+  .then(d => {
+    if (d.success) {
+      document.getElementById('teacher-' + courseId).innerHTML = '<em>None</em>';
+      // Optional: Update button
+      const btn = document.querySelector(`button[onclick="unassignCourseTeacher(${courseId})"]`);
+      if (btn) {
+        btn.outerHTML = `<button onclick="assignCourseTeacher(${courseId})" class="btn btn-primary" style="font-size:0.8em;">Assign Teacher</button>`;
+      }
+    } else {
+      alert(d.error);
+    }
+  })
+  .catch(err => alert('Network error'));
+}
+  </script>
+</body>
+</html>

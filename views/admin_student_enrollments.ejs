@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Student Enrollments</title>
+    <link rel="stylesheet" href="/style.css">
+    <style>
+        table { border-collapse: collapse; width: 100%; margin: 20px 0; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        .form-group { margin: 20px 0; }
+        select { padding: 5px; width: 200px; margin: 5px; }
+        button { padding: 5px 10px; background: #28a745; color: white; border: none; cursor: pointer; }
+        .delete-btn { background: #dc3545 !important; }
+        .error { color: red; }
+        a { display: inline-block; padding: 10px; margin: 5px; background: #007bff; color: white; text-decoration: none; }
+        .warning { color: orange; font-style: italic; }
+    </style>
+</head>
+<body>
+    <h1>Student Course Enrollments</h1>
+    
+    <ul class="error">
+        <% errors.forEach(error => { %>
+            <li><%= error.msg %></li>
+        <% }) %>
+    </ul>
+    
+    <!-- Enroll Student Form -->
+    <div class="form-group">
+        <h3>Enroll Student in Course</h3>
+        <form method="POST" action="/admin/student-enrollments">
+            <select name="student_id" required>
+                <option value="">Select Student</option>
+                <% if (students && students.length > 0) { %>
+                    <% students.forEach(student => { %>
+                        <option value="<%= student.id %>"><%= student.username %> - <%= student.name %></option>
+                    <% }) %>
+                <% } else { %>
+                    <option disabled>No approved students found</option>
+                <% } %>
+            </select>
+            
+            <select name="term_id" required>
+                <option value="">Select Term</option>
+                <% if (termCourses && termCourses.length > 0) { %>
+                    <% termCourses.forEach(tc => { %>
+                        <option value="<%= tc.id %>">
+                            <%= tc.term_name %> (Class: <%= tc.class_name %>)
+                        </option>
+                    <% }) %>
+                <% } else { %>
+                    <option disabled>No terms found</option>
+                <% } %>
+            </select>
+            
+            <select name="course_id" required>
+                <option value="">Select Course</option>
+                <% if (allCourses && allCourses.length > 0) { %>
+                    <% allCourses.forEach(course => { %>
+                        <option value="<%= course.id %>">
+                            <%= course.name %> (Class <%= course.class_id %>)
+                        </option>
+                    <% }) %>
+                <% } else { %>
+                    <option disabled>No courses found</option>
+                <% } %>
+            </select>
+            
+            <p class="warning">
+                Note: Server will validate that course belongs to the selected term's class.
+            </p>
+            <button type="submit">Enroll Student</button>
+        </form>
+    </div>
+    
+    <!-- Enrollments Table -->
+    <h3>Current Enrollments</h3>
+    <% if (!enrollments || enrollments.length === 0) { %>
+        <p>No student enrollments found.</p>
+    <% } else { %>
+        <table>
+            <tr>
+                <th>ID</th>
+                <th>Student</th>
+                <th>Term</th>
+                <th>Course</th>
+                <th>Actions</th>
+            </tr>
+            <% enrollments.forEach(enrollment => { %>
+                <tr>
+                    <td><%= enrollment.id %></td>
+                    <td><%= enrollment.student_name %></td>
+                    <td><%= enrollment.term_name %></td>
+                    <td><%= enrollment.course_name %></td>
+                    <td>
+                        <form method="POST" action="/admin/student-enrollments/delete/<%= enrollment.id %>" 
+                              onsubmit="return confirm('Remove <%= enrollment.student_name %> from <%= enrollment.course_name %>?')" 
+                              style="display: inline;">
+                            <button type="submit" class="delete-btn">Remove</button>
+                        </form>
+                    </td>
+                </tr>
+            <% }) %>
+        </table>
+    <% } %>
+    
+    <a href="/dashboard">Back to Dashboard</a>
+</body>
+</html>

@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Teacher Classes</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <h1>Your Assigned Classes</h1>
+  <a href="/dashboard">Back to Dashboard</a> | <a href="/logout">Logout</a>
+  <table>
+    <tr>
+      <th>Class</th>
+      <th>Course</th>
+    </tr>
+    <% assignments.forEach(assignment => { %>
+      <tr>
+        <td><%= assignment.class_name %></td>
+        <td><%= assignment.course_name %></td>
+      </tr>
+    <% }) %>
+  </table>
+</body>
+</html>

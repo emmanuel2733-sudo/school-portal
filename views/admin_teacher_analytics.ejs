@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Teacher Analytics • Admin</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #4361ee;
+      --success: #2ecc71;
+      --warning: #f39c12;
+      --danger: #e74c3c;
+      --dark: #2d3436;
+      --light: #f8f9fa;
+      --gray: #95a5a6;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+      min-height: 100vh;
+      padding: 30px 20px;
+      color: #2d3436;
+    }
+    .container {
+      max-width: 1300px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 20px;
+      padding: 40px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.08);
+    }
+    h1 {
+      text-align: center;
+      font-size: 1.9rem;
+      margin-bottom: 12px;
+      color: var(--dark);
+      font-weight: 700;
+    }
+    .term-badge {
+      text-align: center;
+      font-size: 1.4rem;
+      font-weight: 600;
+      color: #4361ee;
+      background: #eff6ff;
+      padding: 10px 24px;
+      border-radius: 30px;
+      display: inline-block;
+      margin-bottom: 40px;
+    }
+    .awaiting {
+      text-align: center;
+      background: #fffbeb;
+      color: #f59e0b;
+      padding: 60px 30px;
+      border-radius: 20px;
+      border: 3px dashed #fbbf24;
+      font-size: 1.6rem;
+      max-width: 700px;
+      margin: 60px auto;
+    }
+    .awaiting strong {
+      font-size: 2rem;
+      display: block;
+      margin-bottom: 16px;
+    }
+
+    h1 { text-align: center; font-size: 1.9rem; margin-bottom: 40px; color: var(--dark); font-weight: 700; }
+    h2 { font-size: 1.55rem; margin: 50px 0 30px; color: var(--dark); text-align: center; }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 24px;
+      margin-bottom: 50px;
+    }
+    .card {
+      background: white;
+      padding: 28px;
+      border-radius: 16px;
+      text-align: center;
+      box-shadow: 0 8px 25px rgba(0,0,0,0.08);
+      border: 1px solid #e2e8f0;
+      transition: all 0.3s ease;
+    }
+    .card:hover { transform: translateY(-8px); box-shadow: 0 16px 35px rgba(0,0,0,0.12); }
+    .card-icon {
+      width: 70px; height: 70px; margin: 0 auto 16px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 2rem; color: white;
+    }
+    .card:nth-child(1) .card-icon { background: var(--primary); }
+    .card:nth-child(2) .card-icon { background: var(--success); }
+    .card:nth-child(3) .card-icon { background: #9b59b6; }
+    .card:nth-child(4) .card-icon { background: var(--warning); }
+    .card-number { font-size: 2.1rem; font-weight: 700; color: var(--dark); margin: 8px 0; }
+    .card-label { font-size: 1rem; color: var(--gray); font-weight: 500; }
+
+    .grade-table { width: 100%; border-collapse: collapse; background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.08); font-size: 0.95rem; }
+    .grade-table th { background: var(--primary); color: white; padding: 16px 14px; text-align: center; font-weight: 600; }
+    .grade-table th:first-child { background: #2d3436; text-align: left; padding-left: 30px; }
+    .grade-table td { padding: 16px 14px; text-align: center; border-bottom: 1px solid #e2e8f0; }
+    .grade-table td:first-child { text-align: left; font-weight: 600; background: #f8f9fc; padding-left: 30px; font-size: 1rem; }
+    .grade-table tr:hover { background: #f1f5f9; }
+    .count { font-size: 1.2rem; font-weight: 700; color: var(--dark); }
+    .count.zero { color: #bbb; }
+
+    .back-btn {
+      display: block;
+      width: fit-content;
+      margin: 50px auto 0;
+      padding: 14px 36px;
+      background: var(--dark);
+      color: white;
+      border-radius: 12px;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 1rem;
+    }
+    .back-btn:hover { background: #1e272e; transform: translateY(-2px); }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Teacher Performance Analytics</h1>
+
+    <% if (awaiting === true) { %>
+      <div class="awaiting">
+        <strong><%= message %></strong>
+        <div style="margin-top: 16px; font-size: 1.2rem; color: #d97706;">
+          <%= subtitle %>
+        </div>
+      </div>
+    <% } else { %>
+      <div class="term-badge"><%= term_name %> • Current Term Report</div>
+
+      <div class="cards">
+        <div class="card">
+          <div class="card-icon">Teacher</div>
+          <div class="card-number"><%= totalTeachers %></div>
+          <div class="card-label">Active Teachers</div>
+        </div>
+        <div class="card">
+          <div class="card-icon">Book</div>
+          <div class="card-number"><%= totalCourses %></div>
+          <div class="card-label">Courses Taught</div>
+        </div>
+        <div class="card">
+          <div class="card-icon">Student</div>
+          <div class="card-number"><%= totalStudents %></div>
+          <div class="card-label">Students Graded</div>
+        </div>
+        <div class="card">
+          <div class="card-icon">Trophy</div>
+          <div class="card-number"><%= overallAvgScore %></div>
+          <div class="card-label">School Average Score</div>
+        </div>
+      </div>
+
+      <h2>Grade Distribution by Teacher</h2>
+
+      <% if (gradeDist.length > 0) { %>
+        <table class="grade-table">
+          <thead>
+            <tr>
+              <th>Teacher Name</th>
+              <th>A</th>
+              <th>B</th>
+              <th>C</th>
+              <th>D</th>
+              <th>F</th>
+            </tr>
+          </thead>
+          >
+          <tbody>
+            <% gradeDist.forEach(t => { %>
+              <tr>
+                <td>
+                  <%= t.teacher_name %>
+                  <% if (t.username) { %> <small style="color:#64748b;">(@<%= t.username %>)</small> <% } %>
+                </td>
+                >
+                <td><span class="count <%= t.count_A == 0 ? 'zero' : '' %>"><%= t.count_A || 0 %></span></td>
+                <td><span class="count <%= t.count_B == 0 ? 'zero' : '' %>"><%= t.count_B || 0 %></span></td>
+                <td><span class="count <%= t.count_C == 0 ? 'zero' : '' %>"><%= t.count_C || 0 %></span></td>
+                <td><span class="count <%= t.count_D == 0 ? 'zero' : '' %>"><%= t.count_D || 0 %></span></td>
+                <td><span class="count <%= t.count_F == 0 ? 'zero' : '' %>"><%= t.count_F || 0 %></span></td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      <% } else { %>
+        <p style="text-align:center; font-size:1.3rem; color:#95a5a6; margin:80px 0;">
+          No grades recorded yet for <%= term_name %>.
+        </p>
+      <% } %>
+    <% } %>
+
+    <a href="/dashboard" class="back-btn">Back to Dashboard</a>
+  </div>
+</body>
+</html>

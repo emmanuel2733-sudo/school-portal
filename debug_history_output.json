@@ -1,0 +1,310 @@
+{
+  "year": {
+    "id": 4,
+    "year": "2025/2026"
+  },
+  "class": {
+    "id": 1,
+    "name": "JS1"
+  },
+  "terms": [
+    {
+      "id": 10,
+      "term_name": "2025 First Term"
+    },
+    {
+      "id": 11,
+      "term_name": "2025 Second Term"
+    },
+    {
+      "id": 12,
+      "term_name": "2025 Third Term"
+    }
+  ],
+  "courses": [
+    {
+      "id": 3,
+      "course_name": "BIOLOGY"
+    },
+    {
+      "id": 2,
+      "course_name": "CHEMISTRY"
+    },
+    {
+      "id": 1,
+      "course_name": "MATHS"
+    },
+    {
+      "id": 4,
+      "course_name": "PHYSICS"
+    }
+  ],
+  "students": [
+    {
+      "id": 2,
+      "student_name": "student1"
+    },
+    {
+      "id": 3,
+      "student_name": "student2"
+    },
+    {
+      "id": 5,
+      "student_name": "student4"
+    }
+  ],
+  "grades": [
+    {
+      "student_id": 2,
+      "term_id": 10,
+      "course_id": 3,
+      "grade": "A",
+      "total": 88
+    },
+    {
+      "student_id": 3,
+      "term_id": 10,
+      "course_id": 3,
+      "grade": "A",
+      "total": 77
+    },
+    {
+      "student_id": 5,
+      "term_id": 10,
+      "course_id": 3,
+      "grade": "B",
+      "total": 66
+    },
+    {
+      "student_id": 2,
+      "term_id": 10,
+      "course_id": 2,
+      "grade": "A",
+      "total": 88
+    },
+    {
+      "student_id": 3,
+      "term_id": 10,
+      "course_id": 2,
+      "grade": "C",
+      "total": 55
+    },
+    {
+      "student_id": 5,
+      "term_id": 10,
+      "course_id": 2,
+      "grade": "B",
+      "total": 66
+    },
+    {
+      "student_id": 2,
+      "term_id": 10,
+      "course_id": 1,
+      "grade": "A",
+      "total": 77
+    },
+    {
+      "student_id": 3,
+      "term_id": 10,
+      "course_id": 1,
+      "grade": "C",
+      "total": 55
+    },
+    {
+      "student_id": 5,
+      "term_id": 10,
+      "course_id": 1,
+      "grade": "A",
+      "total": 88
+    },
+    {
+      "student_id": 2,
+      "term_id": 10,
+      "course_id": 4,
+      "grade": "A",
+      "total": 77
+    },
+    {
+      "student_id": 3,
+      "term_id": 10,
+      "course_id": 4,
+      "grade": "B",
+      "total": 66
+    },
+    {
+      "student_id": 5,
+      "term_id": 10,
+      "course_id": 4,
+      "grade": "C",
+      "total": 55
+    },
+    {
+      "student_id": 2,
+      "term_id": 11,
+      "course_id": 3,
+      "grade": "A",
+      "total": 77
+    },
+    {
+      "student_id": 3,
+      "term_id": 11,
+      "course_id": 3,
+      "grade": "B",
+      "total": 66
+    },
+    {
+      "student_id": 5,
+      "term_id": 11,
+      "course_id": 3,
+      "grade": "A",
+      "total": 88
+    },
+    {
+      "student_id": 2,
+      "term_id": 11,
+      "course_id": 2,
+      "grade": "B",
+      "total": 66
+    },
+    {
+      "student_id": 3,
+      "term_id": 11,
+      "course_id": 2,
+      "grade": "A",
+      "total": 77
+    },
+    {
+      "student_id": 5,
+      "term_id": 11,
+      "course_id": 2,
+      "grade": "C",
+      "total": 55
+    },
+    {
+      "student_id": 2,
+      "term_id": 11,
+      "course_id": 1,
+      "grade": "A",
+      "total": 88
+    },
+    {
+      "student_id": 3,
+      "term_id": 11,
+      "course_id": 1,
+      "grade": "B",
+      "total": 66
+    },
+    {
+      "student_id": 5,
+      "term_id": 11,
+      "course_id": 1,
+      "grade": "B",
+      "total": 66
+    },
+    {
+      "student_id": 2,
+      "term_id": 11,
+      "course_id": 4,
+      "grade": "A",
+      "total": 77
+    },
+    {
+      "student_id": 3,
+      "term_id": 11,
+      "course_id": 4,
+      "grade": "B",
+      "total": 66
+    },
+    {
+      "student_id": 5,
+      "term_id": 11,
+      "course_id": 4,
+      "grade": "A",
+      "total": 77
+    },
+    {
+      "student_id": 2,
+      "term_id": 12,
+      "course_id": 3,
+      "grade": "A",
+      "total": 77
+    },
+    {
+      "student_id": 3,
+      "term_id": 12,
+      "course_id": 3,
+      "grade": "A",
+      "total": 77
+    },
+    {
+      "student_id": 5,
+      "term_id": 12,
+      "course_id": 3,
+      "grade": "B",
+      "total": 66
+    },
+    {
+      "student_id": 2,
+      "term_id": 12,
+      "course_id": 2,
+      "grade": "A",
+      "total": 77
+    },
+    {
+      "student_id": 3,
+      "term_id": 12,
+      "course_id": 2,
+      "grade": "C",
+      "total": 55
+    },
+    {
+      "student_id": 5,
+      "term_id": 12,
+      "course_id": 2,
+      "grade": "C",
+      "total": 55
+    },
+    {
+      "student_id": 2,
+      "term_id": 12,
+      "course_id": 1,
+      "grade": "B",
+      "total": 66
+    },
+    {
+      "student_id": 3,
+      "term_id": 12,
+      "course_id": 1,
+      "grade": "A",
+      "total": 77
+    },
+    {
+      "student_id": 5,
+      "term_id": 12,
+      "course_id": 1,
+      "grade": "B",
+      "total": 66
+    },
+    {
+      "student_id": 2,
+      "term_id": 12,
+      "course_id": 4,
+      "grade": "B",
+      "total": 66
+    },
+    {
+      "student_id": 3,
+      "term_id": 12,
+      "course_id": 4,
+      "grade": "A",
+      "total": 77
+    },
+    {
+      "student_id": 5,
+      "term_id": 12,
+      "course_id": 4,
+      "grade": "B",
+      "total": 66
+    }
+  ]
+}

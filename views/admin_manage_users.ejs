@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Manage Users</title>
+    <link rel="stylesheet" href="/style.css">
+    <style>
+        table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background: #f8f9fa; font-weight: bold; }
+        tr:hover { background: #f5f5f5; }
+        .btn { padding: 6px 12px; margin: 2px; border: none; border-radius: 4px; cursor: pointer; font-size: 13px; }
+        .btn-approve { background: #28a745; color: white; }
+        .btn-approve:hover { background: #218838; }
+        .btn-manage { background: #007bff; color: white; }
+        .btn-manage:hover { background: #0056b3; }
+        .status-pending { color: #ffc107; font-weight: bold; }
+        .status-approved { color: #28a745; font-weight: bold; }
+        .status-disabled { color: #dc3545; font-weight: bold; }
+
+        .filter-btns { 
+            display: flex; gap: 10px; margin: 20px 0; flex-wrap: wrap; 
+        }
+        .filter-btn {
+            padding: 10px 16px; border: 1px solid #ddd; background: #fff;
+            border-radius: 6px; font-size: 14px; font-weight: 600;
+            text-decoration: none; color: #333; transition: 0.2s;
+        }
+        .filter-btn.active {
+            background: #007bff; color: white; border-color: #007bff;
+        }
+        .filter-btn:hover { background: #f0f0f0; }
+        .filter-btn.active:hover { background: #0056b3; }
+
+        /* Pagination Styles */
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            margin: 30px 0;
+            flex-wrap: wrap;
+        }
+        .pagination a, .pagination span {
+            padding: 8px 14px;
+            text-decoration: none;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            color: #333;
+            font-size: 14px;
+        }
+        .pagination a:hover {
+            background: #f0f0f0;
+        }
+        .pagination .current {
+            background: #007bff;
+            color: white;
+            border-color: #007bff;
+            font-weight: bold;
+        }
+        .pagination .disabled {
+            color: #aaa;
+            cursor: not-allowed;
+            border-color: #eee;
+        }
+    </style>
+</head>
+<body>
+    <div style="max-width: 900px; margin: 30px auto; padding: 20px;">
+        <h1>Manage Users</h1>
+        <a href="/admin/users">← Back to Dashboard</a> 
+
+        <div class="filter-btns">
+            <a href="/admin/manage-users?filter=student" 
+               class="filter-btn <%= filter === 'student' ? 'active' : '' %>">
+               Students (<%= counts.students %>)
+            </a>
+            <a href="/admin/manage-users?filter=teacher" 
+               class="filter-btn <%= filter === 'teacher' ? 'active' : '' %>">
+               Teachers (<%= counts.teachers %>)
+            </a>
+            <a href="/admin/manage-users?filter=pending" 
+               class="filter-btn <%= filter === 'pending' ? 'active' : '' %>">
+               Pending (<%= counts.pending %>)
+            </a>
+            <a href="/admin/manage-users?filter=disabled" 
+               class="filter-btn <%= filter === 'disabled' ? 'active' : '' %>">
+               Disabled (<%= counts.disabled %>)
+            </a>
+        </div>
+
+        <% if (success) { %>
+            <div style="background: #d4edda; color: #155724; padding: 10px; border-radius: 5px; margin: 15px 0;">
+                <%= success %>
+            </div>
+        <% } %>
+
+        <!-- Results info -->
+        <p>
+            Showing <%= ((page - 1) * limit) + 1 %> – <%= Math.min(page * limit, totalUsers) %> 
+            of <%= totalUsers %> users
+        </p>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>S/N</th>
+                    <th>Username</th>
+                    <th>Name</th>
+                    <th>Role</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% users.forEach((u, index) => { %>
+                <tr>
+                    <!-- Serial number respecting current page -->
+                    <td><strong><%= (page - 1) * limit + index + 1 %></strong></td>
+                    <td><strong><%= u.username %></strong></td>
+                    <td><%= u.name || '-' %></td>
+                    <td><%= u.role.charAt(0).toUpperCase() + u.role.slice(1) %></td>
+                    <td>
+                        <span class="status-<%= u.status %>">
+                            <%= u.status.charAt(0).toUpperCase() + u.status.slice(1) %>
+                        </span>
+                    </td>
+                    <td>
+                        <% if (u.status === 'pending') { %>
+                            <form method="POST" action="/admin/users/approve/<%= u.id %>" style="display:inline;">
+                                <button type="submit" class="btn btn-approve">Approve</button>
+                            </form>
+                        <% } %>
+                        <a href="/admin/users/manage/<%= u.id %>" class="btn btn-manage">Manage</a>
+                    </td>
+                </tr>
+                <% }) %>
+            </tbody>
+        </table>
+
+        <!-- Pagination -->
+        <% if (totalPages > 1) { %>
+        <div class="pagination">
+            <!-- Previous -->
+            <% if (page > 1) { %>
+                <a href="?page=<%= page - 1 %>&filter=<%= filter || '' %>">&laquo; Previous</a>
+            <% } else { %>
+                <span class="disabled">&laquo; Previous</span>
+            <% } %>
+
+            <!-- Page numbers -->
+            <% 
+                let startPage = Math.max(1, page - 2);
+                let endPage = Math.min(totalPages, page + 2);
+                if (endPage - startPage < 4) {
+                    if (startPage === 1) endPage = Math.min(totalPages, startPage + 4);
+                    else endPage = Math.min(totalPages, startPage + 4);
+                }
+                for (let i = startPage; i <= endPage; i++) { 
+            %>
+                <% if (i === page) { %>
+                    <span class="current"><%= i %></span>
+                <% } else { %>
+                    <a href="?page=<%= i %>&filter=<%= filter || '' %>"><%= i %></a>
+                <% } %>
+            <% } %>
+
+            %>
+
+            <!-- Next -->
+            <% if (page < totalPages) { %>
+                <a href="?page=<%= page + 1 %>&filter=<%= filter || '' %>">Next &raquo;</a>
+            <% } else { %>
+                <span class="disabled">Next &raquo;</span>
+            <% } %>
+        </div>
+        <% } %>
+
+    </div>
+</body>
+</html>

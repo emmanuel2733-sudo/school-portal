@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Admin Dashboard</title>
+    <link rel="stylesheet" href="/style.css">
+    <style>
+        .dashboard { display: flex; gap: 20px; margin: 20px; }
+        .card { padding: 20px; border: 1px solid #ccc; border-radius: 5px; }
+        .card h3 { margin-top: 0; }
+        a { display: inline-block; padding: 10px; margin: 5px; background: #007bff; color: white; text-decoration: none; border-radius: 3px; }
+        a:hover { background: #0056b3; }
+
+
+.admin-quick-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 20px 0;
+  justify-content: center;
+  padding: 15px;
+  background: #f8f9fa;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+}
+
+.action-btn {
+  padding: 12px 20px;
+  background: white;
+  color: #2c3e50;
+  text-decoration: none;
+  border-radius: 8px;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  transition: all 0.3s ease;
+  border: 2px solid transparent;
+}
+
+.action-btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+}
+
+.action-btn.highlight {
+  background: #e74c3c;
+  color: white;
+  border-color: #c0392b;
+}
+
+.action-btn.highlight:hover {
+  background: #c0392b;
+}
+        
+    </style>
+</head>
+<body>
+    <h1>Admin Dashboard</h1>
+
+
+    
+
+
+    <p>Welcome, <%= user.name %> (<%= user.role %>)</p>
+
+    <!-- SEARCH BAR - FIXED -->
+    <div class="search-container">
+      <form method="GET" action="/admin/search-users" class="d-flex">
+        <input 
+          class="form-control me-2" 
+          type="search" 
+          name="q" 
+          placeholder="Search users: pending, disabled, active..." 
+          value="<%= q || '' %>" 
+          aria-label="Search"
+        >
+        <button class="btn btn-outline-primary" type="submit">
+          Search
+        </button>
+        <% if (q) { %> <!-- FIXED: Added missing %> -->
+          <a href="/admin/dashboard" class="btn btn-outline-secondary ms-2">Clear</a>
+        <% } %> <!-- FIXED: Closed properly -->
+      </form>
+    </div>
+
+    <div class="dashboard">
+        <div class="card">
+            <h3>User Management</h3>
+                        <a href="/admin/teacher-analytics" class="dashboard-link"> Teacher Performance Analytics</a>
+            <a href="/admin/reports" class="dashboard-link">Student Reports Analytics</a>
+            <!-- <a href="/admin/analytics">Analytics Dashboard</a> -->
+            <a href="/admin/re-enroll-all" class="btn btn-success"> Re-enroll All Students for Current Term</a>
+             <a href="/admin/history">Student Academic History</a>
+        </div>
+        
+        <div class="card">
+            <h3>School Setup</h3>
+            <a href="/admin/users">Manage Users</a>
+            <a href="/register">Register New User</a>
+            <a href="/admin/account" class="btn" style="background:#17a2b8;">View All Accounts (username + password)</a>
+            <a href="/admin/academic-years">Manage Academic Years</a>
+
+        </div>
+    </div>
+
+<!-- ADD THIS ANYWHERE IN YOUR CURRENT DASHBOARD
+<div class="dashboard-item">
+  <a href="/admin/history" style="display:block; padding:20px; background:#e74c3c; color:white; 
+     text-align:center; border-radius:12px; font-weight:bold; font-size:1.3em; 
+     text-decoration:none; box-shadow:0 6px 15px rgba(231,76,60,0.3);">
+     Student Academic History
+  </a>
+</div> -->
+
+
+    <!-- <div class="card mt-4">
+  <div class="card-body">
+    <h5 class="card-title text-danger">New Academic Year Setup</h5>
+    <p>After creating a new academic year and setting the current term, click below to re-enroll all students:</p>
+    <a href="/admin/re-enroll-students" class="btn btn-success btn-lg" 
+       onclick="return confirm('This will copy all previous enrollments to the current term. Continue?')">
+      Re-Enroll All Students for Current Term
+    </a>
+    <small class="text-muted d-block mt-2">
+      Safe to run multiple times · Uses INSERT OR IGNORE
+    </small>
+  </div>
+</div> -->
+    
+    <a href="/logout">Logout</a>
+</body>
+</html>

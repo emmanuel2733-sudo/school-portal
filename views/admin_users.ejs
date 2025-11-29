@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Active Users</title>
+    <link rel="stylesheet" href="/style.css">
+    <style>
+        table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background: #f8f9fa; font-weight: bold; }
+        tr:hover { background: #f5f5f5; }
+        .btn { padding: 6px 12px; margin: 2px; border: none; border-radius: 4px; cursor: pointer; font-size: 13px; }
+        .btn-manage { background: #007bff; color: white; }
+        .btn-manage:hover { background: #0056b3; }
+    </style>
+</head>
+<body>
+    <div style="max-width: 900px; margin: 30px auto; padding: 20px;">
+        <h1>Active Users</h1>
+        <a href="/dashboard"> Back to Dashboard</a>
+ |
+        <a href="/admin/manage-users">Manage All Users</a>
+
+        <% if (success) { %>
+            <div style="background: #d4edda; color: #155724; padding: 10px; border-radius: 5px; margin: 15px 0;">
+                <%= success %>
+            </div>
+        <% } %>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>S/N</th>
+                    <th>Username</th>
+                    <th>Name</th>
+                    <th>Role</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% users.forEach((u, index) => { %>
+                <tr>
+                    <td><strong><%= index + 1 %></strong></td>
+                    <td><strong><%= u.username %></strong></td>
+                    <td><%= u.name || '-' %></td>
+                    <td><%= u.role.charAt(0).toUpperCase() + u.role.slice(1) %></td>
+                    <td>
+                        <a href="/admin/users/manage/<%= u.id %>" class="btn btn-manage">Manage</a>
+                    </td>
+                </tr>
+                <% }) %>
+            </tbody>
+        </table>
+
+        <% if (users.length === 0) { %>
+            <p style="text-align:center; color:#888; margin:30px 0;">No active users.</p>
+        <% } %>
+    </div>
+</body>
+</html>

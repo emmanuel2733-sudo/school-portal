@@ -1,0 +1,74 @@
+<!-- <!DOCTYPE html>
+<html>
+<head>
+    <title>Manage Terms</title>
+    <link rel="stylesheet" href="/style.css">
+    <style>
+        table { border-collapse: collapse; width: 100%; margin: 20px 0; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        .form-group { margin: 20px 0; }
+        input[type="text"], select { padding: 5px; width: 200px; }
+        button { padding: 5px 10px; background: #dc3545; color: white; border: none; cursor: pointer; }
+        .success { color: green; }
+        .error { color: red; }
+        a { display: inline-block; padding: 10px; margin: 5px; background: #007bff; color: white; text-decoration: none; }
+    </style>
+</head>
+<body>
+    <h1>Manage Terms</h1>
+    
+    <ul class="error">
+        <% errors.forEach(error => { %>
+            <li><%= error.msg %></li>
+        <% }) %>
+    </ul>
+    
+    <!-- Add Term Form -->
+    <div class="form-group">
+        <h3>Add New Term</h3>
+        <form method="POST" action="/admin/terms">
+            <input type="text" name="name" placeholder="Term Name (e.g., Term 1)" required>
+            <select name="class_id" required>
+                <option value="">Select Class</option>
+                <% classes.forEach(classItem => { %>
+                    <option value="<%= classItem.id %>"><%= classItem.name %></option>
+                <% }) %>
+            </select>
+            <button type="submit">Add Term</button>
+        </form>
+    </div>
+    
+    <!-- Terms Table -->
+    <h3>Existing Terms</h3>
+    <% if (terms.length === 0) { %>
+        <p>No terms found. Add a term above.</p>
+    <% } else { %>
+        <table>
+            <tr>
+                <th>ID</th>
+                <th>Term Name</th>
+                <th>Class</th>
+                <th>Actions</th>
+            </tr>
+            <% terms.forEach(term => { %>
+                <tr>
+                    <td><%= term.id %></td>
+                    <td><%= term.name %></td>
+                    <td><%= term.class_name %></td>
+                    <td>
+                        <form method="POST" action="/admin/terms/delete/<%= term.id %>" 
+                              onsubmit="return confirm('Delete <%= term.name %> for <%= term.class_name %>?')" 
+                              style="display: inline;">
+                            <button type="submit">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+            <% }) %>
+        </table>
+    <% } %>
+    
+    <a href="/dashboard">Back to Dashboard</a>
+</body>
+</html> -->
+

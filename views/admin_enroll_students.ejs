@@ -1,0 +1,33 @@
+html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Enroll Students - <%= className %></title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <div class="container">
+    <h1>Enroll Students in <%= className %></h1>
+    <a href="/admin/classes">← Back to Classes</a>
+
+    <% if (errorMsg) { %>
+      <div class="msg error"><%= errorMsg %></div>
+    <% } %>
+
+    <form action="/admin/class/<%= classId %>/enroll" method="POST">
+      <input type="hidden" name="termId" value="<%= currentTermId %>">
+
+      <p><strong>Current Term:</strong> <%= currentTermName %></p>
+
+      <textarea name="student_usernames" placeholder="Enter one username per line&#10;e.g.&#10;john2025&#10;mary_k&#10;student123" 
+                rows="15" style="width:100%; padding:10px; font-family:monospace;" required></textarea>
+
+      <button type="submit" style="margin-top:15px; padding:12px 20px; font-size:1.1rem;">
+        Enroll All Students and delete tis file later
+      </button>
+    </form>
+  </div>
+</body>
+</html>

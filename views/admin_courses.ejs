@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Manage Courses</title>
+    <link rel="stylesheet" href="/style.css">
+    <style>
+        table { border-collapse: collapse; width: 100%; margin: 20px 0; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        .form-group { margin: 20px 0; }
+        input[type="text"], select { padding: 5px; width: 200px; }
+        button { padding: 5px 10px; background: #dc3545; color: white; border: none; cursor: pointer; }
+        .success { color: green; }
+        .error { color: red; }
+        a { display: inline-block; padding: 10px; margin: 5px; background: #007bff; color: white; text-decoration: none; }
+        .edit-btn { background: #28a745 !important; padding: 5px 10px !important; margin-right: 5px; border-radius: 3px; }
+        .delete-btn { background: #dc3545 !important; padding: 5px 10px !important; }
+    </style>
+</head>
+<body>
+    <h1>Manage Courses</h1>
+    
+    <ul class="error">
+        <% errors.forEach(error => { %>
+            <li><%= error.msg %></li>
+        <% }) %>
+    </ul>
+    
+    <!-- Add Course Form -->
+    <div class="form-group">
+        <h3>Add New Course</h3>
+        <form method="POST" action="/admin/courses">
+            <input type="text" name="name" placeholder="Course Name (e.g., Mathematics)" required>
+            <select name="class_id" required>
+                <option value="">Select Class</option>
+                <% if (classes && classes.length > 0) { %>
+                    <% classes.forEach(classItem => { %>
+                        <option value="<%= classItem.id %>"><%= classItem.name %></option>
+                    <% }) %>
+                <% } %>
+            </select>
+            <button type="submit">Add Course</button>
+        </form>
+    </div>
+    
+    <!-- Courses Table -->
+    <h3>Existing Courses</h3>
+    <% if (!courses || courses.length === 0) { %>
+        <p>No courses found. Add a course above.</p>
+    <% } else { %>
+        <table>
+            <tr>
+                <th>ID</th>
+                <th>Course Name</th>
+                <th>Class</th>
+                <th>Actions</th>
+            </tr>
+            <% courses.forEach(course => { %>
+  <tr>
+    <td><%= course.name %></td>
+    <td>
+      <% if (course.teacher_name) { %>
+        <span class="assigned-teacher">
+          <%= course.teacher_name %>
+          <form action="/admin/course/<%= course.id %>/assign-teacher" method="POST" style="display:inline;">
+            <input type="hidden" name="remove" value="1">
+            <button type="submit" style="background:none;border:none;color:red;cursor:pointer;font-size:0.8em;">✕</button>
+          </form>
+        </span>
+      <% } else { %>
+        <form action="/admin/course/<%= course.id %>/assign-teacher" method="POST" style="display:inline;">
+          <input type="text" name="teacher_username" placeholder="Enter username" size="15" required>
+          <button type="submit" style="font-size:0.8em;">Assign</button>
+        </form>
+      <% } %>
+    </td>
+    <td>
+      <a href="/admin/course/<%= course.id %>/edit?termId=<%= termId %>">Edit</a> |
+      <form action="/admin/course/<%= course.id %>/delete" method="POST" style="display:inline;">
+        <input type="hidden" name="termId" value="<%= termId %>">
+        <input type="hidden" name="classId" value="<%= classId %>">
+        <button type="submit" style="background:none;border:none;color:red;cursor:pointer;" 
+                onclick="return confirm('Delete <%= course.name %>?');">Delete</button>
+      </form>
+    </td>
+  </tr>
+<% }) %>
+    
+    <a href="/dashboard">Back to Dashboard</a>
+</body>
+</html>

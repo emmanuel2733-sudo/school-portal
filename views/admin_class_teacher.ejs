@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Assign Class Teacher – <%= className %></title>
+  <link rel="stylesheet" href="/style.css">
+  <style>
+    .container { max-width: 500px; margin: 40px auto; padding: 20px; background: #fff; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+    input, select { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ccc; border-radius: 4px; }
+    button { background: #1976d2; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; }
+    button:hover { background: #1565c0; }
+    .error { color: #d32f2f; margin: 10px 0; }
+    a { color: #1976d2; text-decoration: none; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Assign Class Teacher</h1>
+    <h3><%= className %> (Term <%= termId %>)</h3>
+
+    <% if (errorMsg) { %>
+      <p class="error"><%= errorMsg %></p>
+    <% } %>
+
+    <form method="POST" action="/admin/class/<%= classId %>/class-teacher">
+      <input type="hidden" name="termId" value="<%= termId %>">
+      <label>Teacher</label>
+      <select name="teacherId" required>
+        <option value="">-- Select Teacher --</option>
+        <% teachers.forEach(t => { %>
+          <option value="<%= t.id %>" <%= currentTeacher && currentTeacher.id === t.id ? 'selected' : '' %>>
+            <%= t.name %> (@<%= t.username %>)
+          </option>
+        <% }) %>
+      </select>
+
+       <label>Course (Optional – for display)</label>
+            <select name="courseId">
+        <option value="">-- No course --</option>
+        
+        <!-- Super safe: only loops if courses exists and has items -->
+        <% 
+          if (typeof courses !== 'undefined' && Array.isArray(courses) && courses.length > 0) { 
+            courses.forEach(c => { 
+        %>
+              <option value="<%= c.id %>"><%= c.name %></option>
+        <%
+            });
+          } else {
+        %>
+              <option disabled style="color: #999;">(No courses added to this class yet)</option>
+        <%
+          }
+        %>
+      </select>
+
+      <button type="submit">Save Class Teacher</button>
+<a href="/admin/term/<%= termId %>/classes">Cancel</a>
+    </form>
+  </div>
+</body>
+</html>

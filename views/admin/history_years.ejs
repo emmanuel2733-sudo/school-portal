@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Completed Academic Years</title>
+  <style>
+    body { font-family: 'Segoe UI', Arial, sans-serif; background: #f5f7fa; margin: 0; padding: 40px; }
+    .container { max-width: 1100px; margin: 0 auto; }
+    .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 30px; }
+    .header h1 { margin: 0; color: #2c3e50; font-size: 1.8em; }
+    .back-btn {
+      background: #34495e; color: white; padding: 10px 20px; border-radius: 8px;
+      text-decoration: none; font-weight: bold; transition: 0.3s;
+    }
+    .back-btn:hover { background: #2c3e50; }
+    .years-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 18px;
+    }
+    .year-card {
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      text-align: center;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+      transition: all 0.3s ease;
+      font-weight: bold;
+      font-size: 1.3em;
+      color: #2c3e50;
+    }
+    .year-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+    }
+    .year-card a {
+      text-decoration: none;
+      color: inherit;
+      display: block;
+    }
+    .no-data {
+      text-align: center;
+      padding: 60px 20px;
+      color: #7f8c8d;
+      font-size: 1.3em;
+      background: white;
+      border-radius: 12px;
+      margin-top: 30px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>Completed Academic Years</h1>
+      <a href="/dashboard" class="back-btn">Back to Dashboard</a>
+
+    </div>
+
+    <% if (noHistory) { %>
+      <div class="no-data">
+        No completed academic years found yet.<br>
+        <small>Old years will appear here when you mark the current year as completed.</small>
+      </div>
+    <% } else { %>
+      <div class="years-grid">
+        <% years.forEach(y => { %>
+          <div class="year-card">
+           <a href="/admin/history/year/<%= y.id %>">
+  <%= y.year %>
+</a>
+          </div>
+        <% }) %>
+      </div>
+    <% } %>
+  </div>
+</body>
+</html>

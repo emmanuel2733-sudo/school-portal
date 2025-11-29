@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html>
+<head><title>Edit Course</title><link rel="stylesheet" href="/style.css"></head>
+<body>
+  <h1>Edit Course</h1>
+  <form method="POST">
+    <input type="hidden" name="termId" value="<%= termId %>">
+    <input type="hidden" name="classId" value="<%= classId %>">
+    <input type="text" name="name" value="<%= course.name %>" required>
+    <button type="submit">Update</button>
+  </form>
+  <a href="/admin/class/<%= classId %>/courses?termId=<%= termId %>">Back</a>
+</body>
+</html>

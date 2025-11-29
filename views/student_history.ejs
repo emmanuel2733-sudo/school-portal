@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Academic History</title>
+  <link rel="stylesheet" href="/style.css">
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; background: #f8f9fa; }
+    .container { max-width: 1000px; margin: auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+    h1 { color: #2c3e50; text-align: center; }
+
+    .no-records { text-align: center; padding: 40px; color: #666; font-size: 1.2em; background: #f0f0f0; border-radius: 8px; }
+
+    /* ==== Collapsible Year Card ==== */
+    .year-card {
+      margin: 30px 0;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+    .year-header {
+      background: #3498db;
+      color: white;
+      padding: 15px;
+      font-size: 1.4em;
+      font-weight: bold;
+      text-align: center;
+      cursor: pointer;
+      user-select: none;
+      position: relative;
+    }
+    .year-header::after {
+      content: "▼";               /* down arrow when collapsed */
+      position: absolute;
+      right: 20px;
+      top: 50%;
+      transform: translateY(-50%);
+      transition: transform 0.2s ease;
+    }
+    .year-header.collapsed::after {
+      content: "▶";               /* right arrow when collapsed */
+      transform: translateY(-50%) rotate(0);
+    }
+    .year-header:not(.collapsed)::after {
+      transform: translateY(-50%) rotate(180deg);
+    }
+
+    .year-content {
+      max-height: 2000px;         /* large enough for any content */
+      overflow: hidden;
+      transition: max-height 0.4s ease, padding 0.4s ease;
+    }
+    .year-content.collapsed {
+      max-height: 0;
+      padding-top: 0;
+      padding-bottom: 0;
+    }
+
+    .term-card { margin: 15px; border: 1px solid #eee; border-radius: 6px; }
+    .term-header { 
+      background: #2980b9; color: white; padding: 12px 15px; 
+      font-weight: bold; font-size: 1.2em; position: relative; 
+    }
+    .term-info { 
+      position: absolute; right: 15px; top: 50%; transform: translateY(-50%);
+      font-size: 0.95em; font-weight: normal;
+    }
+    table { width: 100%; border-collapse: collapse; margin: 10px 0; }
+    th, td { padding: 12px; text-align: left; border-bottom: 1px solid #eee; }
+    th { background: #f8f9fa; }
+    tr:hover { background: #f5f5f5; }
+    .back-btn { display: inline-block; margin: 20px 0; padding: 10px 20px; background: #6c757d; color: white; text-decoration: none; border-radius: 5px; }
+    .back-btn:hover { background: #5a6268; }
+    .grade-A { color: green; font-weight: bold; }
+    .grade-F { color: red; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>My Academic History</h1>
+
+   <% if (!historyYears || historyYears.length === 0) { %>
+  <div class="no-records">
+    <h3>No History Available</h3>
+    <p>You have no results from completed academic years yet.</p>
+  </div>
+<% } else { %>
+  <!-- your existing loop -->
+      <% historyYears.forEach((year, yearIndex) => { %>
+        <div class="year-card">
+          <!-- Clickable header -->
+          <div class="year-header" 
+               onclick="toggleYear(this, event)">
+            <%= year.academic_year %> (Completed)
+          </div>
+
+          <!-- Content that collapses -->
+          <div class="year-content">
+            <% year.terms.forEach(term => { %>
+              <div class="term-card">
+                <div class="term-header">
+                  <%= term.term_name %>
+                  <div class="term-info">
+                    Class: <strong><%= term.class_name %></strong> | 
+                    Position: <strong><%= term.position %></strong>
+                  </div>
+                </div>
+                
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Subject</th>
+                      <th>CA</th>
+                      <th>Exam</th>
+                      <th>Total</th>
+                      <th>Grade</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <% term.courses.forEach(course => { %>
+                      <tr>
+                        <td><strong><%= course.course_name %></strong></td>
+                        <td><%= course.ca %></td>
+                        <td><%= course.exam %></td>
+                        <td><strong><%= course.total %></strong></td>
+                        <td>
+                          <span class="<%= course.grade === 'A' ? 'grade-A' : course.grade === 'F' ? 'grade-F' : '' %>">
+                            <%= course.grade %>
+                          </span>
+                        </td>
+                      </tr>
+                    <% }) %>
+                  </tbody>
+                </table>
+              </div>
+            <% }) %>
+          </div>
+        </div>
+      <% }) %>
+    <% } %>
+
+    <a href="/dashboard" class="back-btn">Back to Dashboard</a>
+  </div>
+
+  <script>
+    // Toggle collapse/expand for a year
+    function toggleYear(header, event) {
+      event.preventDefault();
+      const content = header.nextElementSibling;   // .year-content
+      const isCollapsed = content.classList.toggle('collapsed');
+
+      // Update header class for arrow direction
+      if (isCollapsed) {
+        header.classList.add('collapsed');
+      } else {
+        header.classList.remove('collapsed');
+      }
+    }
+
+    // Optional: collapse all years except the first one on page load
+    document.addEventListener('DOMContentLoaded', () => {
+      document.querySelectorAll('.year-card').forEach((card, idx) => {
+        if (idx !== 0) {               // keep the most recent year open if you want
+          const header = card.querySelector('.year-header');
+          const content = card.querySelector('.year-content');
+          content.classList.add('collapsed');
+          header.classList.add('collapsed');
+        }
+      });
+    });
+  </script>
+</body>
+</html>

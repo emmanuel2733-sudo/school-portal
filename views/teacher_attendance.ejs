@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Attendance Spreadsheet</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" rel="stylesheet">
+  <style>
+    body { background: #f8f9fa; font-family: 'Segoe UI', sans-serif; }
+    .card { border-radius: 15px; box-shadow: 0 5px 20px rgba(0,0,0,0.1); }
+    .spreadsheet { overflow-x: auto; }
+    table { font-size: 0.9rem; }
+    th.student-name { 
+      min-width: 140px; 
+      writing-mode: vertical-rl; 
+      text-orientation: mixed; 
+      transform: rotate(180deg);
+      white-space: nowrap;
+    }
+    td, th { text-align: center; vertical-align: middle; }
+    .btn-cell { 
+      width: 100%; height: 100%; border: none; padding: 6px; font-size: 0.8rem; 
+      border-radius: 4px;
+    }
+    .btn-cell.present { background: #d4edda; color: #155724; }
+    .btn-cell.absent { background: #f8d7da; color: #721c24; }
+    .btn-cell:hover { opacity: 0.8; }
+    .legend { font-size: 0.8rem; }
+    .table th, .table td { padding: 8px; }
+  </style>
+</head>
+<body>
+
+  <div class="container mt-4">
+    <h2 class="text-center mb-4">Attendance Spreadsheet</h2>
+
+    <!-- Month Picker -->
+    <div class="card p-3 mb-4">
+      <div class="row align-items-center">
+        <div class="col-md-4">
+          <label><strong>Select Month</strong></label>
+          <input type="text" id="monthPicker" class="form-control" placeholder="Pick month">
+        </div>
+        <div class="col-md-8 text-end">
+          <button id="prevMonth" class="btn btn-outline-primary">Previous</button>
+          <button id="nextMonth" class="btn btn-outline-primary">Next</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Spreadsheet -->
+    <div class="card p-3 spreadsheet">
+      <div id="spreadsheetContainer">
+        <p class="text-center text-muted"><em>Select a month to load attendance</em></p>
+      </div>
+    </div>
+
+    <div class="text-center mt-3">
+      <a href="/dashboard" class="btn btn-secondary">Back to Dashboard</a>
+    </div>
+  </div>
+
+  <!-- REQUIRED SCRIPTS -->
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@flatpickr/month-select-plugin@1.0.0/dist/index.min.js"></script>
+
+  <!-- MAIN LOGIC -->
+  <script>
+    const classId = '<%= classId %>';
+    const students = <%- JSON.stringify(students) %>;
+    let currentMonth = null;
+
+    // Initialize Month Picker
+    flatpickr("#monthPicker", {
+      plugins: [new monthSelectPlugin({
+        shorthand: true,
+        dateFormat: "Y-m"
+      })],
+      onChange: (dates, str) => {
+        if (str) loadMonth(str);
+      }
+    });
+
+    document.getElementById('prevMonth').onclick = () => navigateMonth(-1);
+    document.getElementById('nextMonth').onclick = () => navigateMonth(1);
+
+    function navigateMonth(delta) {
+      if (!currentMonth) return;
+      const [y, m] = currentMonth.split('-').map(Number);
+      const date = new Date(y, m - 1 + delta, 1);
+      const newMonth = date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0');
+      loadMonth(newMonth);
+    }
+
+    function loadMonth(monthStr) {
+      currentMonth = monthStr;
+      document.getElementById('spreadsheetContainer').innerHTML = '<p class="text-center">Loading...</p>';
+
+      fetch(`/teacher/attendance/spreadsheet?month=${monthStr}&classId=${classId}`)
+        .then(r => r.json())
+        .then(data => renderSpreadsheet(monthStr, data))
+        .catch(err => {
+          console.error(err);
+          document.getElementById('spreadsheetContainer').innerHTML = '<p class="text-danger">Error loading data</p>';
+        });
+    }
+
+    function renderSpreadsheet(monthStr, attendanceData) {
+      const [year, month] = monthStr.split('-').map(Number);
+      const daysInMonth = new Date(year, month, 0).getDate();
+      const firstDay = new Date(year, month - 1, 1).getDay();
+
+      let html = `
+        <table class="table table-bordered table-sm">
+          <thead class="table-light">
+            <tr>
+              <th style="width: 80px;">Date</th>
+              ${students.map(s => `<th class="student-name">${s.name}</th>`).join('')}
+            </tr>
+          </thead>
+          <tbody>
+      `;
+
+      let date = 1;
+      for (let week = 0; week < 6; week++) {
+        html += '<tr>';
+        for (let day = 0; day < 7; day++) {
+          if (week === 0 && day < firstDay) {
+            html += '<td></td>';
+          } else if (date > daysInMonth) {
+            html += '<td></td>';
+          } else {
+            const dateStr = `${year}-${String(month).padStart(2,'0')}-${String(date).padStart(2,'0')}`;
+            const isWeekend = day === 0 || day === 6;
+            const dayData = attendanceData[dateStr] || {};
+
+            html += `<td class="${isWeekend ? 'bg-light' : ''}">`;
+            if (!isWeekend) {
+              html += `<small class="d-block text-muted mb-1">${date}</small>`;
+              students.forEach(s => {
+                const status = dayData[s.id] || 'present';
+                const btnClass = status === 'absent' ? 'absent btn-cell btn-danger' : 'present btn-cell btn-success';
+                html += `
+                  <button class="${btnClass} btn-sm"
+                          onclick="toggleAttendance('${dateStr}', ${s.id}, this)">
+                    ${status === 'absent' ? 'A' : 'P'}
+                  </button>`;
+              });
+            }
+            html += `</td>`;
+            date++;
+          }
+        }
+        html += '</tr>';
+        if (date > daysInMonth) break;
+      }
+
+      html += `
+          </tbody>
+        </table>
+        <div class="legend text-center mt-2">
+          <span class="badge bg-success">P = Present</span>
+          <span class="badge bg-danger ms-2">A = Absent</span>
+        </div>
+      `;
+
+      document.getElementById('spreadsheetContainer').innerHTML = html;
+    }
+
+    function toggleAttendance(date, studentId, btn) {
+      const isAbsent = btn.textContent === 'A';
+      const newStatus = isAbsent ? 'present' : 'absent';
+
+      fetch('/teacher/attendance/toggle', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ date, studentId, classId, status: newStatus })
+      })
+      .then(r => r.json())
+      .then(data => {
+        if (data.success) {
+          btn.textContent = newStatus === 'absent' ? 'A' : 'P';
+          btn.className = newStatus === 'absent' ? 'btn-cell btn-danger absent btn-sm' : 'btn-cell btn-success present btn-sm';
+        }
+      });
+    }
+
+    // Auto-load current month
+    const today = new Date();
+    const currentMonthStr = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0');
+    document.getElementById('monthPicker')._flatpickr.setDate(currentMonthStr, true);
+  </script>
+</body>
+</html>

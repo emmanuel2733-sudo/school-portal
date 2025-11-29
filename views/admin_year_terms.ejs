@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title><%= year %> Terms</title>
+  <link rel="stylesheet" href="/style.css">
+  <style>
+    table{border-collapse:collapse;width:100%;margin:20px 0}
+    th,td{border:1px solid #ddd;padding:10px}
+    th{background:#f2f2f2}
+    .btn{display:inline-block;padding:8px 12px;background:#28a745;color:#fff;
+         text-decoration:none;border-radius:4px;font-size:14px}
+    .btn:hover{background:#218838}
+    .btn-current{background:#007bff;color:#fff}
+    .btn-current:hover{background:#0056b3}
+    .current-label{font-weight:bold;color:#007bff}
+  </style>
+</head>
+<body>
+  <h1><%= year %> – Terms</h1>
+
+  <% if (successMsg) { %>
+    <div style="color:green;background:#d4edda;padding:10px;margin:10px 0;border-radius:4px">
+      <%= successMsg %>
+    </div>
+  <% } %>
+  <% if (errorMsg) { %>
+    <div style="color:red;background:#f8d7da;padding:10px;margin:10px 0;border-radius:4px">
+      <%= errorMsg %>
+    </div>
+  <% } %>
+
+  <table>
+    <tr>
+      <th>#</th>
+      <th>Term</th>
+      <th>Actions</th>
+      <th>Status</th>
+    </tr>
+    <% terms.forEach(term => { %>
+      <tr>
+        <td><%= term.term_number %></td>
+        <td><%= term.name %></td>
+        <td>
+          <a href="/admin/term/<%= term.id %>/classes" class="btn">Manage Classes</a>
+        </td>
+        <td>
+          <% if (currentTermId === term.id) { %>
+            <span class="current-label">Current Term</span>
+          <% } else { %>
+            <form method="POST" action="/admin/academic-year/<%= yearId %>/set-current-term/<%= term.id %>" style="display:inline;">
+              <button type="submit" class="btn btn-current">Make Current</button>
+            </form>
+          <% } %>
+        </td>
+      </tr>
+    <% }) %>
+  </table>
+
+  <a href="/admin/academic-years" style="margin-top:20px;display:inline-block;padding:10px 15px;background:#6c757d;color:#fff;text-decoration:none;border-radius:4px;">
+    Back to Academic Years
+  </a>
+</body>
+</html>

@@ -1,0 +1,13 @@
+<%- include('partials/header') %>
+<h2>All Grades</h2>
+<table>
+  <tr><th>Term</th><th>Course</th><th>Score</th><th>Grade</th></tr>
+  <% grades.forEach(g => { %>
+    <tr>
+      <td><%= g.term_name %> <%= g.academic_year %></td>
+      <td><%= g.course_name %></td>
+      <td><%= g.score %></td>
+      <td><%= g.grade %></td>
+    </tr>
+  <% }) %>
+</table>

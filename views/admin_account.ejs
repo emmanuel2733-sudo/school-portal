@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Admin – Active Accounts</title>
+  <link rel="stylesheet" href="/style.css">
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; background: #f9f9f9; }
+    h1 { color: #2c3e50; }
+    .msg { padding: 12px; margin: 10px 0; border-radius: 4px; }
+    .success { background: #d4edda; color: #155724; }
+    .error { background: #f8d7da; color: #721c24; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; background: white; }
+    th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+    th { background: #f2f2f2; font-weight: 600; }
+    .reset-btn { padding: 6px 12px; background: #ffc107; color: #212529; border: none; border-radius: 4px; cursor: pointer; }
+    .reset-btn:hover { background: #e0a800; }
+
+    /* SEARCH BAR */
+    .search-box {
+      margin: 15px 0;
+      display: flex; gap: 10px; align-items: center;
+    }
+    .search-box input {
+      padding: 10px; font-size: 15px; border: 1px solid #ccc; border-radius: 6px; width: 280px;
+    }
+    .search-box button {
+      padding: 10px 16px; background: #007bff; color: white; border: none; border-radius: 6px; cursor: pointer;
+    }
+    .search-box button:hover { background: #0056b3; }
+  </style>
+</head>
+<body>
+  <h1>Admin – Active Accounts</h1>
+
+  <% if (successMsg) { %>
+    <div class="msg success"><%= successMsg %></div>
+  <% } %>
+  <% if (errorMsg) { %>
+    <div class="msg error"><%= errorMsg %></div>
+  <% } %>
+
+  <!-- SEARCH BAR -->
+  <div class="search-box">
+    <form method="GET" action="/admin/account" style="display:flex; gap:10px;">
+      <input type="text" name="q" placeholder="Search by username or name..." value="<%= q || '' %>">
+      <button type="submit">Search</button>
+      <% if (q) { %>
+        <a href="/admin/account" style="color:#007bff; text-decoration:none;">Clear</a>
+      <% } %>
+    </form>
+  </div>
+
+  <% if (users && users.length) { %>
+    <table>
+      <tr>
+        <th>#</th>
+        <th>Username</th>
+        <th>Reset Password</th>
+        <th>Role</th>
+        <th>Name</th>
+        <th>Status</th>
+      </tr>
+      <% users.forEach((u, idx) => { %>
+        <tr>
+          <td><%= idx + 1 %></td>
+          <td><strong><%= u.username %></strong></td>
+          <td>
+            <form method="POST" action="/admin/reset-password/<%= u.id %>" style="display:inline;">
+              <button type="submit" class="reset-btn">Reset</button>
+            </form>
+          </td>
+          <td><%= u.role.charAt(0).toUpperCase() + u.role.slice(1) %></td>
+          <td><%= u.name || '—' %></td>
+          <td><span style="color:#28a745; font-weight:bold;">Active</span></td>
+        </tr>
+      <% }) %>
+    </table>
+  <% } else { %>
+    <p>No active users found<%= q ? ' for "' + q + '"' : '' %>.</p>
+  <% } %>
+
+  <p>
+    <a href="/admin/manage-users">Manage All Users</a> | 
+<a href="/dashboard">Back to Dashboard</a>
+  </p>
+</body>
+</html>
+    
+    
+    

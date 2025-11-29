@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>My Courses & Results</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #4e73df;
+      --primary-dark: #224abe;
+      --success: #28a745;
+      --warning: #ffc107;
+      --danger: #dc3545;
+      --light: #f8f9fa;
+      --gray: #6c757d;
+      --purple-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    body {
+      background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+      min-height: 100vh;
+      font-family: 'Segoe UI', sans-serif;
+    }
+    .navbar {
+      background: var(--purple-gradient);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    .container { max-width: 1000px; margin-top: 2rem; }
+    .page-title {
+      font-weight: 700;
+      color: #2c3e50;
+      margin-bottom: 1.5rem;
+      text-align: center;
+      font-size: 1.8rem;
+    }
+
+    .term-header-toggle {
+      background: var(--primary);
+      color: white;
+      padding: 15px 20px;
+      font-weight: 600;
+      font-size: 1.3rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      transition: background 0.3s ease;
+      border-radius: 15px 15px 0 0;
+    }
+    .term-header-toggle:hover {
+      background: var(--primary-dark);
+    }
+    .term-header-toggle .term-badge {
+      background: rgba(255,255,255,0.2);
+      padding: 4px 10px;
+      border-radius: 50px;
+      font-size: 0.8rem;
+      font-weight: 500;
+    }
+    .term-header-toggle .toggle-icon {
+      transition: transform 0.3s ease;
+    }
+    .term-header-toggle[aria-expanded="true"] .toggle-icon {
+      transform: rotate(180deg);
+    }
+
+    .current-term .term-header-toggle {
+      background: var(--success);
+    }
+    .current-term .term-header-toggle:hover {
+      background: #218838;
+    }
+
+    .term-card {
+      background: white;
+      border-radius: 15px;
+      box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+      margin-bottom: 25px;
+      overflow: hidden;
+      transition: transform 0.3s ease;
+    }
+    .term-card:hover {
+      transform: translateY(-5px);
+    }
+
+    .term-body {
+      border-top: 1px solid #eee;
+    }
+
+    .results-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 0;
+    }
+    .results-table th, .results-table td {
+      border: 1px solid #dee2e6;
+      padding: 12px;
+      text-align: center;
+      font-size: 0.95rem;
+    }
+    .results-table th {
+      background-color: #f8f9fa;
+      font-weight: 600;
+      color: #495057;
+    }
+    .results-table tbody tr:hover {
+      background-color: #f1f3f5;
+    }
+    .grade-A { color: #2ecc71; font-weight: bold; }
+    .grade-B { color: #3498db; font-weight: bold; }
+    .grade-C { color: #f1c40f; font-weight: bold; }
+    .grade-D { color: #e67e22; font-weight: bold; }
+    .grade-F { color: #e74c3c; font-weight: bold; }
+
+    .cgpa-box {
+      margin: 2rem 0;
+      padding: 1.5rem;
+      background: var(--purple-gradient);
+      color: white;
+      border-radius: 12px;
+      text-align: center;
+      font-size: 1.3rem;
+      font-weight: 700;
+      box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+    }
+    .cgpa-box span {
+      font-size: 2rem;
+    }
+
+    .back-btn {
+      display: inline-block;
+      margin-bottom: 1.5rem;
+      background: #6c757d;
+      color: white;
+      padding: 10px 20px;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: 600;
+      transition: all 0.3s ease;
+    }
+    .back-btn:hover {
+      background: #5a6268;
+      transform: translateY(-2px);
+    }
+
+    .search-container {
+      max-width: 600px;
+      margin: 20px auto;
+    }
+
+    .empty-term {
+      padding: 20px;
+      text-align: center;
+      color: #6c757d;
+      font-style: italic;
+      background: #f8f9fa;
+    }
+     .logout-btn {
+      position: absolute;
+      top: 10px;
+      right: 20px;
+      background: #e74c3c;
+      color: white;
+      padding: 8px 16px;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 0.9rem;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 8px rgba(231, 76, 60, 0.2);
+    }
+
+    .logout-btn:hover {
+      background: #c0392b;
+      transform: translateY(-2px);
+    }
+
+    @media (max-width: 768px) {
+      .term-header-toggle { font-size: 1.1rem; padding: 14px 16px; }
+      .results-table { font-size: 0.85rem; }
+      .results-table th, .results-table td { padding: 8px; }
+      .page-title { font-size: 1.5rem; }
+      .cgpa-box { font-size: 1.1rem; padding: 1rem; }
+      .cgpa-box span { font-size: 1.6rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <nav class="navbar navbar-expand-lg navbar-dark">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="/student/dashboard">
+        Student Portal
+      </a>
+      <div class="ms-auto d-flex gap-2">
+        <a href="/student/history" class="btn btn-outline-light btn-sm">
+          History
+        </a>
+        <a href="/logout" class="btn btn-danger btn-sm">Logout</a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container">
+    <div class="text-center">
+      <a href="/student/dashboard" class="back-btn">
+        Back to Dashboard
+      </a>
+    </div>
+
+    <h2 class="page-title">
+      My Courses & Results
+    </h2>
+
+    <% if (!currentYear) { %>
+      <div class="alert alert-warning text-center">
+        No active academic year. Please contact admin.
+      </div>
+    <% } else { %>
+
+      <div class="text-center mb-4">
+        <span class="badge bg-primary fs-5 px-4 py-2">
+          <%= currentYear.year %>
+        </span>
+      </div>
+
+      <div class="search-container">
+        <form method="GET" action="/student/courses" class="d-flex">
+          <input class="form-control me-2" type="search" name="q" placeholder="Search course, term..." value="<%= q || '' %>">
+          <button class="btn btn-outline-primary" type="submit">Search</button>
+          <% if (q) { %>
+            <a href="/student/courses" class="btn btn-outline-secondary ms-2">Clear</a>
+          <% } %>
+        </form>
+      </div>
+
+      <% if (terms.length === 0) { %>
+        <div class="alert alert-info text-center">
+          <% if (q) { %>No results for "<strong><%= q %></strong>".<% } else { %>No courses enrolled.<% } %>
+        </div>
+      <% } else { %>
+
+        <% let totalPoints = 0; let totalCredits = 0; %>
+        <div class="accordion" id="termAccordion">
+          <% terms.forEach((term, index) => { %>
+            <% 
+              const collapseId = 'termCollapse' + index;
+              const isOpen = term.is_current;
+              let termPoints = 0; let termCredits = 0;
+            %>
+            <div class="term-card <%= term.is_current ? 'current-term' : '' %>">
+              <div 
+                class="term-header-toggle" 
+                data-bs-toggle="collapse" 
+                data-bs-target="#termCollapse<%= index %>" 
+                aria-expanded="<%= isOpen %>"
+                role="button"
+              >
+                <span><%= term.term_name %></span>
+                <span>
+                  <span class="term-badge <%= term.is_current ? 'bg-light text-success' : 'bg-secondary text-white' %>">
+                    <%= term.is_current ? 'CURRENT' : 'PAST' %>
+                  </span>
+                  <i class="fas fa-chevron-down toggle-icon ms-2"></i>
+                </span>
+              </div>
+
+              <div 
+                id="termCollapse<%= index %>" 
+                class="collapse <%= isOpen ? 'show' : '' %> term-body" 
+                data-bs-parent="#termAccordion"
+              >
+                <% if (term.courses.length === 0) { %>
+                  <div class="empty-term">
+                    <em>No courses enrolled in this term</em>
+                  </div>
+                <% } else { %>
+                  <div class="table-responsive p-3">
+                    <table class="table results-table">
+                      <thead>
+                        <tr>
+                          <th>S/N</th>
+                          <th>Course</th>
+                          <th>CA (30)</th>
+                          <th>Exam (70)</th>
+                          <th>Total</th>
+                          <th>Grade</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <% term.courses.forEach((r, i) => { %>
+                          <% 
+                            const credit = 3;
+                            const points = r.gpa_points || 0;
+                            termPoints += points * credit;
+                            termCredits += credit;
+                            totalPoints += points * credit;
+                            totalCredits += credit;
+                          %>
+                          <tr>
+                            <td><%= i + 1 %></td>
+                            <td class="text-start fw-semibold"><%= r.course_name %></td>
+                            <td><%= r.ca != null ? r.ca : '-' %></td>
+                            <td><%= r.exam != null ? r.exam : '-' %></td>
+                            <td><%= r.total != null ? r.total : '-' %></td>
+                            <td class="grade-<%= r.grade %>"><%= r.grade || '-' %></td>
+                          </tr>
+                        <% }) %>
+                      </tbody>
+                    </table>
+                  </div>
+                <% } %>
+              </div>
+            </div>
+          <% }) %>
+        </div>
+
+        <% const cgpa = totalCredits > 0 ? (totalPoints / totalCredits).toFixed(2) : '0.00'; %>
+        <div class="cgpa-box">
+          CGPA: <span><%= cgpa %></span>
+          <% if (cgpa >= 4.5) { %> <br><small>Outstanding!</small>
+          <% } else if (cgpa >= 3.5) { %> <br><small>Very Good</small>
+          <% } else if (cgpa >= 2.5) { %> <br><small>Good</small>
+          <% } else if (cgpa >= 1.0) { %> <br><small>Pass</small>
+          <% } else { %> <br><small>Work Harder</small>
+          <% } %>
+        </div>
+
+      <% } %>
+    <% } %>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Edit Academic Year</title>
+  <link rel="stylesheet" href="/style.css">
+  <style>
+    .container { max-width: 500px; margin: 40px auto; padding: 20px; background: #fff; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+    .error { color: #d32f2f; margin: 10px 0; }
+    .success { color: #2e7d32; margin: 10px 0; }
+    input[type="number"] { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ccc; border-radius: 4px; }
+    button { background: #1976d2; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; }
+    button:hover { background: #1565c0; }
+    a { color: #1976d2; text-decoration: none; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Edit Academic Year</h1>
+
+    <% if (errorMsg) { %>
+      <p class="error"><%= errorMsg %></p>
+    <% } %>
+
+    <% if (successMsg) { %>
+      <p class="success"><%= successMsg %></p>
+    <% } %>
+
+    <form action="/admin/academic-years/edit/<%= year.id %>" method="POST">
+      <label for="year">Year</label>
+      <input type="number" id="year" name="year" value="<%= year.year %>" required min="2000" max="2100">
+
+      <button type="submit">Update Year</button>
+      <a href="/admin/academic-years" style="margin-left: 10px;">Cancel</a>
+    </form>
+  </div>
+</body>
+</html>

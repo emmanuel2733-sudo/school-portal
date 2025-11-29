@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<%- include('partials/student_head', { title: 'Student Profile' }) %>
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Student Profile</title>
+  <link rel="stylesheet" href="/css/style.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --pink: #ff6b9d;
+      --cream: #fdf5e6;
+      --light-pink: #ffe6f0;
+      --gray: #6c757d;
+      --shadow: 0 6px 16px rgba(255, 107, 157, 0.15);
+      --radius: 14px;
+    }
+
+    [data-theme="dark"] {
+      --cream: #2c3e50;
+      --light-pink: #34495e;
+      background: #1a1a1a !important;
+      color: #ecf0f1 !important;
+    }
+
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: var(--cream);
+      color: #333;
+      min-height: 100vh;
+      padding: 15px;
+      transition: background 0.4s ease, color 0.4s ease;
+    }
+
+    .container { max-width: 600px; margin: 0 auto; }
+
+    /* HEADER - SAME AS OTHER PAGES */
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 30px;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .page-title {
+      font-size: 1.9rem;
+      font-weight: 700;
+      color: var(--pink);
+      margin: 0;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .back-btn, .logout-btn {
+      padding: 8px 14px;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 0.85rem;
+      transition: 0.3s;
+    }
+
+    .back-btn {
+      background: var(--pink);
+      color: white;
+    }
+    .back-btn:hover { background: #e55a87; }
+
+    .logout-btn {
+      background: #e74c3c;
+      color: white;
+    }
+    .logout-btn:hover { background: #c0392b; }
+
+    /* DARK MODE TOGGLE */
+    .theme-toggle {
+      background: #6c757d;
+      color: white;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      border: none;
+      font-size: 1.1rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: 0.3s;
+    }
+    .theme-toggle:hover {
+      background: #5a6268;
+      transform: scale(1.1);
+    }
+
+    /* PROFILE CARD */
+    .profile-card {
+      background: white;
+      border-radius: var(--radius);
+      padding: 2rem;
+      box-shadow: var(--shadow);
+      text-align: center;
+    }
+
+    .profile-photo {
+      width: 130px;
+      height: 130px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 5px solid var(--light-pink);
+      box-shadow: 0 4px 15px rgba(255, 107, 157, 0.2);
+      margin-bottom: 1rem;
+    }
+
+    .student-name {
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: #333;
+      margin: 10px 0;
+    }
+
+    .term-badge {
+      background: var(--pink);
+      color: white;
+      padding: 0.5rem 1.2rem;
+      border-radius: 50px;
+      display: inline-block;
+      font-size: 0.95rem;
+      font-weight: 600;
+      margin: 10px 0 20px;
+    }
+
+    .info-grid {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 1rem;
+      text-align: left;
+      margin-top: 1.5rem;
+      font-size: 1rem;
+    }
+
+    .label {
+      font-weight: 600;
+      color: var(--gray);
+    }
+
+    .value {
+      color: #333;
+      font-weight: 500;
+    }
+
+    .back-dashboard-btn {
+      display: inline-block;
+      margin-top: 2rem;
+      padding: 12px 24px;
+      background: var(--pink);
+      color: white;
+      border-radius: 12px;
+      text-decoration: none;
+      font-weight: 600;
+      transition: 0.3s;
+    }
+    .back-dashboard-btn:hover {
+      background: #e55a87;
+      transform: translateY(-2px);
+    }
+
+    @media (max-width: 480px) {
+      .page-title { font-size: 1.8rem; }
+      .profile-photo { width: 100px; height: 100px; }
+      .student-name { font-size: 1.6rem; }
+      .header-actions { gap: 8px; }
+      .back-btn, .logout-btn, .theme-toggle { font-size: 0.8rem; padding: 6px 10px; width: 36px; height: 36px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+
+    <!-- HEADER WITH DARK MODE, BACK & LOGOUT -->
+    <div class="header">
+      <h1 class="page-title">My Profile</h1>
+      <div class="header-actions">
+        <button class="theme-toggle" id="theme-toggle">Moon</button>
+        <a href="/dashboard" class="back-btn">Back</a>
+        <a href="/logout" class="logout-btn">Logout</a>
+      </div>
+    </div>
+
+    <!-- PROFILE CARD -->
+    <div class="profile-card">
+      <img 
+        src="<%= student.photo ? '/uploads/' + student.photo : '/images/default-photo.jpg' %>" 
+        alt="Student Photo" 
+        class="profile-photo"
+        onerror="this.src='/images/default-photo.jpg'"
+      >
+      <h2 class="student-name"><%= student.name %></h2>
+      <div class="term-badge"><%= termLabel %></div>
+
+      <div class="info-grid">
+        <div class="label">Class:</div>
+        <div class="value"><%= student.class_name || 'Not Assigned' %></div>
+
+        <div class="label">Date of Birth:</div>
+        <div class="value"><%= student.dob_formatted %> (Age: <%= student.age %>)</div>
+
+        <div class="label">Sex:</div>
+        <div class="value"><%= student.sex || 'Not Set' %></div>
+
+        <div class="label">Address:</div>
+        <div class="value"><%= student.address || 'Not Set' %></div>
+      </div>
+
+      <!-- <div style="margin-top: 2rem;">
+        <a href="/dashboard" class="back-dashboard-btn">Back to Dashboard</a>
+      </div> -->
+    </div>
+  </div>
+
+  <!-- DARK MODE SCRIPT -->
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const html = document.documentElement;
+      const toggle = document.getElementById('theme-toggle');
+
+      // Load saved theme
+      const savedTheme = localStorage.getItem('theme') || 'light';
+      html.setAttribute('data-theme', savedTheme);
+      toggle.innerHTML = savedTheme === 'dark' ? 'Sun' : 'Moon';
+
+      // Toggle click
+      toggle.addEventListener('click', () => {
+        const current = html.getAttribute('data-theme');
+        const newTheme = current === 'dark' ? 'light' : 'dark';
+        html.setAttribute('data-theme', newTheme);
+        localStorage.setItem('theme', newTheme);
+        toggle.innerHTML = newTheme === 'dark' ? 'Sun' : 'Moon';
+      });
+    });
+  </script>
+</body>
+</html>

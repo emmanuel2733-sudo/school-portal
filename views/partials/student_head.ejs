@@ -1,0 +1,75 @@
+<!-- views/partials/student_head.ejs -->
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title><%= title || 'Student Portal' %></title>
+  <link rel="stylesheet" href="/css/style.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="/js/theme.js" defer></script>
+  <style>
+    :root {
+      --pink: #ff6b9d;
+      --cream: #fdf5e6;
+      --light-pink: #ffe6f0;
+      --gray: #6c757d;
+      --shadow: 0 6px 16px rgba(255, 107, 157, 0.15);
+      --radius: 14px;
+      --bg: #fdf5e6;
+      --card-bg: #ffffff;
+      --text: #333333;
+      --border: #ffe0e9;
+      --table-header: #ffe6f0;
+    }
+
+    [data-theme="dark"] {
+      --pink: #ff8ab3;
+      --cream: #1a1a1a;
+      --light-pink: #2d1b3a;
+      --gray: #b0b0b0;
+      --shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+      --bg: #121212;
+      --card-bg: #1e1e1e;
+      --text: #e0e0e0;
+      --border: #333333;
+      --table-header: #2a2a2a;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      transition: background 0.3s ease, color 0.3s ease;
+    }
+
+    /* TOGGLE STYLE */
+    .theme-toggle {
+      background: var(--card-bg);
+      border: 2px solid var(--border);
+      border-radius: 50px;
+      width: 50px;
+      height: 26px;
+      position: relative;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    .theme-toggle::before {
+      content: '';
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      width: 18px;
+      height: 18px;
+      background: var(--pink);
+      border-radius: 50%;
+      transition: 0.3s;
+    }
+
+    [data-theme="dark"] .theme-toggle::before {
+      transform: translateX(24px);
+      background: #ff8ab3;
+    }
+  </style>
+</head>

@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<%- include('partials/student_head', { title: 'Dashboard' }) %>
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Student Dashboard • La-Vogue</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+  <style>
+    :root {
+      --pink: #ff6b9d;
+      --cream: #fdf5e6;
+      --light-pink: #ffe6f0;
+      --gray: #6c757d;
+      --shadow: 0 6px 16px rgba(255, 107, 157, 0.15);
+      --bg: #fdf5e6;
+      --card-bg: #ffffff;
+      --text: #333333;
+      --border: #ffe0e9;
+      --radius: 16px;
+    }
+    [data-theme="dark"] {
+      --pink: #ff8ab3;
+      --light-pink: #2d1b3a;
+      --gray: #b0b0b0;
+      --shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+      --bg: #121212;
+      --card-bg: #1e1e1e;
+      --text: #e0e0e0;
+      --border: #333333;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      transition: background 0.4s ease, color 0.4s ease;
+    }
+    .container { display: flex; width: 100%; max-width: 1600px; margin: 0 auto; }
+
+    /* LEFT SIDEBAR */
+    .sidebar {
+      width: 310px;
+      background: var(--card-bg);
+      box-shadow: var(--shadow);
+      height: 100vh;
+      position: sticky;
+      top: 0;
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* PROFILE TOP */
+   .profile-top {
+  background: var(--card-bg);
+  padding: 35px 25px;
+  text-align: center;
+  position: relative;
+  border-bottom: 1px solid var(--border);
+  overflow: hidden;               /* ← ADD THIS */
+}
+
+.sidebar {
+  width: 310px;
+  background: var(--card-bg);
+  box-shadow: var(--shadow);
+  height: 100vh;
+  position: sticky;
+  top: 0;
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  position: relative;          /* ← ADD THIS */
+  overflow: hidden;            /* ← ADD THIS */
+}
+
+/* FULL-HEIGHT PINK BAR ON THE RIGHT EDGE OF THE ENTIRE SIDEBAR */
+.sidebar::before {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 7px;
+  background: var(--pink);
+  z-index: 10;
+}
+    .profile-top img {
+      width: 90px; height: 90px; border-radius: 50%;
+      border: 5px solid var(--pink);
+      margin-bottom: 14px;
+      object-fit: cover;
+    }
+    .profile-top h3 { font-size: 1.35rem; font-weight: 700; color: var(--text); }
+    .profile-top p { font-size: 0.98rem; color: var(--pink); font-weight: 600; margin-top: 4px; }
+
+    /* SIDEBAR MENU CARDS */
+    .sidebar-menu {
+      padding: 20px;
+      flex-grow: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      
+    }
+    .menu-card {
+      background: var(--light-pink);
+      border-radius: var(--radius);
+      padding: 20px;
+      box-shadow: 0 4px 12px rgba(255,107,157,0.1);
+    }
+    .menu-card h4 {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--pink);
+      margin-bottom: 14px;
+      text-align: center;
+    }
+    .menu-card ul {
+      list-style: none;
+    }
+    .menu-card a {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 14px;
+      color: var(--text);
+      text-decoration: none;
+      font-weight: 500;
+      border-radius: 10px;
+      transition: all 0.3s;
+    }
+    .menu-card a:hover {
+      background: var(--card-bg);
+      color: var(--pink);
+      transform: translateX(6px);
+    }
+    .menu-card i { font-size: 1.1rem; width: 20px; }
+
+    /* MAIN CONTENT */
+    .main-content { flex: 1; padding: 28px 40px; }
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 28px;
+    }
+    .school-name {
+      font-size: 2rem;
+      font-weight: 800;
+      background: linear-gradient(90deg, var(--pink), #ff8ab3);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .top-controls {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .session-badge {
+      background: var(--pink);
+      color: white;
+      padding: 9px 18px;
+      border-radius: 50px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      box-shadow: var(--shadow);
+    }
+    .theme-toggle {
+      background: var(--card-bg);
+      border: 2px solid var(--border);
+      border-radius: 50px;
+      width: 52px;
+      height: 28px;
+      position: relative;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+    .theme-toggle::before {
+      content: '';
+      position: absolute;
+      top: 4px; left: 4px;
+      width: 20px; height: 20px;
+      background: var(--pink);
+      border-radius: 50%;
+      transition: 0.3s;
+    }
+    [data-theme="dark"] .theme-toggle::before {
+      transform: translateX(24px);
+      background: var(--pink);
+    }
+    .logout-btn {
+      width: 42px; height: 42px;
+      background: var(--pink);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-size: 1.2rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: var(--shadow);
+      cursor: pointer;
+    }
+
+    .hello-card {
+      background: linear-gradient(135deg, var(--pink), #ff8ab3);
+      color: white;
+      padding: 50px 40px;
+      text-align: center;
+      border-radius: var(--radius);
+      margin-bottom: 35px;
+      box-shadow: var(--shadow);
+    }
+    .hello-card h1 { font-size: 2.7rem; font-weight: 800; margin-bottom: 10px; }
+    .hello-card p { font-size: 1.2rem; opacity: 0.95; }
+
+    .cards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 24px;
+      margin-bottom: 40px;
+    }
+    .feature-card {
+      background: var(--card-bg);
+      padding: 32px 24px;
+      text-align: center;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      transition: transform 0.3s;
+    }
+    .feature-card:hover { transform: translateY(-8px); }
+
+    .bottom-grid {
+      display: grid;
+      grid-template-columns: 1fr 1.5fr 0.9fr;
+      gap: 28px;
+    }
+    .bottom-card {
+      background: var(--card-bg);
+      padding: 28px;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      border-top: 5px solid var(--pink);
+    }
+    .card-title {
+      font-size: 1.3rem;
+      font-weight: 700;
+      margin-bottom: 20px;
+      text-align: center;
+      color: var(--pink);
+    }
+    .subject-list { display: flex; flex-direction: column; gap: 12px; }
+    .subject-card {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 16px;
+      border-radius: var(--radius);
+      background: var(--light-pink);
+      transition: 0.3s;
+    }
+    .subject-card:nth-child(even) { background: var(--card-bg); }
+    .subject-card:hover { transform: translateX(10px); background: var(--light-pink); }
+    .subject-icon {
+      width: 44px; height: 44px; border-radius: 12px;
+      background: var(--pink);
+      color: white; font-weight: bold;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .profile-card {
+      background: var(--card-bg) !important;
+      text-align: center;
+    }
+    .profile-card img {
+      width: 100px; height: 100px;
+      border-radius: 50%;
+      border: 6px solid var(--pink);
+      margin-bottom: 16px;
+    }
+    .profile-card h3 { font-size: 1.35rem; font-weight: 700; color: var(--pink); }
+    .profile-card p { color: var(--pink); font-weight: 600; font-size: 1rem; }
+
+    @media (max-width: 992px) {
+      .container { flex-direction: column; }
+      .sidebar { width: 100%; height: auto; position: static; }
+      .top-bar { flex-direction: column; gap: 20px; text-align: center; }
+      .bottom-grid { grid-template-columns: 1fr; }
+    }
+
+.slideshow-container {
+  width: 100%;
+  max-width: 1000px;
+  margin: 35px auto;
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow: var(--shadow);
+  background: var(--card-bg);
+  padding: 0;
+}
+
+.slides {
+  position: relative;
+  width: 100%;
+  height: 360px;
+  background: #000;
+}
+
+.slide {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: none;
+  flex-wrap: wrap;
+  gap: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+.slide.active {
+  display: flex;
+}
+
+.slide img {
+  flex: 1;
+  min-width: 50%;
+  height: 360px;
+  object-fit: cover;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+  .slides {
+    height: auto;
+  }
+  .slide {
+    flex-direction: column;
+  }
+  .slide img {
+    min-width: 100%;
+    height: 260px;
+  }
+}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- LEFT SIDEBAR -->
+    <div class="sidebar">
+      <!-- Profile Section -->
+      <div class="profile-top">
+        <img src="<%= user.photo ? '/uploads/' + user.photo : '/images/default-photo.jpg' %>"
+             alt="Student" onerror="this.src='/images/default-photo.jpg'">
+        <h3><%= user.userName %></h3>
+        <p><%= studentClass || 'Student' %></p>
+      </div>
+
+      <!-- Menu Cards -->
+      <div class="sidebar-menu">
+        <!-- E-Learning Card -->
+        <div class="menu-card">
+          <h4>E-Learning</h4>
+          <ul>
+            <a href="#"><i class="fas fa-book"></i> Topics</a>
+            <a href="/announcements"><i class="fas fa-bullhorn"></i> Announcement</a>
+            <a href="#"><i class="fas fa-book-open"></i> E-Library</a>
+            <a href="#"><i class="fas fa-laptop"></i> CBT Exam</a>
+            <a href="#"><i class="fas fa-video"></i> Virtual Class</a>
+          </ul>
+        </div>
+
+        <!-- My Class Card -->
+        <div class="menu-card">
+          <h4>My Class</h4>
+          <ul>
+            <a href="/student/current-term"><i class="fas fa-chart-bar"></i> Check Results</a>
+            <a href="/student/history"><i class="fas fa-history"></i> History</a>
+            <a href="#"><i class="fas fa-users"></i> Class Activity</a>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div class="main-content">
+      <div class="top-bar">
+        <div class="school-name">LA-VOGUE BRITISH INTERNATIONAL SCHOOL</div>
+        <div class="top-controls">
+          <div class="session-badge">
+            <%= sessionYear || '2024/2025' %> • <%= studentClass || 'JSS 2' %>
+          </div>
+          <button class="theme-toggle" id="theme-toggle"></button>
+          <a href="/logout" class="logout-btn">
+            <i class="fas fa-power-off"></i>
+          </a>
+        </div>
+      </div>
+
+      <div class="hello-card">
+        <h1>Hello, <%= user.userName.split(' ')[0] %>!</h1>
+        <p>Ready to continue your learning journey today?</p>
+      </div>
+
+     <!-- PASTE THIS WHERE YOU WANT THE SLIDESHOW -->
+<div class="slideshow-container">
+  <div class="slides">
+    <div class="slide active">
+      <img src="/images/slide1.png" alt="1">
+      <img src="/images/slide2.png" alt="2">
+    </div>
+    <div class="slide">
+      <img src="/images/slide3.png" alt="3">
+      <img src="/images/slide4.png" alt="4">
+    </div>
+  </div>
+</div>
+
+      <div class="bottom-grid">
+        <div class="bottom-card">
+          <h3 class="card-title">My Subjects</h3>
+          <div class="subject-list">
+            <div class="subject-card"><div class="subject-icon">E</div><div>English Studies</div></div>
+            <div class="subject-card"><div class="subject-icon">M</div><div>Mathematics</div></div>
+            <div class="subject-card"><div class="subject-icon">S</div><div>Basic Science</div></div>
+            <div class="subject-card"><div class="subject-icon">H</div><div>History</div></div>
+            <div class="subject-card"><div class="subject-icon">C</div><div>Civic Education</div></div>
+          </div>
+        </div>
+
+        <div class="bottom-card">
+          <h3 class="card-title">General Information</h3>
+          <table style="width:100%;font-size:0.94rem;">
+            <tr><td>Full Name</td><td><%= user.userName %></td></tr>
+            <tr><td>Class</td><td><%= studentClass %></td></tr>
+            <tr><td>Term</td><td><%= cleanTermDisplay || 'First Term' %></td></tr>
+            <tr><td>Session</td><td><%= sessionYear %></td></tr>
+          </table>
+        </div>
+
+        <div class="bottom-card profile-card">
+          <img src="<%= user.photo ? '/uploads/' + user.photo : '/images/default-photo.jpg' %>"
+               alt="Profile" onerror="this.src='/images/default-photo.jpg'">
+          <h3><%= user.userName %></h3>
+          <p><%= studentClass || 'Student' %></p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const toggle = document.getElementById('theme-toggle');
+    const html = document.documentElement;
+    const saved = localStorage.getItem('theme') || 'light';
+    html.setAttribute('data-theme', saved);
+    toggle.addEventListener('click', () => {
+      const newTheme = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+      html.setAttribute('data-theme', newTheme);
+      localStorage.setItem('theme', newTheme);
+    });
+
+    // Slideshow auto-rotation
+    const slides = document.querySelectorAll('.slide');
+    let currentSlide = 0;
+
+    if (slides.length > 0) {
+      function nextSlide() {
+        slides.forEach(slide => slide.classList.remove('active'));
+        currentSlide = (currentSlide + 1) % slides.length;
+        slides[currentSlide].classList.add('active');
+      }
+      setInterval(nextSlide, 6000);
+    }
+  </script>
+</body>
+</html>

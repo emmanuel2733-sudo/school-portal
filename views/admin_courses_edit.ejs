@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Edit Course</title>
+    <link rel="stylesheet" href="/style.css">
+    <style>
+        .form-group { margin: 20px 0; }
+        input[type="text"], select { padding: 5px; width: 200px; margin: 5px; }
+        button { padding: 5px 10px; margin: 5px; }
+        .btn-primary { background: #007bff; color: white; border: none; cursor: pointer; }
+        .btn-secondary { background: #6c757d; color: white; border: none; cursor: pointer; }
+        .error { color: red; }
+        a { display: inline-block; padding: 10px; margin: 5px; background: #007bff; color: white; text-decoration: none; }
+    </style>
+</head>
+<body>
+    <h1>Edit Course</h1>
+    
+    <ul class="error">
+        <% errors.forEach(error => { %>
+            <li><%= error.msg %></li>
+        <% }) %>
+    </ul>
+    
+    <div class="form-group">
+        <h3>Edit <%= course.name %> </h3>
+        <form method="POST" action="/admin/courses/edit/<%= course.id %>">
+            <input type="text" name="name" value="<%= course.name %>" placeholder="Course Name" required>
+            <select name="class_id" required>
+                <% classes.forEach(classItem => { %>
+                    <option value="<%= classItem.id %>" <%= course.class_id == classItem.id ? 'selected' : '' %>>
+                        <%= classItem.name %>
+                    </option>
+                <% }) %>
+            </select>
+            <br>
+            <button type="submit" class="btn-primary">Update Course</button>
+            <a href="/admin/courses" class="btn-secondary">Cancel</a>
+        </form>
+    </div>
+    
+    <a href="/admin/courses">Back to Courses</a>
+</body>
+</html>

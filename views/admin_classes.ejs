@@ -1,0 +1,68 @@
+<!-- <!DOCTYPE html>
+<html>
+<head>
+    <title>Manage Classes</title>
+    <link rel="stylesheet" href="/style.css">
+    <style>
+        table { border-collapse: collapse; width: 100%; margin: 20px 0; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        .form-group { margin: 20px 0; }
+        input[type="text"] { padding: 5px; width: 200px; }
+        button { padding: 5px 10px; background: #dc3545; color: white; border: none; cursor: pointer; }
+        .success { color: green; }
+        .error { color: red; }
+        a { display: inline-block; padding: 10px; margin: 5px; background: #007bff; color: white; text-decoration: none; }
+    </style>
+</head>
+<body>
+    <h1>Manage Classes</h1>
+    
+    <% if (success) { %>
+        <p class="success"><%= success %></p>
+    <% } %>
+    
+    <ul class="error">
+        <% errors.forEach(error => { %>
+            <li><%= error.msg %></li>
+        <% }) %>
+    </ul>
+    
+    <!-- Add Class Form -->
+    <div class="form-group">
+        <h3>Add New Class</h3>
+        <form method="POST" action="/admin/classes">
+            <input type="text" name="name" placeholder="Class Name (e.g., Class 1)" required>
+            <button type="submit">Add Class</button>
+        </form>
+    </div>
+    
+    <!-- Classes Table -->
+    <h3>Existing Classes</h3>
+    <% if (classes.length === 0) { %>
+        <p>No classes found. Add a class above.</p>
+    <% } else { %>
+        <table>
+            <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Actions</th>
+            </tr>
+            <% classes.forEach(classItem => { %>
+                <tr>
+                    <td><%= classItem.id %></td>
+                    <td><%= classItem.name %></td>
+                    <td>
+                        <form method="POST" action="/admin/classes/delete/<%= classItem.id %>" 
+                              onsubmit="return confirm('Delete <%= classItem.name %>?')" style="display: inline;">
+                            <button type="submit">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+            <% }) %>
+        </table>
+    <% } %>
+    
+    <a href="/dashboard">Back to Dashboard</a>
+</body>
+</html> -->

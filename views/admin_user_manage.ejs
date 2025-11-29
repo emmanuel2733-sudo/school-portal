@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Manage User</title>
+    <link rel="stylesheet" href="/style.css">
+    <style>
+        .form-group { margin: 20px 0; }
+        input, select, textarea { 
+            padding: 8px; 
+            width: 280px; 
+            margin: 5px 0; 
+            border: 1px solid #ccc; 
+            border-radius: 4px; 
+            font-size: 14px;
+        }
+        textarea { resize: vertical; height: 80px; }
+        button { 
+            padding: 9px 16px; 
+            margin: 0 4px; 
+            border: none; 
+            cursor: pointer; 
+            border-radius: 4px; 
+            font-weight: bold;
+            font-size: 14px;
+        }
+        .btn-primary { background: #007bff; color: white; }
+        .btn-primary:hover { background: #0056b3; }
+        .btn-success { background: #28a745; color: white; }
+        .btn-success:hover { background: #218838; }
+        .btn-danger { background: #dc3545; color: white; }
+        .btn-danger:hover { background: #c82333; }
+        .btn-warning { background: #ffc107; color: #212529; }
+        .btn-warning:hover { background: #e0a800; }
+        .btn-edit { background: #17a2b8; color: white; }
+        .btn-edit:hover { background: #138496; }
+        .btn-secondary { background: #6c757d; color: white; }
+        .btn-secondary:hover { background: #5a6268; }
+        .error { color: #dc3545; padding: 10px; background: #f8d7da; border-radius: 5px; margin: 15px 0; }
+        .info { background: #e9ecef; padding: 15px; border-radius: 6px; margin: 15px 0; border-left: 4px solid #495057; }
+        .status-approved { color: #28a745; font-weight: bold; }
+        .status-disabled { color: #dc3545; font-weight: bold; }
+        .status-pending { color: #ffc107; font-weight: bold; }
+        .role-student { color: #007bff; }
+        .role-teacher { color: #6f42c1; }
+        .role-admin { color: #dc3545; font-weight: bold; }
+        label { display: block; margin: 12px 0 6px; font-weight: bold; color: #333; }
+        small { color: #6c757d; display: block; margin-top: 4px; font-size: 13px; }
+        .photo-preview {
+            width: 100px; height: 100px; object-fit: cover; border-radius: 8px;
+            border: 2px solid #ddd; margin-top: 8px;
+        }
+        .section-title {
+            font-size: 1.1em; color: #495057; border-bottom: 1px solid #eee;
+            padding-bottom: 5px; margin: 25px 0 15px;
+        }
+        .edit-mode { display: none; }
+        .view-mode { display: block; }
+        .editing .edit-mode { display: block; }
+        .editing .view-mode { display: none; }
+        .action-buttons { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+    </style>
+</head>
+<body>
+    <div style="max-width: 600px; margin: 30px auto; padding: 25px; background: #fff; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+        
+        <!-- HEADER WITH ACTION BUTTONS -->
+        <div class="header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
+            <h1 style="margin: 0; color: #343a40;">User: <strong><%= user.username %></strong></h1>
+            
+            <div class="action-buttons">
+                <!-- APPROVE BUTTON (only if pending) -->
+                <% if (user.status === 'pending') { %>
+                    <form method="POST" action="/admin/users/approve/<%= user.id %>" style="display:inline;">
+                        <button type="submit" class="btn-success"
+                                onclick="return confirm('Approve <%= user.username %>? They will be able to log in.')">
+                            Approve
+                        </button>
+                    </form>
+                <% } %>
+
+                <!-- DISABLE / ENABLE BUTTON -->
+                <form method="POST" action="/admin/users/toggle-status/<%= user.id %>" style="display:inline;">
+                    <% if (user.status === 'disabled') { %>
+                        <button type="submit" class="btn-success"
+                                onclick="return confirm('Enable <%= user.username %>?')">
+                            Enable
+                        </button>
+                    <% } else if (user.status === 'approved') { %>
+                        <button type="submit" class="btn-danger"
+                                onclick="return confirm('Disable <%= user.username %>? They will NOT be able to log in.')">
+                            Disable
+                        </button>
+                    <% } %>
+                </form>
+
+                <!-- EDIT BUTTON (toggle form) -->
+                <button type="button" id="editBtn" class="btn-edit">
+                    Edit Details
+                </button>
+            </div>
+        </div>
+
+        <!-- USER INFO (VIEW MODE) -->
+        <div id="viewMode" class="view-mode">
+            <div class="info">
+                <p><strong>ID:</strong> <%= user.id %></p>
+                <p><strong>Username:</strong> <%= user.username %></p>
+                <p><strong>Full Name:</strong> <%= user.name || 'Not set' %></p>
+                <p><strong>Role:</strong> 
+                    <span class="role-<%= user.role %>"><%= user.role.charAt(0).toUpperCase() + user.role.slice(1) %></span>
+                </p>
+                <p><strong>Status:</strong> 
+                    <span class="status-<%= user.status %>"><%= user.status.charAt(0).toUpperCase() + user.status.slice(1) %></span>
+                </p>
+                <p><strong>Sex:</strong> <%= user.sex || 'Not set' %></p>
+                <p><strong>Date of Birth:</strong> <%= user.dob ? new Date(user.dob).toLocaleDateString('en-GB') : 'Not set' %></p>
+                <p><strong>Address:</strong> <%= user.address || 'Not set' %></p>
+                <p><strong>Created:</strong> <%= user.created_at ? new Date(user.created_at).toLocaleDateString('en-GB') : 'Unknown' %></p>
+            </div>
+
+            <% if (user.photo && user.photo !== 'default-photo.jpg') { %>
+                <div style="margin: 15px 0;">
+                    <strong>Photo:</strong><br>
+                    <img src="/uploads/<%= user.photo %>" alt="User Photo" class="photo-preview">
+                </div>
+            <% } else { %>
+                <p><em>No photo uploaded</em></p>
+            <% } %>
+
+            <p>
+                <a href="/admin/users" style="color: #007bff; text-decoration: none;">Back to Users List</a>
+            </p>
+        </div>
+
+        <!-- EDIT FORM -->
+        <div id="editMode" class="edit-mode">
+            <% if (errors && errors.length > 0) { %>
+                <div class="error">
+                    <ul style="margin: 0; padding-left: 20px;">
+                        <% errors.forEach(error => { %> <li><%= error.msg %></li> <% }) %>
+                    </ul>
+                </div>
+            <% } %>
+
+            <form method="POST" action="/admin/users/manage/<%= user.id %>">
+                <div class="section-title">Edit User Details</div>
+
+                <div class="form-group">
+                    <label>Username:</label>
+                    <input type="text" value="<%= user.username %>" disabled style="background:#f8f9fa; color:#6c757d;">
+                    <small>Cannot be changed</small>
+                </div>
+
+                <div class="form-group">
+                    <label>Full Name:</label>
+                    <input type="text" name="name" value="<%= user.name || '' %>" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Sex:</label>
+                    <select name="sex" required>
+                        <option value="">-- Select --</option>
+                        <option value="Male" <%= user.sex === 'Male' ? 'selected' : '' %>>Male</option>
+                        <option value="Female" <%= user.sex === 'Female' ? 'selected' : '' %>>Female</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Date of Birth:</label>
+                    <input type="date" name="dob" value="<%= user.dob || '' %>" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Address:</label>
+                    <textarea name="address" required><%= user.address || '' %></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Role:</label>
+                    <select name="role" required>
+                        <% ['student', 'teacher', 'admin'].forEach(r => { %>
+                            <option value="<%= r %>" <%= user.role === r ? 'selected' : '' %>><%= r.charAt(0).toUpperCase() + r.slice(1) %></option>
+                        <% }) %>
+                    </select>
+                </div>
+
+                <div style="margin-top: 25px;">
+                    <button type="submit" class="btn-primary">Save Changes</button>
+                    <button type="button" id="cancelBtn" class="btn-secondary">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const container = document.querySelector('div[style*="max-width"]');
+        document.getElementById('editBtn').addEventListener('click', () => {
+            container.classList.add('editing');
+        });
+        document.getElementById('cancelBtn').addEventListener('click', () => {
+            container.classList.remove('editing');
+        });
+    </script>
+</body>
+</html>

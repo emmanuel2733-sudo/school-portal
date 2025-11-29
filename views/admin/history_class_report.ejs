@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= className %> • <%= yearName %></title>
+  <style>
+    body { font-family: 'Segoe UI', sans-serif; background: #f4f6f9; margin: 0; padding: 30px; }
+    .container { max-width: 1400px; margin: auto; background: white; border-radius: 15px; padding: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+    .header h1 { color: #2c3e50; text-align: center; margin: 0 0 15px 0; font-size: 1.9em; }
+    .back { display: inline-block; background: #95a5a6; color: white; padding: 10px 20px; border-radius: 8px; text-decoration: none; }
+    .back:hover { background: #7f8c8d; }
+
+    .term-section { margin: 45px 0; }
+    .term-header {
+      background: #3498db;
+      color: white;
+      padding: 18px 25px;
+      border-radius: 12px;
+      font-size: 1.35em;
+      font-weight: 600;
+      cursor: pointer;
+      user-select: none;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: background 0.3s;
+    }
+    .term-header:hover { background: #2980b9; }
+
+    /* Clean Widget - Fixed */
+    .widget {
+      width: 32px;
+      height: 32px;
+      background: rgba(255,255,255,0.2);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.3em;
+      transition: transform 0.3s ease;
+    }
+    .term-header.collapsed .widget { transform: rotate(-90deg); }
+
+    .term-content {
+      margin-top: 20px;
+      max-height: 3000px;
+      overflow: hidden;
+      transition: max-height 0.5s ease;
+    }
+    .term-content.collapsed { max-height: 0; margin-top: 0; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 15px;
+      font-size: 0.93em; /* Smaller readable text */
+      box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    th, td {
+      padding: 12px 10px;
+      text-align: center;
+      border: 1px solid #ddd;
+    }
+    th {
+      background: #f8f9fc;
+      font-weight: 600;
+      font-size: 0.9em;
+    }
+    td:first-child {
+      text-align: left;
+      font-weight: 500;
+      background: #f9f9f9;
+      position: sticky;
+      left: 0;
+      z-index: 5;
+    }
+
+    /* No colors, no bold, clean grades */
+    td:not(:first-child) {
+      font-weight: normal !important;
+      background: white !important;
+      color: #2c3e50;
+    }
+
+    .pdf-btn {
+      background: #e74c3c;
+      color: white;
+      padding: 6px 12px;
+      border-radius: 6px;
+      text-decoration: none;
+      font-size: 0.82em;
+    }
+    .pdf-btn:hover { background: #c0392b; }
+
+    .no-data {
+      text-align: center;
+      padding: 70px;
+      color: #95a5a6;
+      font-size: 1.3em;
+      background: #f8f9fa;
+      border-radius: 12px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1><%= className %> • <%= yearName %></h1>
+      <a href="/admin/history/year/<%= yearId %>" class="back">Back to Classes</a>
+    </div>
+
+    <% if (!students.length) { %>
+      <div class="no-data">No students found for this class in <%= yearName %>.</div>
+    <% } else { %>
+      <% terms.forEach((term, i) => { %>
+        <div class="term-section">
+          <div class="term-header <%= i > 0 ? 'collapsed' : '' %>"
+               onclick="this.classList.toggle('collapsed'); this.nextElementSibling.classList.toggle('collapsed')">
+            <span><%= term.term_name.replace(/^\d{4,}.*?-?\s*/, '').trim()
+                .replace(/first|1/i, 'First Term')
+                .replace(/second|2/i, 'Second Term')
+                .replace(/third|3/i, 'Third Term') %></span>
+            <div class="widget">></div>
+          </div>
+          <div class="term-content <%= i > 0 ? 'collapsed' : '' %>">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:220px; text-align:left;">Student Name</th>
+                  <% courses.forEach(c => { %>
+                    <th title="<%= c.course_name %>">
+                      <%= c.course_name.length > 14 ? c.course_name.slice(0,14)+'...' : c.course_name %>
+                    </th>
+                  <% }) %>
+                  <th>Report</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% students.forEach(s => { %>
+                  <% const st = s.terms.find(t => t.term_id === term.id); %>
+                  <% if (st) { %>
+                    <tr>
+                      <td><%= s.student_name %></td>
+                      <% courses.forEach(c => { %>
+                        <% const g = st.courses.find(x => x.course_id === c.id); %>
+                        <td><%= g?.grade || '-' %></td>
+                      <% }) %>
+                      <td><a href="#" class="pdf-btn">PDF</a></td>
+                    </tr>
+                  <% } %>
+                <% }) %>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      <% }) %>
+    <% } %>
+  </div>
+
+  <script>
+    // Auto-collapse all except first term
+    document.querySelectorAll('.term-header').forEach((header, index) => {
+      if (index > 0) {
+        header.classList.add('collapsed');
+        header.nextElementSibling.classList.add('collapsed');
+      }
+    });
+  </script>
+</body>
+</html>

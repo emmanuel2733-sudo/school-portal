@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Term Report Preview</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <h1>Term Report for <%= student.name %></h1>
+  <a href="/dashboard">Back to Dashboard</a> | <a href="/logout">Logout</a>
+  <h2>Class: <%= term.class_name %></h2>
+  <h2>Term: <%= term.name %> <%= term.year %></h2>
+  <table>
+    <tr>
+      <th>Course</th>
+      <th>Assignment Marks</th>
+      <th>Exam Marks</th>
+      <th>Total Marks</th>
+      <th>Remark</th>
+    </tr>
+    <% results.forEach(result => { %>
+      <tr>
+        <td><%= result.course_name %></td>
+        <td><%= result.assignment_marks %></td>
+        <td><%= result.exam_marks %></td>
+        <td><%= result.assignment_marks + result.exam_marks %></td>
+        <td><%= result.remark || '' %></td>
+      </tr>
+    <% }) %>
+  </table>
+  <a href="/admin/report/<%= student.id %>/<%= term.id %>">Download PDF</a>
+</body>
+</html>

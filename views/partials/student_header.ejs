@@ -1,0 +1,11 @@
+<!-- views/partials/student_header.ejs -->
+<div class="header">
+  <h1 class="page-title"><%= pageTitle %></h1>
+  <div class="header-actions">
+    <% if (showBack) { %>
+      <a href="/dashboard" class="back-btn">Back</a>
+    <% } %>
+    <a href="/logout" class="logout-btn">Logout</a>
+    <div class="theme-toggle" id="theme-toggle"></div>
+  </div>
+</div>

@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Bulk Enroll Students – <%= className %></title>
+  <link rel="stylesheet" href="/style.css">
+  <style>
+    .error { color: red; background: #f8d7da; padding: 10px; border-radius: 4px; margin: 10px 0; }
+    .success { color: green; background: #d4edda; padding: 10px; border-radius: 4px; margin: 10px 0; }
+    .btn { padding: 8px 12px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; }
+    textarea { width: 100%; height: 100px; margin: 10px 0; }
+  </style>
+</head>
+<body>
+  <h1>Bulk Enroll Students in <%= className %> </h1>
+
+  <% if (successMsg) { %>
+    <div class="success"><%= successMsg %></div>
+  <% } %>
+  <% if (errors && errors.length > 0) { %>
+    <div class="error">
+      <ul>
+        <% errors.forEach(error => { %>
+          <li><%= error.msg %></li>
+        <% }) %>
+      </ul>
+    </div>
+  <% } %>
+
+  <form method="POST">
+    <input type="hidden" name="termId" value="<%= termId %>">
+    <input type="hidden" name="className" value="<%= className %>">
+    <label>Student Usernames (comma-separated):</label><br>
+    <textarea name="student_usernames" placeholder="student1, student2, student3" required></textarea><br>
+    <button type="submit" class="btn">Enroll Students</button>
+  </form>
+
+  <a href="/admin/term/<%= termId %>/classes" style="margin-top:20px;display:inline-block;">Back to Classes</a>
+</body>
+</html>

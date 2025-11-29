@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Manage Academic Years</title>
+  <link rel="stylesheet" href="/style.css">
+  <style>
+    body { font-family: Arial, sans-serif; margin: 40px; background: #f7f9fc; }
+    table { width: 100%; border-collapse: collapse; margin: 25px 0; background: white; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+    th, td { padding: 14px; text-align: left; border-bottom: 1px solid #eee; }
+    th { background: #2c3e50; color: white; }
+    .btn { padding: 8px 14px; margin: 0 4px; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; text-decoration: none; display: inline-block; }
+    .btn-edit    { background: #3498db; color: white; }
+    .btn-delete  { background: #e74c3c; color: white; }
+    .btn-current { background: #27ae60; color: white; }
+    .btn-complete{ background: #9b59b6; color: white; }
+    .btn:hover { opacity: 0.9; }
+    .status { font-weight: bold; padding: 6px 12px; border-radius: 20px; color: white; font-size: 13px; }
+    .current    { background: #27ae60; }
+    .completed  { background: #9b59b6; }
+    .inactive   { background: #95a5a6; }
+    .msg { padding: 12px; border-radius: 6px; margin: 15px 0; }
+    .success { background: #d5efdb; color: #27ae60; border: 1px solid #27ae60; }
+    .error   { background: #fce8e6; color: #e74c3c; border: 1px solid #e74c3c; }
+  </style>
+</head>
+<body>
+
+  <h1>Manage Academic Years</h1>
+
+  <% if (successMsg) { %><div class="msg success"><%= successMsg %></div><% } %>
+  <% if (errorMsg)   { %><div class="msg error"><%= errorMsg %></div><% } %>
+
+  <h3>Add New Academic Year</h3>
+  <form method="POST" action="/admin/academic-years" style="margin-bottom:30px;">
+    <input type="text" name="year" placeholder="2025/2026" required pattern="\d{4}/\d{4}"
+           style="padding:10px; font-size:16px; width:200px; border-radius:6px; border:1px solid #ccc;" />
+    <button type="submit" class="btn" style="background:#2980b9;">Add Year</button>
+  </form>
+
+  <h3>Academic Years</h3>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Year</th>
+        <th>Status</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% if (!years || years.length === 0) { %>
+        <tr><td colspan="3" style="text-align:center; color:#777; padding:30px;">No academic years yet.</td></tr>
+      <% } else { %>
+        <% years.forEach(y => { %>
+          <tr>
+            <td>
+              <a href="/admin/academic-year/<%= y.id %>/terms" style="font-weight:bold; color:#2c3e50; text-decoration:none;">
+                <%= y.year %>
+              </a>
+            </td>
+
+            <!-- STATUS LOGIC -->
+            <td>
+              <% if (y.current) { %>
+                <span class="status current">Current Year</span>
+              <% } else if (y.is_completed) { %>
+                <span class="status completed">Completed</span>
+              <% } else { %>
+                <span class="status inactive">Not Active</span>
+              <% } %>
+            </td>
+
+            <!-- ACTIONS LOGIC – EXACTLY AS YOU WANT -->
+            <td>
+              <!-- Always show -->
+              <a href="/admin/academic-years/edit/<%= y.id %>" class="btn btn-edit">Edit</a>
+
+              <form action="/admin/academic-years/delete/<%= y.id %>" method="POST" style="display:inline;"
+                    onsubmit="return confirm('DELETE EVERYTHING in <%= y.year %>?\nThis cannot be undone!');">
+                <button type="submit" class="btn btn-delete">Delete All</button>
+              </form>
+
+              <!-- Set Current → show only if NOT current -->
+              <% if (!y.current) { %>
+                <form action="/admin/academic-years/set-current/<%= y.id %>" method="POST" style="display:inline;">
+                  <button type="submit" class="btn btn-current">Set Current</button>
+                </form>
+              <% } %>
+
+              <!-- Mark Completed → show ONLY on the Current year -->
+              <% if (y.current && !y.is_completed) { %>
+                <form action="/admin/academic-years/mark-completed/<%= y.id %>" method="POST" style="display:inline;">
+                  <button type="submit" class="btn btn-complete">Mark Completed</button>
+                </form>
+
+              <% } %>
+            </td>
+          </tr>
+        <% }) %>
+      <% } %>
+    </tbody>
+  </table>
+
+  <a href="/dashboard" class="btn" style="background:#6c757d; margin-top:20px;">Back to Dashboard</a>
+
+</body>
+</html>

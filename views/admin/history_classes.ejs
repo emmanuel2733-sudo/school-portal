@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Classes - <%= yearName %>/<%= yearName + 1 %></title>
+  <style>
+    body { font-family: 'Segoe UI', sans-serif; background: #f5f7fa; margin: 0; padding: 40px; }
+    .container { max-width: 1000px; margin: 0 auto; }
+    .header {
+      display: flex; justify-content: space-between; align-items: center;
+      background: #2c3e50; color: white; padding: 20px 30px;
+      border-radius: 12px; margin-bottom: 30px;
+    }
+    .header h1 { margin: 0; font-size: 1.7em; }
+    .back-btn {
+      background: #e74c3c; padding: 10px 20px; border-radius: 8px;
+      text-decoration: none; color: white; font-weight: bold;
+    }
+    .back-btn:hover { background: #c0392b; }
+    .classes-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: 20px;
+    }
+    .class-card {
+      background: white;
+      padding: 25px;
+      border-radius: 12px;
+      text-align: center;
+      box-shadow: 0 5px 18px rgba(0,0,0,0.1);
+      transition: 0.3s;
+      font-size: 1.2em;
+      font-weight: bold;
+      color: #34495e;
+    }
+    .class-card:hover {
+      transform: translateY(-8px);
+      box-shadow: 0 15px 30px rgba(0,0,0,0.15);
+    }
+    .class-card a {
+      text-decoration: none;
+      color: inherit;
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+     <h1>Classes in <%= yearName %></h1>
+      <a href="/admin/history" class="back-btn">Back to Years</a>
+    </div>
+
+    <div class="classes-grid">
+      <% classes.forEach(cls => { %>
+        <div class="class-card">
+          <a href="/admin/history/year/<%= yearId %>/class/<%= cls.id %>">
+            <%= cls.class_name %>
+          </a>
+        </div>
+      <% }) %>
+    </div>
+  </div>
+</body>
+</html>
