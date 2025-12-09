@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Enroll Students – <%= exam.course_name %></title>
+    <link rel="stylesheet" href="/style.css">
+
+    <style>
+        body { background:#f5f5f5; padding:20px; font-family:Arial; }
+        .box { background:white; max-width:800px; margin:auto; padding:20px; border-radius:10px; }
+        table { width:100%; border-collapse:collapse; margin-top:20px; }
+        th, td { padding:10px; border:1px solid #ddd; }
+        th { background:#eee; }
+        .btn { padding:8px 12px; border-radius:5px; text-decoration:none; color:white; }
+        .btn-primary { background:#007bff; }
+        .btn-secondary { background:#6c757d; }
+    </style>
+</head>
+
+<body>
+<% if (successMsg) { %>
+    <div style="background:#d4edda;padding:10px;border-radius:5px;color:#155724;">
+        ✔ Students successfully enrolled!
+    </div>
+<% } %>
+<p><strong><%= enrolledIds.length %></strong> students enrolled in this exam.</p>
+
+<div class="box">
+    <h1>Enroll Students – <%= exam.course_name %> (<%= exam.class_name %>)</h1>
+
+    <form method="POST">
+
+        <table>
+            <tr>
+                <th>Select</th>
+                <th>Name</th>
+                <th>Username</th>
+            </tr>
+
+<% students.forEach(s => { %>
+  <tr>
+    <td>
+      <input 
+        type="checkbox" 
+        name="students[]" 
+        value="<%= s.id %>" 
+        <%= enrolledIds.includes(s.id) ? "checked" : "" %>
+      >
+    </td>
+    <td><%= s.name %></td>
+    <td><%= s.username %></td>
+  </tr>
+<% }) %>
+
+
+        </table>
+
+        <button type="submit" class="btn btn-primary" style="margin-top:20px;">
+            Save Enrollment
+        </button>
+
+    </form>
+
+    <br>
+    <a href="/admin/courses/<%= exam.course_id %>/cbt" class="btn btn-secondary">
+        ⬅ Back
+    </a>
+
+</div>
+
+</body>
+</html>

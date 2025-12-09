@@ -112,6 +112,7 @@ const upload = multer({
     cb(new Error('Only JPG/PNG'));
   }
 });
+const bankUpload = multer({ dest: 'uploads/question_bank/' });
 // Middleware Setup
 app.set('view engine', 'ejs');
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -134,7 +135,93 @@ app.use(session({
   }
 }));
 
+/////////////////////////////////////////////////////////////
+// === 2. DOCUMENT UPLOADER (PDF & Word for E-Library) ===
+const uploadDir = 'public/uploads/e-library';
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
 
+const documentStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, uploadDir); // saves to public/uploads/e-library/
+  },
+  filename: (req, file, cb) => {
+    const safeName = Date.now() + '-' + file.originalname.replace(/[^a-zA-Z0-9.-]/g, '_');
+    cb(null, safeName);
+  }
+});
+
+const uploadDocument = multer({ storage: documentStorage });
+
+
+const questionStorage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        cb(null, path.join(__dirname, "public/uploads/questions"));
+    },
+    filename: function (req, file, cb) {
+        const ext = path.extname(file.originalname);
+        cb(null, "q_" + Date.now() + ext);
+    }
+});
+
+const uploadQuestionImage = multer({
+    storage: questionStorage,
+    limits: { fileSize: 5 * 1024 * 1024 },
+    fileFilter: function (req, file, cb) {
+        const allowed = /jpg|jpeg|png|gif/;
+        const ext = path.extname(file.originalname).toLowerCase();
+        if (!allowed.test(ext)) {
+            return cb(new Error("Only JPG, PNG, GIF allowed"));
+        }
+        cb(null, true);
+    }
+});
+const bulkUpload = multer({ dest: "uploads/bulk/" });
+
+const OpenAI = require("openai");
+const openai = new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY
+});
+
+
+// ======================
+// STUDENT WEBCAM SNAPSHOT UPLOADER
+// ======================
+// ensure directories exist
+const webcamDir = path.join(__dirname, 'public/uploads/webcam');
+if (!fs.existsSync(webcamDir)) fs.mkdirSync(webcamDir, { recursive: true });
+
+// Multer for webcam snapshots (student)
+const webcamStorage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, webcamDir),
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname) || '.jpg';
+    cb(null, `snap_${Date.now()}${ext}`);
+  }
+});
+const uploadWebcam = multer({
+  storage: webcamStorage,
+  limits: { fileSize: 2 * 1024 * 1024 }, // 2MB snapshots
+  fileFilter: (req, file, cb) => {
+    const allowed = /jpg|jpeg|png/;
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (allowed.test(ext)) cb(null, true);
+    else cb(new Error('Only images allowed'));
+  }
+});
+
+app.use('/uploads/question_bank', express.static('uploads/question_bank'));
+
+
+
+////////////////////////////////////////////////////////////
+
+
+
+
+
+////////////////////////////////////////////////////////
 // ===== FLASH MESSAGES (for req.flash) =====
 const flash = require('connect-flash');
 app.use(flash());
@@ -180,33 +267,42 @@ function runQuery(sql, params = []) {
 
 
 function cleanTermName(dirtyName) {
-  if (!dirtyName) return 'Current Term';
+  if (!dirtyName || typeof dirtyName !== 'string') return 'Current Term';
 
   let name = dirtyName.trim();
 
-  // 1. Remove anything in parentheses/brackets
-  name = name.replace(/\s*[$$ \[\{].*?[ $$\]\}]/g, '');
+  // 1. Remove anything in parentheses, brackets, or braces
+  name = name.replace(/\s*[\(\[\{].*?[\)\]\}]/g, '');
 
-  // 2. Remove leading years like "2025", "2024/2025", "2025-2026 "
+  // 2. Remove leading years like "2024/2025", "2025-2026", "2025 "
   name = name.replace(/^\d{4,5}[\/\-\s]*\d{0,4}\s*-?\s*/g, '');
 
-  // 3. Remove duplicate "Term Term", "term term", etc.
-  name = name.replace(/Term\s+Term$/i, 'Term');
+  // 3. Remove common junk words
+  name = name.replace(/\b(current|active|session|year)\b/gi, '');
 
-  // 4. Normalize known terms
-  if (name.match(/first|1st|1/i)) name = 'First Term';
-  else if (name.match(/second|2nd|2/i)) name = 'Second Term';
-  else if (name.match(/third|3rd|3/i)) name = 'Third Term';
-  else if (name.match(/term/i)) {
-    // Already has "Term" → just clean spacing
-    name = name.replace(/\s+/g, ' ').trim();
-  } else {
-    // No term keyword → add it
-    name = name + ' Term';
+  // 4. Clean up spacing
+  name = name.replace(/\s+/g, ' ').trim();
+
+  // 5. Normalize known terms
+  const lower = name.toLowerCase();
+  if (lower.includes('first') || lower.includes('1st') || lower.includes('1')) {
+    return 'First Term';
+  }
+  if (lower.includes('second') || lower.includes('2nd') || lower.includes('2')) {
+    return 'Second Term';
+  }
+  if (lower.includes('third') || lower.includes('3rd') || lower.includes('3')) {
+    return 'Third Term';
   }
 
-  // Final cleanup
-  return name.trim() || 'Current Term';
+  // If it already contains "Term" → just clean it
+  if (lower.includes('term')) {
+    name = name.replace(/term.*/i, 'Term').trim();
+    return name.endsWith('Term') ? name : name + ' Term';
+  }
+
+  // Fallback: if nothing matches
+  return name ? name + ' Term' : 'Current Term';
 }
 
 async function getStudentCurrentInfo(studentId) {
@@ -237,7 +333,8 @@ app.use((req, res, next) => {
   console.log(`${req.method} ${req.url}`);
   next();
 });
-// 1. GET /login (and root → login)
+
+/// ===GET /login (and root → login) === /////////////////////
 app.get('/', (req, res) => res.redirect('/login'));
 app.get('/login', (req, res) => {
   // Pull any previously‑typed username from session (after a failed login)
@@ -253,26 +350,31 @@ app.get('/login', (req, res) => {
     errorMsg: null
   });
 });
-// 2. POST /login
+/// === POST /login — UPGRADED VERSION (DO NOT DELETE ANYTHING BELOW) ===
 app.post('/login', [
   check('username').notEmpty().withMessage('Username is required'),
   check('password').notEmpty().withMessage('Password is required')
-], (req, res) => {
+], async (req, res) => {  // ← CHANGED TO async
+  console.log("LOGIN ROUTE HIT — USING NEW CODE!");
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     req.session.userInput = { username: req.body.username };
     req.session.loginErrors = errors.array();
     return res.redirect('/login');
   }
+
   const { username, password } = req.body;
   console.log('Login attempt:', { username });
-  db.get('SELECT * FROM users WHERE username = ?', [username], (err, user) => {
-    if (err) {
-      console.error('Login DB error:', err);
-      req.session.userInput = { username };
-      req.session.loginErrors = [{ msg: 'Database error' }];
-      return res.redirect('/login');
-    }
+
+  try {
+    // GET USER
+    const user = await new Promise((resolve, reject) => {
+      db.get('SELECT * FROM users WHERE username = ?', [username], (err, row) => {
+        if (err) reject(err);
+        else resolve(row);
+      });
+    });
+
     if (!user) {
       req.session.userInput = { username };
       req.session.loginErrors = [{ msg: 'Invalid credentials' }];
@@ -288,29 +390,82 @@ app.post('/login', [
       req.session.loginErrors = [{ msg: 'Account pending approval. Contact administrator.' }];
       return res.redirect('/login');
     }
-    bcrypt.compare(password, user.password, (err, match) => {
-      if (err) {
-        console.error('Password compare error:', err);
-        req.session.userInput = { username };
-        req.session.loginErrors = [{ msg: 'Login error' }];
-        return res.redirect('/login');
-      }
-      if (!match) {
-        req.session.userInput = { username };
-        req.session.loginErrors = [{ msg: 'Invalid credentials' }];
-        return res.redirect('/login');
-      }
-      req.session.userId = user.id;
-      req.session.role = user.role;
-      req.session.userName = user.name || user.username;
-      req.session.photo = user.photo || 'default-photo.jpg'; // KEY FIX
-      console.log('Login successful:', { userId: user.id, role: user.role });
-      delete req.session.userInput;
-      delete req.session.loginErrors;
-      return res.redirect('/dashboard');
+
+    // CHECK PASSWORD
+    const match = await new Promise((resolve, reject) => {
+      bcrypt.compare(password, user.password, (err, result) => {
+        if (err) reject(err);
+        else resolve(result);
+      });
+    });
+
+    if (!match) {
+      req.session.userInput = { username };
+      req.session.loginErrors = [{ msg: 'Invalid credentials' }];
+      return res.redirect('/login');
+    }
+
+    // === NEW: FETCH CLASS ASSIGNMENT IF TEACHER ===
+   let classTeacherOf = null;
+if (user.role === 'teacher') {
+  const rows = await new Promise((resolve, reject) => {
+    db.all('SELECT name FROM classes WHERE class_teacher_id = ?', [user.id], (err, rows) => {
+      if (err) reject(err);
+      else resolve(rows);
     });
   });
+
+  classTeacherOf = rows.length > 0 
+    ? rows.map(r => r.name).join(', ')
+    : null;
+}
+
+    // SAVE FULL USER + CLASS TO SESSION
+    req.session.user = {
+      id: user.id,
+      username: user.username,
+      name: user.name || user.username,
+      sex: user.sex || null,
+      dob: user.dob || null,
+      address: user.address || null,
+      phone: user.phone || null,
+      email: user.email || null,
+      photo: user.photo || 'default-photo.jpg',
+      role: user.role,
+      status: user.status,
+      classTeacherOf: classTeacherOf        // THIS LINE FIXES EVERYTHING!
+    };
+
+    // Keep old session variables (for backward compatibility)
+    req.session.userId = user.id;
+    req.session.role = user.role;
+    req.session.userName = user.name || user.username;
+    req.session.photo = user.photo || 'default-photo.jpg';
+
+    console.log('Login successful — Full user + class saved in session:', {
+      id: user.id,
+      name: user.name,
+      role: user.role,
+      classTeacherOf: classTeacherOf   // You will now see the class here!
+    });
+
+    // Clean up temp data
+    delete req.session.userInput;
+    delete req.session.loginErrors;
+
+    return res.redirect('/dashboard');
+
+  } catch (err) {
+    console.error('Login error:', err);
+    req.session.userInput = { username };
+    req.session.loginErrors = [{ msg: 'Server error' }];
+    return res.redirect('/login');
+  }
 });
+//////////////////////////////////////////////////////////////////
+
+
+/// === ADMIN: RESET USER PASSWORD === ///////////////////////
 app.post('/admin/reset-password/:id', (req, res) => {
   if (!req.session.userId || req.session.role !== 'admin') {
     return res.redirect('/login');
@@ -331,7 +486,9 @@ for (let i = 0; i < 8; i++) {
     res.redirect(`/admin/account?success=Password+reset+to+${newPass}`);
   });
 });
-// DASHBOARD
+////////////////////////////////////////////////////////////////
+
+/// === DASHBOARD ==== ///////////////////////////////////////
 app.get('/dashboard', async (req, res) => {
   if (!req.session.userId) {
     console.log('No session or userId, redirecting to login');
@@ -364,42 +521,66 @@ if (role === 'admin') {
 }
  // === TEACHER: FETCH NAME + CLASSES + COURSES ===
 if (role === 'teacher') {
-  db.get('SELECT name FROM users WHERE id = ?', [userId], (err, user) => {
-    if (!err && user) req.session.userName = user.name || req.session.userName;
-    
+  const userId = req.session.userId; // already set from auth middleware
+
+  // === 1. GET FULL USER DATA (name, sex, dob, address, photo) ===
+  db.get(`
+    SELECT id, username, name, sex, dob, address, photo, status
+    FROM users 
+    WHERE id = ? AND role = 'teacher'
+  `, [userId], (err, fullUser) => {
+    if (err || !fullUser) {
+      return res.redirect('/login');
+    }
+
+    // Keep your existing session update (safe)
+    req.session.userName = fullUser.name || req.session.userName;
+    req.session.photo   = fullUser.photo || 'default-photo.jpg';
+
+    // === 2. GET CLASS TEACHER INFO ===
     db.all('SELECT name FROM classes WHERE class_teacher_id = ?', [userId], (err, classRows) => {
       const classTeacherOf = classRows?.length > 0
         ? classRows.map(r => r.name).join(', ')
         : null;
 
-      db.all(`
-        SELECT c.name AS course_name, cl.name AS class_name, c.id
-        FROM teacher_assignments ta
-        JOIN courses c ON ta.course_id = c.id
-        JOIN classes cl ON c.class_id = cl.id
-        WHERE ta.teacher_id = ?
-        ORDER BY cl.name, c.name
-      `, [userId], (err, courses) => {
-        if (err) courses = [];
+      // === 3. GET ASSIGNED COURSES — FIXED FOR YOUR REAL DATABASE (NO course_id) ===
+// === CORRECT QUERY FOR YOUR CURRENT DATABASE ===
+db.all(`
+  SELECT DISTINCT 
+         c.name AS course_name,
+         cl.name AS class_name,
+         c.id AS course_id
+  FROM teacher_assignments ta
+  JOIN courses c ON ta.course_id = c.id
+  JOIN classes cl ON c.class_id = cl.id
+  WHERE ta.teacher_id = ?
+  ORDER BY cl.name, c.name
+`, [userId], (err, courses) => {
+  if (err) {
+    console.error('Error loading assigned courses:', err.message);
+    courses = [];
+  }
 
-        res.render('teacher_dashboard', {
-          user: req.session,
-          classTeacherOf,
-          assignedCourses: courses,
-          successMsg: req.query.success || null,
-          errorMsg: req.query.error || null
-        });
-        // ADD THIS LINE → stops execution!
-        return;   // ← ← ← ← ← ← ← ← ← ← ← ← ← ← ← ← ← ← ← ← ← ← ← ←
-      });
-    });
+  // render dashboard...
+  res.render('teacher_dashboard', {
+    user: fullUser,
+    classTeacherOf: classTeacherOf || 'None',
+    courses: courses || [],
+    assignedCourses: courses || [],
+    successMsg: req.query.success || null,
+    errorMsg: req.query.error || null
   });
-  return;   // Also add this one for extra safety
+});    });
+  });
+  return; // safety
 }
-// STUDENT DASHBOARD
+
+
 if (role === 'student') {
   const studentId = userId;
+
   try {
+    // === YOUR ORIGINAL WORKING CODE (KEEP THIS) ===
     const infoResult = await query(`
       SELECT DISTINCT
         cl.name AS class_name,
@@ -424,9 +605,25 @@ if (role === 'student') {
       const info = infoResult[0];
       studentClass = info.class_name || 'Not Assigned';
       sessionYear = info.session || '2025/2026';
-
       cleanTermDisplay = cleanTermName(info.raw_term_name);
     }
+
+    // === ONLY THIS PART IS NEW: GET REAL SUBJECTS ===
+    let enrolledCourses = [];
+    const coursesResult = await query(`
+      SELECT DISTINCT c.name AS course_name
+      FROM student_enrollments se
+      JOIN courses c ON se.course_id = c.id
+      JOIN terms t ON se.term_id = t.id
+      JOIN academic_years ay ON t.year_id = ay.id
+      WHERE se.student_id = ? AND ay.current = 1
+      ORDER BY c.name
+    `, [studentId]);
+
+    if (coursesResult && coursesResult.length > 0) {
+      enrolledCourses = coursesResult.map(row => row.course_name);
+    }
+    // === END OF NEW PART ===
 
     res.render('student_dashboard', {
       user: {
@@ -436,9 +633,11 @@ if (role === 'student') {
       studentClass,
       cleanTermDisplay,
       sessionYear,
+      enrolledCourses,           // ← ONLY THIS LINE IS NEW!
       successMsg: req.query.success || null,
       errorMsg: req.query.error || null
     });
+
   } catch (err) {
     console.error('Error loading student dashboard:', err);
     res.render('student_dashboard', {
@@ -446,6 +645,7 @@ if (role === 'student') {
       studentClass: 'Error',
       cleanTermDisplay: 'Error',
       sessionYear: 'Error',
+      enrolledCourses: [],     // ← ADD THIS TOO
       errorMsg: 'Failed to load session information'
     });
   }
@@ -455,8 +655,9 @@ if (role === 'student') {
   // Fallback
   res.redirect('/login');
 });
+///////////////////////////////////////////////////////////////
 
-
+// === STUDENT: CURRENT TERM RESULTS === /////////////////////////////
 app.get('/student/results', (req, res) => {
   if (!req.session.userId || req.session.role !== 'student') return res.redirect('/login');
   const studentId = req.session.userId;
@@ -495,9 +696,135 @@ app.get('/student/results', (req, res) => {
     });
   });
 });
+//////////////////////////////////////////////////////////////////////
 
+// STUDENT: VIEW ALL TOPICS (WORKS 100% - SAME STYLE AS YOUR RESULTS ROUTE)
+app.get('/student/topics', (req, res) => {
+  // Simple session check - exactly like your results route
+  if (!req.session.userId || req.session.role !== 'student') {
+    return res.redirect('/login');
+  }
 
-// === STUDENT: GRADES HISTORY (ALL TERMS) - FIXED & GROUPED ===
+  const studentId = req.session.userId;
+
+  // Get current term ID
+  db.get(`
+    SELECT ay.current_term_id 
+    FROM academic_years ay 
+    WHERE ay.current = 1
+  `, (err, row) => {
+    if (err || !row || !row.current_term_id) {
+      return res.render('student_topics', { 
+        user: req.session, 
+        courses: [] 
+      });
+    }
+
+    const currentTermId = row.current_term_id;
+
+    // Get all courses the student is enrolled in this term
+    db.all(`
+      SELECT DISTINCT
+        c.id AS course_id,
+        c.name AS course_name,
+        cl.name AS class_name
+      FROM student_enrollments se
+      JOIN courses c ON se.course_id = c.id
+      JOIN classes cl ON c.class_id = cl.id
+      WHERE se.student_id = ? 
+        AND se.term_id = ?
+      ORDER BY c.name
+    `, [studentId, currentTermId], (err, courses) => {
+      if (err || !courses || courses.length === 0) {
+        return res.render('student_topics', { 
+          user: req.session, 
+          courses: [] 
+        });
+      }
+
+      let completed = 0;
+      const totalCourses = courses.length;
+
+      // For each course, fetch its topics
+      courses.forEach((course, index) => {
+        db.all(`
+          SELECT topic_name 
+          FROM topics 
+          WHERE course_id = ? 
+          ORDER BY id
+        `, [course.course_id], (err, topics) => {
+          course.topics = err ? [] : topics;
+          completed++;
+
+          // When all courses have their topics loaded → render
+          if (completed === totalCourses) {
+            res.render('student_topics', { 
+              user: req.session, 
+              courses 
+            });
+          }
+        });
+      });
+    });
+  });
+});
+////////////////////////////////////////////////////////////////////
+// STUDENT E-LIBRARY — 100% WORKING VERSION (ignores term mismatches)
+// STUDENT E-LIBRARY — FINAL VERSION THAT ALWAYS WORKS
+// STUDENT E-LIBRARY — 100% SAME LOGIC AS TOPICS PAGE (WORKS 100%)
+app.get('/student/e-library', async (req, res) => {
+  if (!req.session.userId || req.session.role !== 'student') {
+    return res.redirect('/login');
+  }
+
+  const studentId = req.session.userId;
+
+  try {
+    // THIS IS THE EXACT SAME QUERY YOUR TOPICS PAGE USES
+    const courses = await query(`
+      SELECT DISTINCT
+        c.id AS course_id,
+        c.name AS course_name,
+        cl.name AS class_name
+      FROM student_enrollments se
+      JOIN courses c ON se.course_id = c.id
+      JOIN classes cl ON c.class_id = cl.id
+      JOIN academic_years ay ON se.term_id = ay.current_term_id
+      WHERE se.student_id = ? 
+        AND ay.current = 1
+      ORDER BY c.name
+    `, [studentId]);
+
+    if (!courses || courses.length === 0) {
+      return res.render('student_e_library', { courses: [] });
+    }
+
+    // NOW ATTACH E-LIBRARY FILES TO EACH COURSE — SAME PATTERN
+    for (let course of courses) {
+      const files = await query(`
+        SELECT 
+          id, 
+          original_name, 
+          filename, 
+          uploaded_at,
+          ROUND(COALESCE(length, 0) / 1024.0, 1) AS size_kb
+        FROM e_library_files 
+        WHERE course_id = ?
+        ORDER BY uploaded_at DESC
+      `, [course.course_id]);
+
+      course.files = files || [];
+    }
+
+    res.render('student_e_library', { courses });
+
+  } catch (err) {
+    console.error("E-Library Error:", err);
+    res.render('student_e_library', { courses: [] });
+  }
+});
+
+// === STUDENT: GRADES HISTORY (ALL TERMS) - FIXED & GROUPED === //////
 app.get('/student/grades', (req, res) => {
   if (!req.session.userId || req.session.role !== 'student') 
     return res.redirect('/login');
@@ -595,14 +922,16 @@ app.get('/student/grades', (req, res) => {
     });
   });
 });
+///////////////////////////////////////////////////////////////////////
 
 
-// MIDDLEWARE: TEACHER ONLY (ONLY ONE TIME!)
+// MIDDLEWARE: TEACHER ONLY (ONLY ONE TIME!) ////////////////////
 const isTeacher = (req, res, next) => {
   if (req.session && req.session.role === 'teacher') return next();
   req.flash('error', 'Access denied. Teachers only.');
   res.redirect('/login');
 };
+///////////////////////////////////////////////////////////////
 
 // TEACHER COURSES — FINAL VERSION THAT WORKS WITH YOUR CURRENT 35+ ENROLLMENTS
 // TEACHER COURSES — FINAL FIXED VERSION (SHOWS REAL STUDENT COUNTS!)
@@ -622,7 +951,7 @@ app.get('/teacher/courses', isTeacher, async (req, res) => {
                              fullTermName.includes('Second') ? 'Second Term' :
                              fullTermName.includes('Third') ? 'Third Term' : fullTermName;
 
-    // FINAL QUERY — CORRECT ENROLLED + GRADED COUNT
+    // FIXED QUERY — NO ta.course_id! Uses only class_name from teacher_assignments
     const rows = await query(`
       SELECT 
         c.id AS course_id,
@@ -630,8 +959,7 @@ app.get('/teacher/courses', isTeacher, async (req, res) => {
         cl.name AS class_name,
         COALESCE(enrolled.count, 0) AS enrolled_count,
         COALESCE(scored.count, 0) AS scored_count
-      FROM teacher_assignments ta
-      JOIN courses c ON ta.course_id = c.id
+      FROM courses c
       JOIN classes cl ON c.class_id = cl.id
       LEFT JOIN (
         SELECT course_id, COUNT(*) AS count 
@@ -646,7 +974,9 @@ app.get('/teacher/courses', isTeacher, async (req, res) => {
         WHERE se.term_id = ?
         GROUP BY se.course_id
       ) scored ON scored.course_id = c.id
-      WHERE ta.teacher_id = ?
+      WHERE cl.name IN (
+        SELECT class_name FROM teacher_assignments WHERE teacher_id = ?
+      )
       ORDER BY cl.name, c.name
     `, [termId, termId, teacherId]);
 
@@ -720,7 +1050,9 @@ app.get('/admin/search-users', (req, res) => {
     });
   });
 });
-// Register Routes
+
+////////////////////////////////////////////////////////////////////////////
+//  ====Register Routes =====
 app.get('/register', (req, res) => {
   res.render('register', {
     userInput: {},
@@ -729,141 +1061,179 @@ app.get('/register', (req, res) => {
     errors: []
   });
 });
-// === ADMIN: GET EDIT USER PAGE (WITH CURRENT PHOTO) ===
+// === REGISTER NEW USER ===
+app.post('/register', upload.single('photo'), async (req, res) => {
+  const {
+    username, password, name, sex, dob, address, role,
+    parent_name, parent_phone, parent_address, parent_relationship
+  } = req.body;
+
+  // Default values if empty
+  const finalParentName = parent_name?.trim() || '';
+  const finalParentPhone = parent_phone?.trim() || '';
+  const finalParentAddress = parent_address?.trim() || '';
+  const finalParentRelationship = ['Father','Mother','Guardian','Other'].includes(parent_relationship) 
+    ? parent_relationship : null;
+
+  let photoFilename = 'default-photo.jpg';
+
+  // Handle photo upload
+  if (req.file) {
+    photoFilename = `user_${Date.now()}_${username}.jpg`;
+    const finalPath = path.join(__dirname, 'public', 'uploads', photoFilename);
+    try {
+      const image = await Jimp.read(req.file.path);
+      await image.cover(200, 200).quality(90).writeAsync(finalPath);
+      fs.unlinkSync(req.file.path);
+    } catch (err) {
+      console.log('Photo processing failed, using default');
+      photoFilename = 'default-photo.jpg';
+    }
+  }
+
+  // Hash password
+  const hashedPassword = await bcrypt.hash(password, 10);
+
+  // INSERT ALL 13 COLUMNS - THIS FIXES THE ERROR
+  const sql = `
+    INSERT INTO users (
+      username, password, name, sex, dob, address, role,
+      parent_name, parent_phone, parent_address, parent_relationship,
+      photo, status
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'approved')
+  `;
+
+  const values = [
+    username, hashedPassword, name, sex, dob || null, address, role || 'student',
+    finalParentName, finalParentPhone, finalParentAddress, finalParentRelationship,
+    photoFilename
+  ];
+
+  db.run(sql, values, function(err) {
+    if (err) {
+      console.error('Insert error:', err);
+      return res.render('register', {
+        successMsg: null,
+        errorMsg: 'Username already exists or invalid data',
+        errors: [],
+        userInput: req.body
+      });
+    }
+
+    res.render('register', {
+      successMsg: 'User created successfully!',
+      errorMsg: null,
+      errors: [],
+      userInput: {}
+    });
+  });
+});
+/////////////////////////////////////////////////////////////////////////////
+
+// ADMIN: EDIT USER - GET (robust + sends all fields EJS expects)
 app.get('/admin/users/edit/:id', (req, res) => {
   if (!req.session.userId || req.session.role !== 'admin') {
     return res.redirect('/login');
   }
-  const userId = req.params.id;
-  db.get('SELECT * FROM users WHERE id = ?', [userId], (err, user) => {
-    if (err || !user) {
+
+  const id = req.params.id;
+
+  db.get(`
+    SELECT 
+      id, username, name, dob, address, photo,
+      parent_name, parent_phone, parent_address, parent_relationship
+    FROM users 
+    WHERE id = ?
+  `, [id], (err, user) => {
+    if (err) {
+      console.error('DB error fetching user for edit:', err);
+      return res.redirect('/admin/users?error=Fetch+failed');
+    }
+    if (!user) {
+      console.log('User not found for edit id=', id);
       return res.redirect('/admin/users?error=User+not+found');
     }
-    res.render('edit-user', {
-      user,
-      success: null,
-      error: null
-    });
+
+    // Ensure safe defaults so EJS never throws
+    user.photo = user.photo || 'default-photo.jpg';
+    user.dob = user.dob || '';
+    user.address = user.address || '';
+
+    user.parent_name = user.parent_name || '';
+    user.parent_phone = user.parent_phone || '';
+    user.parent_address = user.parent_address || '';
+    user.parent_relationship = user.parent_relationship || '';
+
+    console.log('USER DATA SENT TO EJS (edit):', user);
+    res.render('edit_user', { user });
   });
 });
-// === ADMIN: POST - UPDATE USER + OPTIONAL PHOTO ===
+
+// ==========================
+//  EDIT USER (POST)
+// ==========================
+// EDIT USER (POST)
 app.post('/admin/users/edit/:id', upload.single('photo'), async (req, res) => {
-  if (!req.session.userId || req.session.role !== 'admin') {
-    return res.redirect('/login');
-  }
-  const userId = req.params.id;
-  const { name, username, dob, address, currentPhoto } = req.body;
-  let photoFilename = currentPhoto || 'default-photo.jpg';
-  // Handle new photo upload
-  if (req.file) {
-    const tempPath = req.file.path;
-    photoFilename = `${req.body.role || 'user'}_${Date.now()}_${username || 'user'}.jpg`;
-    const finalPath = path.join(__dirname, 'public', 'uploads', photoFilename);
-    try {
-      const image = await Jimp.read(tempPath);
-      await image.cover(200, 200).quality(90).writeAsync(finalPath);
-      fs.unlinkSync(tempPath);
-      // Delete old photo if not default
-      if (currentPhoto && currentPhoto !== 'default-photo.jpg') {
-        const oldPath = path.join(__dirname, 'public', 'uploads', currentPhoto);
-        fs.unlink(oldPath, (err) => { if (err) console.log('Old photo delete failed:', err); });
-      }
-    } catch (err) {
-      console.error('Photo processing failed:', err);
-      photoFilename = currentPhoto; // fallback
-    }
-  }
-  const updates = { name, username, dob: dob || null, address };
-  if (photoFilename) updates.photo = photoFilename;
-  const fields = Object.keys(updates).map(k => `${k} = ?`).join(', ');
-  const values = Object.values(updates);
-  values.push(userId);
-  db.run(`UPDATE users SET ${fields} WHERE id = ?`, values, function(err) {
-    if (err) {
-      console.error('Update user error:', err);
-      return res.render('edit-user', {
-        user: { ...req.body, id: userId, photo: currentPhoto },
-        error: 'Failed to update (username may exist)',
-        success: null
-      });
-    }
-    res.render('edit-user', {
-      user: { id: userId, name, username, dob, address, photo: photoFilename },
-      success: 'User updated successfully!',
-      error: null
-    });
-  });
-});
-// === ADMIN: CREATE USER WITH PHOTO (MUST START AS PENDING!) ===
-app.post('/register', upload.single('photo'), async (req, res) => {
-  if (!req.session.userId || req.session.role !== 'admin') {
-    return res.redirect('/login');
-  }
-  const { username, password, name, sex, dob, address, role } = req.body;
-  // Basic validation
-  if (!username || !password || !name || !sex || !dob || !address || !role) {
-    return res.render('register', {
-      errorMsg: 'All fields are required',
-      userInput: req.body,
-      successMsg: null,
-      errors: []
-    });
-  }
-  try {
-    // Check if username already exists
-    db.get('SELECT id FROM users WHERE username = ?', [username], async (err, row) => {
-      if (row) {
-        return res.render('register', {
-          errorMsg: 'Username already taken',
-          userInput: req.body,
-          successMsg: null,
-          errors: []
-        });
-      }
-      const hashedPassword = await bcrypt.hash(password, 10);
-      let photoFilename = 'default-photo.jpg';
-      // Process uploaded photo
-      if (req.file) {
+    const userId = req.params.id;
+
+    let photo = req.body.currentPhoto; // default: keep old photo
+
+    // If new photo uploaded → move it from temp to uploads + process it
+    if (req.file) {
+        const newFilename = `user_${Date.now()}_${userId}.jpg`;
         const tempPath = req.file.path;
-        photoFilename = `${role}_${Date.now()}_${username}.jpg`;
-        const finalPath = path.join(__dirname, 'public', 'uploads', photoFilename);
+        const finalPath = path.join(__dirname, 'public', 'uploads', newFilename);
+
         try {
-          const image = await Jimp.read(tempPath);
-          await image.cover(200, 200).quality(90).writeAsync(finalPath);
-          fs.unlinkSync(tempPath);
+            const image = await Jimp.read(tempPath);
+            await image.cover(200, 200).quality(90).writeAsync(finalPath);
+
+            fs.unlinkSync(tempPath); // delete temp file
+            photo = newFilename;     // save new filename into database
         } catch (err) {
-          console.error('Photo resize failed:', err);
-          photoFilename = 'default-photo.jpg'; // fallback
-          fs.unlinkSync(tempPath);
+            console.error("Photo edit processing failed:", err);
         }
-      }
-      // INSERT USER AS PENDING — THIS IS THE FIX!
-      db.run(`
-        INSERT INTO users (username, password, name, sex, dob, address, role, photo, status)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending')
-      `, [username, hashedPassword, name, sex, dob, address, role, photoFilename], function(err) {
-        if (err) {
-          console.error('Insert error:', err);
-          return res.render('register', {
-            errorMsg: 'Failed to create user',
-            userInput: req.body
-          });
-        }
-        res.render('register', {
-          successMsg: `User "${name}" created successfully! Status: PENDING → Go to Manage Users to approve.`,
-          userInput: {},
-          errorMsg: null,
-          errors: []
-        });
-      });
+    }
+
+    const sql = `
+        UPDATE users SET 
+            name = ?, 
+            username = ?, 
+            role = ?, 
+            sex = ?, 
+            dob = ?, 
+            address = ?, 
+            parent_name = ?, 
+            parent_phone = ?, 
+            parent_address = ?, 
+            parent_relationship = ?, 
+            photo = ?
+        WHERE id = ?
+    `;
+
+    db.run(sql, [
+        req.body.name,
+        req.body.username,
+        req.body.role,
+        req.body.sex,
+        req.body.dob,
+        req.body.address,
+        req.body.parent_name,
+        req.body.parent_phone,
+        req.body.parent_address,
+        req.body.parent_relationship,
+        photo,
+        userId
+    ], (err) => {
+        if (err) return res.send("DB Error: " + err);
+
+        return res.redirect('/admin/users');
     });
-  } catch (err) {
-    console.error('Server error:', err);
-    res.render('register', { errorMsg: 'Server error', userInput: req.body });
-  }
 });
 
 
+
+//////////////////////////////////////////////////////////////////////////
 // === MANAGE USERS: 4 FILTERS (STUDENTS, TEACHERS, PENDING, DISABLED) ===
 // === MANAGE USERS WITH PAGINATION (Students, Teachers, Pending, Disabled) ===
 app.get('/admin/manage-users', async (req, res) => {
@@ -969,10 +1339,10 @@ app.get('/admin/manage-users', async (req, res) => {
     res.status(500).send('Server Error');
   }
 });
+/////////////////////////////////////////////////////////////////////////////
 
 
-
-// Academic Years Management
+/// = Academic Years Management = ======================================
 app.get('/admin/academic-years', (req, res) => {
   if (!req.session || !req.session.userId || req.session.role !== 'admin') {
     return res.redirect('/login');
@@ -992,6 +1362,8 @@ app.get('/admin/academic-years', (req, res) => {
     });
   });
 });
+//////////////////////////////////////////////////////////////////////////////
+/// === CREATE NEW ACADEMIC YEAR WITH 3 TERMS AUTOMATICALLY === ////////////////
 app.post('/admin/academic-years', [
   check('year').matches(/^\d{4}\/\d{4}$/).withMessage('Use format: 2025/2026')
 ], async (req, res) => {
@@ -1060,6 +1432,8 @@ app.post('/admin/academic-years', [
   }
 });
 
+
+// === SET CURRENT TERM (ADMIN) === /////////////////////////////
 app.post('/admin/set-current-term/:termId', (req, res) => {
   const termId = req.params.termId;
   db.get('SELECT year_id FROM terms WHERE id = ?', [termId], (err, term) => {
@@ -1078,6 +1452,7 @@ db.run('UPDATE terms SET is_current = 0', () => {
     });
   });
 });
+/// === STUDENT: VIEW COURSES & GRADES BY TERM === /////////////////////////////
 app.get('/student/courses', (req, res) => {
   if (req.session.role !== 'student') return res.redirect('/login');
   const studentId = req.session.userId;
@@ -1115,7 +1490,7 @@ app.get('/student/courses', (req, res) => {
     });
   });
 });
-
+////////////////////////////////////////////////////////////////////
 // === SET CURRENT TERM (ADMIN) - FIXED VERSION ===
 app.post('/admin/academic-year/:yearId/set-current-term/:termId', (req, res) => {
   if (!req.session?.userId || req.session.role !== 'admin') {
@@ -1162,9 +1537,9 @@ app.post('/admin/academic-year/:yearId/set-current-term/:termId', (req, res) => 
     });
   });
 });
+/////////////////////////////////////////////////////////////////////////
 
-
-// 1. SET CURRENT YEAR – IMPROVED & SAFE
+/// === 1. SET CURRENT YEAR – IMPROVED & SAFE === ////////////////
 app.post('/admin/academic-years/set-current/:id', async (req, res) => {
   const yearId = parseInt(req.params.id, 10);
 
@@ -1257,10 +1632,8 @@ app.post('/admin/academic-years/mark-completed/:id', async (req, res) => {
     res.redirect(`/admin/academic-years?error=${msg}`);
   }
 });
-
-
-
-// === GET TERM LIST – SHOW CURRENT ONE ==========================
+///////////////////////////////////////////////////////////////////////
+// === GET TERM LIST – SHOW CURRENT ONE ==== ////////////////////////
 app.get('/admin/academic-year/:yearId/terms', (req, res) => {
   if (!req.session?.userId || req.session.role !== 'admin') {
     return res.redirect('/login');
@@ -1293,7 +1666,7 @@ app.get('/admin/academic-year/:yearId/terms', (req, res) => {
     });
   });
 });
-// === DELETE ACADEMIC YEAR + ALL RELATED DATA (FIXED) ===
+// === DELETE ACADEMIC YEAR + ALL RELATED DATA (FIXED) === ////////////////
 app.post('/admin/academic-years/delete/:id', (req, res) => {
   if (!req.session || !req.session.userId || req.session.role !== 'admin') {
     return res.redirect('/login');
@@ -1584,6 +1957,7 @@ app.post('/admin/term/:termId/classes', [
       });
     }
     const classId = this.lastID;
+    
     res.redirect(`/admin/class/${classId}/courses?termId=${termId}`);
   });
 });
@@ -1621,43 +1995,7 @@ app.get('/admin/term/:termId/classes', (req, res) => {
     }
   );
 });
-app.post('/admin/class/:classId/courses', [
-  check('courses_list').notEmpty().withMessage('Enter courses separated by commas')
-], (req, res) => {
-  if (!req.session || !req.session.userId || req.session.role !== 'admin') {
-    return res.redirect('/login');
-  }
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.render('admin_class_courses', {
-      classId: req.params.classId,
-      courses: [],
-      errors: errors.array(),
-      successMsg: null,
-      errorMsg: null
-    });
-  }
-  const classId = req.params.classId;
-  const termId = req.query.termId;
-  const { courses_list } = req.body;
-  const courseNames = courses_list.split(',').map(name => name.trim());
-  let inserted = 0;
-  function insertNext(i) {
-    if (i >= courseNames.length) {
-      res.redirect(`/admin/term/${termId}/classes`);
-      return;
-    }
-    db.run('INSERT INTO courses (class_id, name) VALUES (?, ?)', [classId, courseNames[i]], (err) => {
-      if (err) {
-        console.error('Course add error:', err);
-      } else {
-        inserted++;
-      }
-      insertNext(i + 1);
-    });
-  }
-  insertNext(0);
-});
+
 // === GET: Classes in a Term (WITH STUDENT COUNT) ===
 // === GET: Classes in a Term (WITH CORRECT STUDENT COUNT) ===
 app.get('/admin/term/:termId/classes', (req, res) => {
@@ -1843,6 +2181,8 @@ app.post('/admin/course/:courseId/delete', (req, res) => {
     res.redirect(`/admin/class/${classId}/courses?termId=${termId}&success=Course deleted`);
   });
 });
+
+////////////////////////////////////////////////////////////////////
 // Bulk Enroll Students
 const util = require('util');
 const dbGet = util.promisify(db.get.bind(db));
@@ -1985,6 +2325,7 @@ app.post('/admin/class/:classId/enroll', async (req, res) => {
     });
   }
 });
+/////////////////////////////////////////////////////////////////////
 // === ASSIGN / REMOVE TEACHER – WITH DEBUG LOGS ===
 app.post('/admin/course/:courseId/assign-teacher', (req, res) => {
   console.log('POST /assign-teacher:', req.body); // DEBUG
@@ -3197,7 +3538,7 @@ app.get('/admin/teacher-analytics', async (req, res) => {
     });
   }
 });
-// === TEACHER PROFILE ===
+// === TEACHER PROFILE === ////////////////////////////////////////////
 app.get('/teacher/profile/:id', (req, res) => {
   if (!req.session.userId || req.session.role !== 'admin') {
     return res.redirect('/login');
@@ -3230,7 +3571,7 @@ app.get('/teacher/profile/:id', (req, res) => {
     });
   });
 });
-// === TEACHER: VIEW OWN PROFILE ===
+// === TEACHER: VIEW OWN PROFILE === //////////////////////////////////////////
 app.get('/teacher/profile', (req, res) => {
   if (!req.session.userId || req.session.role !== 'teacher') {
     return res.redirect('/login');
@@ -3263,6 +3604,10 @@ app.get('/teacher/profile', (req, res) => {
     });
   });
 });
+/////////////////////////////////////////////////////////////////////
+
+
+
 app.get('/logout', (req, res) => {
   req.session.destroy(() => {
     res.redirect('/login');
@@ -3297,6 +3642,7 @@ app.get('/admin/term/:termId/classes', (req, res) => {
     });
   });
 });
+///////////////////////////////////////////////////////////////////////
 // === GET: Courses in a Class (WITH CLASS TEACHER + TERM INFO) ===
 app.get('/admin/class/:classId/courses', (req, res) => {
   if (!req.session || !req.session.userId || req.session.role !== 'admin') {
@@ -3354,9 +3700,69 @@ app.get('/admin/class/:classId/courses', (req, res) => {
     );
   });
 });
+/// === POST: Add Courses to Class (WITH CBT AUTO-CREATE) ===//////////
+app.post('/admin/class/:classId/courses', [
+  check('courses_list').notEmpty().withMessage('Enter courses separated by commas')
+], (req, res) => {
+  if (!req.session || !req.session.userId || req.session.role !== 'admin') {
+    return res.redirect('/login');
+  }
+
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.render('admin_class_courses', {
+      classId: req.params.classId,
+      courses: [],
+      errors: errors.array(),
+      successMsg: null,
+      errorMsg: null
+    });
+  }
+
+  const classId = req.params.classId;
+  const termId = req.query.termId;
+  const { courses_list } = req.body;
+  const courseNames = courses_list.split(',').map(name => name.trim());
+
+  let inserted = 0;
+
+  function insertNext(i) {
+    if (i >= courseNames.length) {
+      res.redirect(`/admin/term/${termId}/classes`);
+      return;
+    }
+
+    db.run('INSERT INTO courses (class_id, name) VALUES (?, ?)', 
+      [classId, courseNames[i]], 
+      function (err) {
+        if (err) {
+          console.error('Course add error:', err);
+          return insertNext(i + 1);
+        }
+
+        const courseId = this.lastID;  // ← Get new course ID
+
+        // ***************************************
+        // INSERT THE CBT AUTO-CREATE CODE HERE
+        // ***************************************
+
+        db.run(`
+          INSERT INTO cbt_exams (course_id, class_id, term_id, title, status, created_by)
+          VALUES (?, ?, ?, 'Default Exam', 'draft', ?)
+        `, [courseId, classId, termId, req.session.userId], (cbtErr) => {
+          if (cbtErr) console.error("CBT auto-create failed:", cbtErr);
+
+          insertNext(i + 1);
+        });
+      }
+    );
+  }
+
+  insertNext(0);
+});
+
 
 ////////////////////////////////////////////////////////////////////////
-
 // ADMIN → Completed Academic Years (100% working with your DB)
 app.get('/admin/history', async (req, res) => {
   if (!req.session.userId || req.session.role !== 'admin') 
@@ -3641,8 +4047,72 @@ app.get('/student/profile', async (req, res) => {
 
 
 
+// ================= TEACHER ATTENDANCE SHEET =================
+app.get('/teacher/attendance', isTeacher, async (req, res) => {
+  try {
+    const teacherId = req.session.userId;
+    const className = req.session.user.classTeacherOf;
+    const currentTerm = req.session.currentTerm || 'First Term 2025/2026';
 
+    if (!className) {
+      req.flash('error', 'You are not assigned to any class');
+      return res.redirect('/dashboard');
+    }
 
+    // Get all real students in your class (from enrollments)
+    const students = await query(`
+      SELECT 
+        u.id,
+        u.name,
+        COALESCE(ta.days_present, 0) AS days_present
+      FROM users u
+      INNER JOIN student_enrollments se ON u.id = se.student_id
+      INNER JOIN courses c ON se.course_id = c.id
+      INNER JOIN classes cl ON c.class_id = cl.id
+      LEFT JOIN term_attendance ta ON u.id = ta.student_id AND ta.term = ?
+      WHERE u.role = 'student'
+        AND cl.name = ?
+      GROUP BY u.id, u.name
+      ORDER BY u.name ASC
+    `, [currentTerm, className]);
+
+    res.render('teacher_attendance', {
+      students: students || [],
+      class_name: className,
+      current_term_name: currentTerm,
+      successMsg: req.flash('success'),
+      errorMsg: req.flash('error')
+    });
+
+  } catch (err) {
+    console.error('Attendance error:', err);
+    req.flash('error', 'Failed to load attendance');
+    res.redirect('/dashboard');
+  }
+});
+
+// SAVE ATTENDANCE
+app.post('/teacher/attendance/save', isTeacher, async (req, res) => {
+  try {
+    const { studentId, daysPresent } = req.body;
+    const term = req.session.currentTerm || 'First Term 2025/2026';
+
+    const days = parseInt(daysPresent) || 0;
+
+    await query(`
+      INSERT INTO term_attendance (student_id, term, days_present, class_id)
+      VALUES (?, ?, ?, 0)
+      ON CONFLICT(student_id, term) DO UPDATE SET
+        days_present = excluded.days_present
+    `, [studentId, term, days]);
+
+    res.json({ success: true });
+
+  } catch (err) {
+    console.error('Save attendance error:', err);
+    res.json({ success: false });
+  }
+});
 
 
 
@@ -3725,10 +4195,2440 @@ app.post('/admin/re-enroll-all', async (req, res) => {
 });
 
 
+/////////////////////////////////////////////////////////////////////////
+
+// MANAGE TOPICS - MAIN PAGE (FIXED VERSION)
+app.get('/teacher/topics', isTeacher, async (req, res) => {
+  try {
+    const teacherId = req.session.user.id;
+    const classTeacherOf = req.session.user.classTeacherOf || '';
+
+    const courses = await query(`
+      SELECT DISTINCT c.id, c.name AS course_name, cl.name AS class_name
+      FROM courses c
+      JOIN classes cl ON c.class_id = cl.id
+      WHERE cl.name IN (
+        SELECT class_name FROM teacher_assignments WHERE teacher_id = ?
+      )
+      ORDER BY cl.name, c.name
+    `, [teacherId]);
+
+    res.render('teacher_topics', { 
+      courses: courses || [],
+      classTeacherOf: classTeacherOf   // ← THIS LINE WAS MISSING!
+    });
+
+  } catch (err) {
+    console.error('Topics page error:', err);
+    res.redirect('/dashboard');
+  }
+});
+
+// CREATE TOPIC FORM
+app.get('/teacher/topics/create/:courseId', isTeacher, async (req, res) => {
+  const courseId = req.params.courseId;
+  const [course] = await query('SELECT c.name AS course_name, cl.name AS class_name FROM courses c JOIN classes cl ON c.class_id = cl.id WHERE c.id = ?', [courseId]);
+ res.render('teacher_create_topic', { 
+  course_id: courseId, 
+  course_name: course.course_name, 
+  class_name: course.class_name,
+  classTeacherOf: req.session.user.classTeacherOf || ''
+});
+});
+
+// VIEW TOPICS
+app.get('/teacher/topics/view/:courseId', isTeacher, async (req, res) => {
+  const courseId = req.params.courseId;
+  const [course] = await query('SELECT c.name AS course_name, cl.name AS class_name FROM courses c JOIN classes cl ON c.class_id = cl.id WHERE c.id = ?', [courseId]);
+  const topics = await query('SELECT topic_name FROM topics WHERE course_id = ? ORDER BY id', [courseId]);
+ res.render('teacher_view_topics', { 
+  topics: topics || [], 
+  course_name: course.course_name, 
+  class_name: course.class_name,
+  classTeacherOf: req.session.user.classTeacherOf || ''
+});
+});
+
+// SAVE TOPICS (FINAL WORKING VERSION)
+app.post('/teacher/topics/save', isTeacher, async (req, res) => {
+  try {
+    const courseId = parseInt(req.body.course_id);
+    const rawTopics = req.body.topics || [];
+    const topics = rawTopics
+      .map(t => t?.trim())
+      .filter(t => t && t.length > 0);
+
+    if (!courseId || topics.length === 0) {
+      return res.redirect('/teacher/topics?error=no_topics');
+    }
+
+    // Delete old topics and insert new ones
+    await query('DELETE FROM topics WHERE course_id = ?', [courseId]);
+
+    const stmt = await new Promise((resolve, reject) => {
+      db.prepare('INSERT INTO topics (course_id, topic_name) VALUES (?, ?)', (err, stmt) => {
+        if (err) reject(err);
+        else resolve(stmt);
+      });
+    });
+
+    for (const topic of topics) {
+      await new Promise((resolve, reject) => {
+        stmt.run([courseId, topic], err => err ? reject(err) : resolve());
+      });
+    }
+
+    await new Promise((resolve) => stmt.finalize(() => resolve()));
+
+    res.redirect('/teacher/topics?success=topics_saved');
+  } catch (err) {
+    console.error('Save topics error:', err);
+    res.redirect('/teacher/topics?error=save_failed');
+  }
+});
+
+
+////////////////////////////////////////////////////////////////////////
+// E-LIBRARY MAIN PAGE
+app.get('/teacher/e-library', isTeacher, async (req, res) => {
+  const teacherId = req.session.user.id;
+  const classTeacherOf = req.session.user.classTeacherOf || '';
+
+  const courses = await query(`
+    SELECT DISTINCT c.id, c.name AS course_name, cl.name AS class_name
+    FROM courses c
+    JOIN classes cl ON c.class_id = cl.id
+    WHERE cl.name IN (
+      SELECT class_name FROM teacher_assignments WHERE teacher_id = ?
+    )
+    ORDER BY cl.name, c.name
+  `, [teacherId]);
+
+  res.render('teacher_e_library', { courses: courses || [], classTeacherOf });
+});
+
+// UPLOAD FORM
+app.get('/teacher/e-library/upload/:courseId', isTeacher, async (req, res) => {
+  const courseId = req.params.courseId;
+  const [course] = await query('SELECT c.name AS course_name, cl.name AS class_name FROM courses c JOIN classes cl ON c.class_id = cl.id WHERE c.id = ?', [courseId]);
+  res.render('teacher_e_library_upload', { course_id: courseId, course_name: course.course_name, class_name: course.class_name });
+});
+
+// VIEW FILES
+app.get('/teacher/e-library/view/:courseId', isTeacher, async (req, res) => {
+  const courseId = req.params.courseId;
+  const [course] = await query('SELECT c.name AS course_name, cl.name AS class_name FROM courses c JOIN classes cl ON c.class_id = cl.id WHERE c.id = ?', [courseId]);
+  const files = await query('SELECT * FROM e_library_files WHERE course_id = ? ORDER BY uploaded_at DESC', [courseId]);
+  res.render('teacher_e_library_view', { files: files || [], course_name: course.course_name, class_name: course.class_name });
+});
+
+// UPLOAD DOCUMENT ROUTE (E-Library) - FINAL 100% WORKING VERSION
+app.post('/teacher/e-library/upload', isTeacher, uploadDocument.single('document'), async (req, res) => {
+  try {
+    if (!req.file) {
+      req.flash('error', 'No file selected or invalid file type.');
+      return res.redirect('back');
+    }
+
+    const { course_id } = req.body;
+
+    // Get current term
+    const [termRow] = await query(`
+      SELECT ay.current_term_id 
+      FROM academic_years ay 
+      WHERE ay.current = 1
+    `);
+    const currentTermId = termRow?.current_term_id || null;
+
+    // THIS LINE WAS MISSING — ADD IT!
+    const fileSize = req.file.size;  // ← THIS IS CRITICAL
+
+    await query(`
+      INSERT INTO e_library_files 
+      (course_id, filename, original_name, term_id, length, uploaded_at)
+      VALUES (?, ?, ?, ?, ?, datetime('now'))
+    `, [course_id, req.file.filename, req.file.originalname, currentTermId, fileSize]);
+
+    req.flash('success', 'Document uploaded successfully!');
+    res.redirect('/teacher/e-library');
+
+  } catch (err) {
+      console.error("Upload error:", err);
+      req.flash('error', 'Upload failed: ' + err.message);
+      res.redirect('back');
+  }
+});
+////////////////////////////////////////////////////////////////////////
+
+// GET: Class Activities dashboard
+app.get('/teacher/class-activities', isTeacher, async (req, res) => {
+  // ADD .trim() HERE
+  const classTeacherOf = (req.session.user.classTeacherOf || '').trim();
+
+  // ← THIS LINE
+
+  let currentTimetable = null;
+  if (classTeacherOf) {
+    // Also use TRIM in query for safety
+    const rows = await query('SELECT * FROM class_timetables WHERE TRIM(class_name) = ?', [classTeacherOf]);
+    currentTimetable = rows[0] || null;
+  }
+
+  res.render('teacher_class_activities', {
+    classTeacherOf,
+    currentTimetable
+  });
+});
+
+// GET: Upload timetable form
+app.get('/teacher/class-activities/upload-timetable', isTeacher, async (req, res) => {
+  // ADD .trim() HERE TOO
+  const classTeacherOf = (req.session.user.classTeacherOf || '').trim();  // ← THIS LINE
+
+  if (!classTeacherOf) {
+    req.flash('error', 'Only class teachers can upload timetables.');
+    return res.redirect('/teacher/class-activities');
+  }
+
+  res.render('teacher_timetable_upload', {
+    classTeacherOf  // this is now clean
+  });
+});
+
+// POST: Handle timetable upload — NOW 100% WORKING FOR STUDENTS
+// POST: Handle timetable upload — FINAL FIXED VERSION
+app.post('/teacher/class-activities/upload-timetable', isTeacher, uploadDocument.single('timetable'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.render('teacher_timetable_upload', {
+        classTeacherOf: req.session.user.classTeacherOf,
+        error: 'Please select a PDF file.'
+      });
+    }
+
+    // THIS LINE IS THE FIX — TRIM THE CLASS NAME!
+    const className = (req.session.user.classTeacherOf || '').trim();
+
+    const fileSize = req.file.size;
+
+    await query(`
+      INSERT INTO class_timetables 
+        (class_name, filename, original_name, uploaded_by, length, uploaded_at)
+      VALUES (?, ?, ?, ?, ?, datetime('now'))
+      ON CONFLICT(class_name) DO UPDATE SET
+        filename = excluded.filename,
+        original_name = excluded.original_name,
+        length = excluded.length,
+        uploaded_at = datetime('now')
+    `, [className, req.file.filename, req.file.originalname, req.session.user.id, fileSize]);
+
+    res.render('teacher_timetable_upload', {
+      classTeacherOf: className,   // also pass the clean version here
+      success: true
+    });
+
+  } catch (err) {
+    console.error(err);
+    res.render('teacher_timetable_upload', {
+      classTeacherOf: req.session.user.classTeacherOf,
+      error: 'Upload failed. Please try again.'
+    });
+  }
+});
+//////////////////////////////////////////////////////////////////////
+// Teacher: Virtual Class Page
+app.get('/teacher/virtual-class', isTeacher, async (req, res) => {
+  const teacherId = req.session.user.id;
+
+  const courses = await query(`
+    SELECT 
+      c.id AS course_id,
+      c.name AS course_name,
+      cl.name AS class_name,
+      v.meet_link
+    FROM teacher_assignments ta
+    JOIN courses c ON ta.course_id = c.id
+    JOIN classes cl ON c.class_id = cl.id
+    LEFT JOIN virtual_classes v ON v.course_id = c.id
+    WHERE ta.teacher_id = ?
+    ORDER BY cl.name, c.name
+  `, [teacherId]);
+
+  res.render('teacher_virtual_class', {
+    courses,
+    success: req.flash('success')[0]
+  });
+});
+
+// Update Meet Link
+app.post('/teacher/virtual-class/update/:courseId', isTeacher, async (req, res) => {
+  const courseId = req.params.courseId;
+  const { meet_link } = req.body;
+  const teacherId = req.session.user.id;
+
+  // Verify teacher teaches this course
+  const assigned = await query(
+    'SELECT 1 FROM teacher_assignments WHERE teacher_id = ? AND course_id = ?',
+    [teacherId, courseId]
+  );
+
+  if (assigned.length === 0) {
+    req.flash('error', 'Unauthorized');
+    return res.redirect('/teacher/virtual-class');
+  }
+
+  if (!meet_link.includes('meet.google.com')) {
+    req.flash('error', 'Please enter a valid Google Meet link');
+    return res.redirect('/teacher/virtual-class');
+  }
+
+  await query(`
+    INSERT INTO virtual_classes (course_id, meet_link, updated_by)
+    VALUES (?, ?, ?)
+    ON CONFLICT(course_id) DO UPDATE SET
+      meet_link = excluded.meet_link,
+      updated_at = CURRENT_TIMESTAMP,
+      updated_by = excluded.updated_by
+  `, [courseId, meet_link.trim(), teacherId]);
+
+  req.flash('success', 'Google Meet link updated successfully!');
+  res.redirect('/teacher/virtual-class');
+});
+
+////////////////////////////////////////////////////////////////////////
+// STUDENT CLASS ACTIVITIES — FINAL WORKING VERSION (NO students TABLE NEEDED)
+app.get('/student/class-activities', async (req, res) => {
+  if (!req.session.userId || req.session.role !== 'student') {
+    return res.redirect('/login');
+  }
+
+  const studentId = req.session.userId;
+
+  try {
+    // GET CLASS FROM ENROLLMENTS — SAME AS TOPICS & E-LIBRARY (WORKS 100%)
+    const [enrollment] = await query(`
+      SELECT DISTINCT cl.name AS class_name
+      FROM student_enrollments se
+      JOIN courses c ON se.course_id = c.id
+      JOIN classes cl ON c.class_id = cl.id
+      WHERE se.student_id = ?
+      LIMIT 1
+    `, [studentId]);
+
+    if (!enrollment?.class_name) {
+      return res.render('student_class_activities', { 
+        className: null, 
+        timetable: null 
+      });
+    }
+
+    const className = enrollment.class_name.trim();
+
+    // Get timetable
+    const [timetable] = await query(`
+      SELECT filename, original_name, uploaded_at
+      FROM class_timetables 
+      WHERE TRIM(class_name) = ?
+      ORDER BY uploaded_at DESC 
+      LIMIT 1
+    `, [className]);
+
+    res.render('student_class_activities', {
+      className: className,
+      timetable: timetable || null
+    });
+
+  } catch (err) {
+    console.error("Class Activities Error:", err);
+    res.render('student_class_activities', { className: null, timetable: null });
+  }
+});
+
+// STUDENT: Virtual Class (Google Meet Links)
+app.get('/student/virtual-class', async (req, res) => {
+  if (!req.session.userId || req.session.role !== 'student') {
+    return res.redirect('/login');
+  }
+
+  const studentId = req.session.userId;
+
+  try {
+    const courses = await query(`
+      SELECT DISTINCT
+        c.id AS course_id,
+        c.name AS course_name,
+        cl.name AS class_name,
+        v.meet_link
+      FROM student_enrollments se
+      JOIN courses c ON se.course_id = c.id
+      JOIN classes cl ON c.class_id = cl.id
+      LEFT JOIN virtual_classes v ON v.course_id = c.id
+      WHERE se.student_id = ?
+      ORDER BY cl.name, c.name
+    `, [studentId]);
+
+    res.render('student_virtual_class', { courses: courses || [] });
+
+  } catch (err) {
+    console.error("Virtual Class Error:", err);
+    res.render('student_virtual_class', { courses: [] });
+  }
+});
+//////////////////////////////////////////////////////////////////////
+
+////////////////////////////////////////////////////////////////////////
+// ==============================================
+// ADMIN CBT DASHBOARD FOR A COURSE
+// ==============================================
+// ==============================================
+// ADMIN: CBT DASHBOARD FOR A COURSE
+// ==============================================
+app.get('/admin/courses/:courseId/cbt', (req, res) => {
+
+  if (!req.session.userId || req.session.role !== 'admin') {
+    return res.redirect('/login');
+  }
+
+  const courseId = req.params.courseId;
+
+  // 1. Get course info
+  db.get(`
+    SELECT c.id AS course_id, c.name AS course_name, c.class_id,
+           cl.name AS class_name
+    FROM courses c
+    JOIN classes cl ON c.class_id = cl.id
+    WHERE c.id = ?
+  `, [courseId], (err, course) => {
+
+    if (err || !course) {
+      return res.send("Course not found");
+    }
+
+    // 2. Get exams for this course
+   db.all(`
+    SELECT 
+        ce.*,
+        (SELECT COUNT(*) FROM cbt_enrollments WHERE exam_id = ce.id) AS enrolled_count
+    FROM cbt_exams ce
+    WHERE ce.course_id = ?
+    ORDER BY ce.id DESC
+`, [courseId], (err2, exams) => {
+
+
+      if (err2) return res.send("Database error loading exams");
+
+      // 3. Render page
+      res.render("cbt_dashboard", {
+        course,   // <-- FIXED
+        exams     // <-- FIXED
+      });
+
+    });
+
+  });
+
+});
+
+/////////////////////////////////////////////////////////////////////////
+// ADMIN: SHOW Create CBT Exam FORM
+app.get('/admin/cbt/:courseId/create', (req, res) => {
+  if (!req.session.userId || req.session.role !== 'admin') return res.redirect('/login');
+
+  const courseId = req.params.courseId;
+
+  db.get(`
+    SELECT c.id AS course_id, c.name AS course_name, c.class_id,
+           cl.name AS class_name
+    FROM courses c
+    JOIN classes cl ON c.class_id = cl.id
+    WHERE c.id = ?
+  `, [courseId], (err, course) => {
+    if (err || !course) return res.send("Course not found");
+
+    // render form (empty defaults)
+    res.render('cbt_create_exam', {
+      course,
+      form: {
+        title: '',
+        start_time: '',
+        end_time: '',
+        duration_minutes: ''
+      },
+      errors: []
+    });
+  });
+});
+
+// ADMIN: HANDLE Create CBT Exam FORM SUBMIT
+app.post('/admin/cbt/:courseId/create', (req, res) => {
+  if (!req.session.userId || req.session.role !== 'admin') return res.redirect('/login');
+
+  const courseId = req.params.courseId;
+  const { title, start_time, end_time, duration_minutes } = req.body;
+
+  // basic validation
+  const errors = [];
+  if (!title || title.trim().length === 0) errors.push({ msg: 'Title is required' });
+  if (!start_time) errors.push({ msg: 'Start time is required' });
+  if (!end_time) errors.push({ msg: 'End time is required' });
+
+  // ensure start < end
+  if (start_time && end_time) {
+    const s = new Date(start_time);
+    const e = new Date(end_time);
+    if (isNaN(s.getTime()) || isNaN(e.getTime())) {
+      errors.push({ msg: 'Invalid start or end datetime' });
+    } else if (s >= e) {
+      errors.push({ msg: 'Start time must be before end time' });
+    }
+  }
+
+  if (errors.length > 0) {
+    // re-render form with entered values
+    db.get(`
+      SELECT c.id AS course_id, c.name AS course_name, c.class_id,
+             cl.name AS class_name
+      FROM courses c
+      JOIN classes cl ON c.class_id = cl.id
+      WHERE c.id = ?
+    `, [courseId], (err, course) => {
+      if (err || !course) return res.send("Course not found");
+
+      return res.render('cbt_create_exam', {
+        course,
+        form: { title, start_time, end_time, duration_minutes },
+        errors
+      });
+    });
+    return;
+  }
+
+  // get class and current term
+  db.get(`SELECT class_id FROM courses WHERE id = ?`, [courseId], (err, row) => {
+    if (err || !row) return res.send("Course not found");
+
+    const classId = row.class_id;
+
+    db.get(`SELECT id FROM terms WHERE is_current = 1 LIMIT 1`, [], (err2, termRow) => {
+      const termId = termRow ? termRow.id : null;
+
+      db.run(`
+        INSERT INTO cbt_exams
+          (course_id, class_id, term_id, title, start_time, end_time, duration_minutes, status, created_by)
+        VALUES (?, ?, ?, ?, ?, ?, ?, 'draft', ?)
+      `, [courseId, classId, termId, title.trim(), start_time, end_time, duration_minutes || null, req.session.userId], function(err3) {
+        if (err3) {
+          console.error('CBT create error:', err3);
+          return res.send('Database error creating exam');
+        }
+        // Redirect to CBT dashboard for the course (exam will show in list)
+        return res.redirect(`/admin/courses/${courseId}/cbt`);
+      });
+    });
+  });
+});
+
+//////////////////////////////////////////////////////
+// ADMIN: SHOW ENROLLMENT PAGE
+// ADMIN: CBT ENROLL – SHOW STUDENTS
+app.get("/admin/cbt/:examId/enroll", (req, res) => {
+    const examId = req.params.examId;
+
+    db.get(`
+        SELECT ce.*, c.name AS course_name, cl.name AS class_name
+        FROM cbt_exams ce
+        JOIN courses c ON ce.course_id = c.id
+        JOIN classes cl ON ce.class_id = cl.id
+        WHERE ce.id = ?
+    `, [examId], (err, exam) => {
+        if (err || !exam) return res.send("Exam not found");
+
+        // Load students enrolled IN THIS COURSE for THIS TERM
+        db.all(`
+            SELECT u.id, u.name, u.username
+            FROM student_enrollments se
+            JOIN users u ON u.id = se.student_id
+            WHERE se.course_id = ?
+              AND se.term_id = ?
+        `, [exam.course_id, exam.term_id], (err2, students) => {
+            if (err2) return res.send("Error loading students");
+
+            db.all(`
+                SELECT student_id FROM cbt_enrollments
+                WHERE exam_id = ?
+            `, [examId], (err3, enrolled) => {
+                if (err3) return res.send("Error loading enrollment");
+
+                const enrolledIds = enrolled.map(e => e.student_id);
+
+                res.render("cbt_enroll_students", {
+                    exam,
+                    students,
+                    enrolledIds,
+                    successMsg: req.query.success
+                });
+            });
+
+        });
+    });
+});
+
+// ADMIN: SAVE STUDENT ENROLLMENT (robust, transactional)
+app.post("/admin/cbt/:examId/enroll", (req, res) => {
+  if (!req.session || !req.session.userId || req.session.role !== "admin") {
+    return res.redirect("/login");
+  }
+
+  const examId = parseInt(req.params.examId, 10);
+  if (isNaN(examId)) return res.send("Invalid exam id");
+
+  // Normalize selected students into an array of numbers
+  let selected = [];
+  if (Array.isArray(req.body['students[]'])) {
+    selected = req.body['students[]'].map(s => Number(s));
+  } else if (Array.isArray(req.body.students)) {
+    selected = req.body.students.map(s => Number(s));
+  } else if (typeof req.body['students[]'] === 'string') {
+    selected = [Number(req.body['students[]'])];
+  } else if (typeof req.body.students === 'string') {
+    selected = [Number(req.body.students)];
+  }
+
+  // Remove invalid / NaN
+  selected = selected.filter(n => Number.isFinite(n) && n > 0);
+
+  console.log("SELECTED STUDENTS:", selected, "for exam:", examId);
+
+  // Fetch exam to validate existence and get class/term if needed
+  db.get(
+    `SELECT id, course_id, class_id, term_id FROM cbt_exams WHERE id = ?`,
+    [examId],
+    (err, exam) => {
+      if (err) {
+        console.error("Exam lookup error:", err);
+        return res.send("Database error looking up exam");
+      }
+      if (!exam) return res.send("Exam not found");
+
+      // Start transaction so delete+inserts are atomic
+      db.run("BEGIN TRANSACTION", (beginErr) => {
+        if (beginErr) {
+          console.error("Transaction begin error:", beginErr);
+          return res.send("Database error");
+        }
+
+        // Clear previous enrollments
+        db.run(`DELETE FROM cbt_enrollments WHERE exam_id = ?`, [examId], function (delErr) {
+          if (delErr) {
+            console.error("Error clearing enrollments:", delErr);
+            // rollback
+            db.run("ROLLBACK", () => res.send("Error clearing old enrollments"));
+            return;
+          }
+
+          // If nothing selected, commit and redirect
+          if (!selected.length) {
+            db.run("COMMIT", (cErr) => {
+              if (cErr) console.error("Commit error:", cErr);
+              return res.redirect(`/admin/cbt/${examId}/enroll?success=1`);
+            });
+            return;
+          }
+
+          // Prepare insert statement
+          const stmt = db.prepare(`INSERT INTO cbt_enrollments (exam_id, student_id) VALUES (?, ?)`, (prepErr) => {
+            if (prepErr) {
+              console.error("Prepare error:", prepErr);
+              db.run("ROLLBACK", () => res.send("Database error preparing inserts"));
+              return;
+            }
+
+            // Insert each selected student (synchronous series via callbacks)
+            let errorOccurred = false;
+            let doneCount = 0;
+
+            selected.forEach(sid => {
+              stmt.run(examId, sid, function (runErr) {
+                if (runErr) {
+                  console.error(`Insert error for student ${sid}:`, runErr);
+                  errorOccurred = true;
+                }
+                doneCount++;
+                // when all processed finalize -> commit/rollback
+                if (doneCount === selected.length) {
+                  stmt.finalize((finalizeErr) => {
+                    if (finalizeErr || errorOccurred) {
+                      console.error("Finalize error or insert errors:", finalizeErr);
+                      db.run("ROLLBACK", () => res.send("Error saving enrollments"));
+                      return;
+                    }
+                    db.run("COMMIT", (commitErr) => {
+                      if (commitErr) {
+                        console.error("Commit error:", commitErr);
+                        db.run("ROLLBACK", () => res.send("Error finalizing enrollments"));
+                        return;
+                      }
+                      // success: redirect back with success flag
+                      return res.redirect(`/admin/cbt/${examId}/enroll?success=1`);
+                    });
+                  });
+                }
+              });
+            }); // end forEach
+          }); // end prepare
+        }); // end delete
+      }); // end begin
+    }
+  );
+});
+
+
+/////////////////////////////////////////////////////////////////////////
+// ADMIN: SHOW EDIT CBT EXAM FORM
+app.get('/admin/cbt/exam/:examId/edit', (req, res) => {
+  if (!req.session.userId || req.session.role !== 'admin') {
+    return res.redirect('/login');
+  }
+
+  const examId = req.params.examId;
+
+  db.get(`
+    SELECT e.*, c.name AS course_name, cl.name AS class_name
+    FROM cbt_exams e
+    JOIN courses c ON e.course_id = c.id
+    JOIN classes cl ON e.class_id = cl.id
+    WHERE e.id = ?
+  `, [examId], (err, exam) => {
+    if (err || !exam) return res.send("Exam not found");
+
+    res.render("cbt_edit_exam", {
+      exam,
+      errors: []
+    });
+  });
+});
+
+// ADMIN: HANDLE EDIT CBT EXAM FORM SUBMIT
+app.post('/admin/cbt/exam/:examId/edit', (req, res) => {
+  if (!req.session.userId || req.session.role !== 'admin') {
+    return res.redirect('/login');
+  }
+
+  const examId = req.params.examId;
+  const { title, start_time, end_time, duration_minutes } = req.body;
+
+  const errors = [];
+
+  if (!title) errors.push({ msg: "Title is required" });
+  if (!start_time) errors.push({ msg: "Start time required" });
+  if (!end_time) errors.push({ msg: "End time required" });
+
+  // compare times
+  if (start_time && end_time) {
+    if (new Date(start_time) >= new Date(end_time)) {
+      errors.push({ msg: "Start time must be before end time" });
+    }
+  }
+
+  if (errors.length > 0) {
+    db.get(`
+      SELECT e.*, c.name AS course_name, cl.name AS class_name
+      FROM cbt_exams e
+      JOIN courses c ON e.course_id = c.id
+      JOIN classes cl ON e.class_id = cl.id
+      WHERE e.id = ?
+    `, [examId], (err, exam) => {
+      if (err || !exam) return res.send("Exam not found");
+
+      return res.render("cbt_edit_exam", {
+        exam: {
+          ...exam,
+          title,
+          start_time,
+          end_time,
+          duration_minutes
+        },
+        errors
+      });
+    });
+
+    return;
+  }
+
+  // save update
+  db.run(`
+    UPDATE cbt_exams
+    SET title = ?, start_time = ?, end_time = ?, duration_minutes = ?
+    WHERE id = ?
+  `, [title, start_time, end_time, duration_minutes || null, examId], err => {
+    if (err) return res.send("Database error updating exam");
+
+    return res.redirect(`/admin/courses/${req.body.course_id}/cbt`);
+  });
+});
+
+///////////////////////////////////////////////////////
+// ADMIN: View / Manage CBT Questions
+app.get("/admin/cbt/:examId/questions", (req, res) => {
+    const examId = req.params.examId;
+
+    // Get exam info
+    db.get(`
+        SELECT ce.*, c.name AS course_name
+        FROM cbt_exams ce
+        JOIN courses c ON ce.course_id = c.id
+        WHERE ce.id = ?
+    `, [examId], (err, exam) => {
+
+        if (err || !exam) return res.send("Exam not found");
+
+        // Load exam questions
+        db.all(`
+            SELECT *
+            FROM cbt_questions
+            WHERE exam_id = ?
+            ORDER BY id ASC
+        `, [examId], (err2, questions) => {
+
+            if (err2) return res.send("Error loading questions");
+
+            res.render("cbt_questions", {
+                exam,
+                questions
+            });
+        });
+
+    });
+});
+
+// ADMIN: Add Question
+app.post("/admin/cbt/:examId/questions/add", (req, res) => {
+    const examId = req.params.examId;
+    const { question, option_a, option_b, option_c, option_d, correct_option } = req.body;
+
+    db.run(`
+        INSERT INTO cbt_questions (exam_id, question, option_a, option_b, option_c, option_d, correct_option)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+    `,
+    [examId, question, option_a, option_b, option_c, option_d, correct_option],
+    (err) => {
+        if (err) return res.send("Database error saving question");
+        res.redirect(`/admin/cbt/${examId}/questions`);
+    });
+});
+//////////////////////////////////////////////////////////
+// ===============================
+// ADMIN: PUBLISH EXAM
+// ===============================
+app.get("/admin/cbt/:examId/publish", (req, res) => {
+
+    if (!req.session.userId || req.session.role !== "admin") {
+        return res.redirect("/login");
+    }
+
+    const examId = req.params.examId;
+
+    // 1. Fetch exam
+    db.get(`SELECT * FROM cbt_exams WHERE id = ?`, [examId], (err, exam) => {
+        if (err || !exam) return res.send("Exam not found");
+
+        // 2. Ensure required fields exist
+        if (!exam.start_time || !exam.end_time || !exam.duration_minutes) {
+            return res.send("Exam time/date is not configured.");
+        }
+
+        // 3. Ensure questions exist
+        db.get(`SELECT COUNT(*) AS q FROM cbt_questions WHERE exam_id = ?`, [examId], (err2, q) => {
+            if (err2) return res.send("Error checking questions");
+
+            if (q.q == 0) {
+                return res.send("You must add at least ONE question before publishing.");
+            }
+
+            // 4. Ensure students enrolled
+            db.get(`SELECT COUNT(*) AS s FROM cbt_enrollments WHERE exam_id = ?`, [examId], (err3, s) => {
+                if (err3) return res.send("Error checking enrollment");
+
+                if (s.s == 0) {
+                    return res.send("No students enrolled. Enroll students first.");
+                }
+
+                // 5. All conditions met → publish
+                db.run(`UPDATE cbt_exams SET status = 'published' WHERE id = ?`,
+                    [examId],
+                    (err4) => {
+                        if (err4) return res.send("Error publishing exam");
+
+                        return res.redirect(`/admin/courses/${exam.course_id}/cbt`);
+                    }
+                );
+            });
+        });
+    });
+});
+/////////////////////////////////////////////////////////////////////////
+// ===============================
+// ADMIN: DELETE EXAM
+// ===============================
+app.get("/admin/cbt/:examId/delete", (req, res) => {
+
+    if (!req.session.userId || req.session.role !== "admin") {
+        return res.redirect("/login");
+    }
+
+    const examId = req.params.examId;
+    const courseId = req.query.courseId;
+
+    db.serialize(() => {
+
+        // DELETE enrollments (this table exists)
+        db.run(`DELETE FROM cbt_enrollments WHERE exam_id = ?`, [examId]);
+
+        // DELETE questions (this table exists)
+        db.run(`DELETE FROM cbt_questions WHERE exam_id = ?`, [examId]);
+
+        // DELETE exam (exists)
+        db.run(`DELETE FROM cbt_exams WHERE id = ?`, [examId], (err) => {
+            if (err) {
+                console.log(err);
+                return res.send("Error deleting exam");
+            }
+
+            // Redirect back to CBT dashboard
+            return res.redirect(`/admin/courses/${courseId}/cbt`);
+        });
+
+    });
+});
+
+
+// ADMIN: PUBLISH EXAM
+app.get("/admin/cbt/:examId/publish", (req, res) => {
+    if (!req.session.userId || req.session.role !== "admin") {
+        return res.redirect("/login");
+    }
+
+    const examId = req.params.examId;
+
+    // 1. Check if exam exists
+    db.get(`
+        SELECT * FROM cbt_exams WHERE id = ?
+    `, [examId], (err, exam) => {
+
+        if (err || !exam) {
+            return res.send("Exam not found");
+        }
+
+        // 2. Ensure exam has at least 1 question before publishing
+        db.get(`
+            SELECT COUNT(*) AS total FROM cbt_questions WHERE exam_id = ?
+        `, [examId], (err2, q) => {
+
+            if (err2) {
+                return res.send("Error checking questions");
+            }
+
+            if (q.total === 0) {
+                return res.send("You must add at least 1 question before publishing this exam.");
+            }
+
+            // 3. Publish exam
+            db.run(`
+                UPDATE cbt_exams 
+                SET status = 'published'
+                WHERE id = ?
+            `, [examId], (err3) => {
+
+                if (err3) {
+                    return res.send("Error publishing exam");
+                }
+
+                // Redirect back to exam dashboard
+                return res.redirect(`/admin/courses/${exam.course_id}/cbt`);
+            });
+
+        });
+
+    });
+});
+/////////////////////////////////////////////////////////////////
+// ===============================
+// TEACHER: VIEW ALL CBT EXAMS
+// ===============================
+app.get("/teacher/cbt", (req, res) => {
+
+    if (!req.session.userId || req.session.role !== "teacher") {
+        return res.redirect("/login");
+    }
+
+    const teacherId = req.session.userId;
+
+    // STEP 1: Get all teacher courses
+    db.all(`
+        SELECT c.id AS course_id, c.name AS course_name, c.class_id, cl.name AS class_name
+        FROM teacher_assignments ta
+        JOIN courses c ON ta.course_id = c.id
+        JOIN classes cl ON c.class_id = cl.id
+        WHERE ta.teacher_id = ?
+    `, [teacherId], (err, courses) => {
+
+        if (err) {
+            console.log(err);
+            return res.send("Error loading teacher courses");
+        }
+
+        if (courses.length === 0) {
+            return res.render("teacher_cbt_dashboard", { exams: [] });
+        }
+
+        const courseIds = courses.map(c => c.course_id);
+
+        // STEP 2: Load all CBT exams for those courses
+        const placeholders = courseIds.map(() => "?").join(",");
+
+        db.all(`
+            SELECT
+                ce.*,
+                c.name AS course_name,
+                cl.name AS class_name,
+                (SELECT COUNT(*) FROM cbt_questions WHERE exam_id = ce.id) AS question_count,
+                (SELECT COUNT(*) FROM cbt_enrollments WHERE exam_id = ce.id) AS enrolled_count,
+                (SELECT COUNT(*) FROM cbt_answers WHERE exam_id = ce.id) AS submitted_count
+            FROM cbt_exams ce
+            JOIN courses c ON ce.course_id = c.id
+            JOIN classes cl ON ce.class_id = cl.id
+            WHERE ce.course_id IN (${placeholders})
+            ORDER BY ce.id DESC
+        `, courseIds, (err2, exams) => {
+
+            if (err2) {
+                console.log(err2);
+                return res.send("Error loading CBT exams");
+            }
+
+            res.render("teacher_cbt_dashboard", { exams });
+        });
+    });
+});
+
+// TEACHER: PREVIEW EXAM
+app.get("/teacher/cbt/:examId/preview", (req, res) => {
+
+    if (!req.session.userId || req.session.role !== "teacher") {
+        return res.redirect("/login");
+    }
+
+    const examId = req.params.examId;
+    const teacherId = req.session.userId;
+
+    db.get(`
+        SELECT ce.*, c.name AS course_name, cl.name AS class_name
+        FROM cbt_exams ce
+        JOIN courses c ON ce.course_id = c.id
+        JOIN classes cl ON ce.class_id = cl.id
+        JOIN teacher_assignments ta ON ta.course_id = c.id
+        WHERE ce.id = ? AND ta.teacher_id = ?
+    `, [examId, teacherId], (err, exam) => {
+
+        if (err || !exam) return res.send("Not authorized or exam not found");
+
+        // Load questions
+        db.all(`
+            SELECT *
+            FROM cbt_questions
+            WHERE exam_id = ?
+        `, [examId], (err2, questions) => {
+
+            if (err2) return res.send("Error loading questions");
+
+            if (questions.length === 0) {
+                return res.render("teacher_cbt_preview", { exam, questions });
+            }
+
+            // Load options for each question
+            let pending = questions.length;
+
+            questions.forEach(q => {
+                db.all(`
+                    SELECT option_text, is_correct
+                    FROM cbt_options
+                    WHERE question_id = ?
+                    ORDER BY id ASC
+                `, [q.id], (err3, opts) => {
+
+                    q.options = opts.map(o => o.option_text);   // text only
+                    q.correct = opts.findIndex(o => o.is_correct == 1) + 1;
+
+                    pending--;
+                    if (pending === 0) {
+                        // All questions processed
+                        res.render("teacher_cbt_preview", {
+                            exam,
+                            questions
+                        });
+                    }
+                });
+            });
+        });
+    });
+});
+
+// TEACHER: MANAGE QUESTIONS
+app.get("/teacher/cbt/:examId/questions", (req, res) => {
+  const examId = req.params.examId;
+
+  // 1) load exam info
+  db.get(
+    `
+    SELECT ce.*, c.name AS course_name
+    FROM cbt_exams ce
+    JOIN courses c ON ce.course_id = c.id
+    WHERE ce.id = ?
+    `,
+    [examId],
+    (err, exam) => {
+      if (err || !exam) {
+        console.log("Exam load error:", err);
+        return res.send("Exam not found");
+      }
+
+      // 2) load questions (with image_path aliased to image)
+      db.all(
+        `
+       SELECT id, question, image_path AS image
+
+        FROM cbt_questions q
+        WHERE q.exam_id = ?
+        ORDER BY q.id ASC
+        `,
+        [examId],
+        (err2, questions) => {
+          if (err2) {
+            console.log("Question load error:", err2);
+            return res.send("Error loading questions");
+          }
+
+          if (!questions || questions.length === 0) {
+            return res.render("teacher_cbt_questions", {
+              exam,
+              examId,
+              questions: []
+            });
+          }
+
+          // 3) load all options for those questions
+          const qIds = questions.map((q) => q.id);
+          const placeholders = qIds.map(() => "?").join(",");
+
+          db.all(
+            `
+            SELECT question_id, option_text, is_correct
+            FROM cbt_options
+            WHERE question_id IN (${placeholders})
+            ORDER BY question_id, id ASC
+            `,
+            qIds,
+            (err3, optionsRows) => {
+              if (err3) {
+                console.log("Options load error:", err3);
+                return res.send("Error loading options");
+              }
+
+              // 4) attach options to each question in order
+              const optionsByQ = {};
+              optionsRows.forEach((r) => {
+                if (!optionsByQ[r.question_id]) optionsByQ[r.question_id] = [];
+                optionsByQ[r.question_id].push({
+                  text: r.option_text,
+                  is_correct: r.is_correct ? 1 : 0
+                });
+              });
+
+              const questionsWithOptions = questions.map((q) => {
+                const opts = optionsByQ[q.id] || [];
+                // map to plain array of texts for template, keep order
+                const optTexts = opts.map((o) => o.text);
+                // find index of correct option (0-based)
+                const correctIndex = opts.findIndex((o) => o.is_correct);
+                return {
+                  id: q.id,
+                  question: q.question,
+                  image: q.image, // matches template that uses q.image
+                  options: [
+                    optTexts[0] || "",
+                    optTexts[1] || "",
+                    optTexts[2] || "",
+                    optTexts[3] || ""
+                  ],
+                  // correct as 1..4 or null if not found
+                  correct: correctIndex >= 0 ? correctIndex + 1 : null
+                };
+              });
+
+              // 5) render
+              res.render("teacher_cbt_questions", {
+                exam,
+                examId,
+                questions: questionsWithOptions
+              });
+            }
+          );
+        }
+      );
+    }
+  );
+});
+
+
+// TEACHER: VIEW SUBMISSIONS
+app.get("/teacher/cbt/:examId/submissions", (req, res) => {
+
+    if (!req.session.userId || req.session.role !== "teacher") {
+        return res.redirect("/login");
+    }
+
+    const examId = req.params.examId;
+
+    db.all(`
+        SELECT 
+            cs.id AS submission_id,
+            u.name AS student_name,
+            u.username AS student_username,
+            cs.score,
+            cs.submitted_at
+        FROM cbt_submissions cs
+        JOIN users u ON u.id = cs.student_id
+        WHERE cs.exam_id = ?
+        ORDER BY cs.submitted_at DESC
+    `, [examId], (err, rows) => {
+
+        if (err) {
+            console.log("SUBMISSIONS LOAD ERROR:", err);
+            return res.send("Database error loading submissions");
+        }
+
+        res.render("teacher_cbt_submissions", { 
+            rows: rows || [] 
+        });
+    });
+});
+
+
+app.get("/teacher/cbt/:examId/delete-questions", (req, res) => {
+
+    const examId = req.params.examId;
+
+    db.run(`DELETE FROM cbt_questions WHERE exam_id = ?`, [examId], () => {
+        res.redirect(`/teacher/cbt/${examId}/questions`);
+    });
+
+});
+
+app.get("/teacher/cbt/:examId/print", (req, res) => {
+
+    const examId = req.params.examId;
+
+    db.all(`SELECT * FROM cbt_questions WHERE exam_id = ?`, [examId], (err, questions) => {
+
+        res.render("teacher_cbt_print", { questions });
+
+    });
+});
+////////////////////////////////////////////////////////////////////////
+
+
+// TEACHER ADD QUESTION FORM
+app.get("/teacher/cbt/:examId/questions/add", (req, res) => {
+    if (!req.session.userId || req.session.role !== "teacher")
+        return res.redirect("/login");
+
+    res.render("teacher_add_question", { examId: req.params.examId });
+});
+
+// TEACHER SAVE NEW QUESTION
+app.post(
+  "/teacher/cbt/:examId/questions/add",
+  uploadQuestionImage.single("question_image"),
+  (req, res) => {
+
+    const examId = req.params.examId;
+    const { question, option1, option2, option3, option4, correct } = req.body;
+
+    const image = req.file ? req.file.filename : null;
+
+    db.run(
+      `
+        INSERT INTO cbt_questions (exam_id, question, image_path)
+        VALUES (?, ?, ?)
+      `,
+      [examId, question, image],
+      function (err) {
+        if (err) {
+          console.log("INSERT QUESTION ERROR:", err);
+          return res.send("Error saving question");
+        }
+
+        const qid = this.lastID;
+        const options = [option1, option2, option3, option4];
+
+        const stmt = db.prepare(`
+          INSERT INTO cbt_options (question_id, option_text, is_correct)
+          VALUES (?, ?, ?)
+        `);
+
+        options.forEach((opt, index) => {
+          stmt.run(qid, opt, correct == index + 1 ? 1 : 0);
+        });
+
+        stmt.finalize(() => {
+          res.redirect(`/teacher/cbt/${examId}/questions`);
+        });
+      }
+    );
+  }
+);
+
+// TEACHER: EDIT QUESTION FORM
+app.get("/teacher/cbt/:examId/questions/:questionId/edit", (req, res) => {
+
+    if (!req.session.userId || req.session.role !== "teacher") {
+        return res.redirect("/login");
+    }
+
+    const examId = req.params.examId;
+    const questionId = req.params.questionId;
+
+    // Load question + options
+    db.get(`
+        SELECT * FROM cbt_questions WHERE id = ?
+    `, [questionId], (err, question) => {
+
+        if (err || !question) {
+            console.log(err);
+            return res.send("Question not found");
+        }
+
+        db.all(`
+            SELECT * FROM cbt_options WHERE question_id = ?
+        `, [questionId], (err2, options) => {
+
+            if (err2) {
+                console.log(err2);
+                return res.send("Error loading options");
+            }
+
+            res.render("teacher_edit_question", {
+                examId,
+                question,
+                options
+            });
+        });
+    });
+});
+
+// TEACHER: SAVE EDITED QUESTION
+app.post(
+    "/teacher/cbt/:examId/questions/:questionId/edit",
+    uploadQuestionImage.single("question_image"),   // ✅ CORRECT
+    (req, res) => {
+
+        const examId = req.params.examId;
+        const questionId = req.params.questionId;
+
+        const { question, option1, option2, option3, option4, correct } = req.body;
+
+        const newImage = req.file ? req.file.filename : null;
+
+        let sql = `
+            UPDATE cbt_questions
+            SET question = ?
+            ${newImage ? ", image_path = ?" : ""}
+            WHERE id = ?
+        `;
+
+        let params = newImage
+            ? [question, newImage, questionId]
+            : [question, questionId];
+
+        db.run(sql, params, (err) => {
+            if (err) {
+                console.log("UPDATE QUESTION ERROR:", err);
+                return res.send("Error updating question");
+            }
+
+            const options = [option1, option2, option3, option4];
+
+            db.all(
+                `SELECT id FROM cbt_options WHERE question_id = ?`,
+                [questionId],
+                (err2, rows) => {
+
+                    if (err2) return res.send("Error updating options");
+                    if (rows.length !== 4)
+                        return res.send("Option mismatch error");
+
+                    const stmt = db.prepare(`
+                        UPDATE cbt_options
+                        SET option_text = ?, is_correct = ?
+                        WHERE id = ?
+                    `);
+
+                    options.forEach((text, index) => {
+                        const optId = rows[index].id;
+                        stmt.run(text, correct == index + 1 ? 1 : 0, optId);
+                    });
+
+                    stmt.finalize(() => {
+                        res.redirect(`/teacher/cbt/${examId}/questions`);
+                    });
+                }
+            );
+        });
+    }
+);
+
+// TEACHER DELETE QUESTION
+app.get("/teacher/cbt/questions/:questionId/delete", (req, res) => {
+
+    if (!req.session.userId || req.session.role !== "teacher") {
+        return res.redirect("/login");
+    }
+
+    const questionId = req.params.questionId;
+
+    db.get(`
+        SELECT exam_id FROM cbt_questions WHERE id = ?
+    `, [questionId], (err, row) => {
+
+        if (err || !row) {
+            return res.send("Question not found");
+        }
+
+        const examId = row.exam_id;
+
+        db.run(`
+            DELETE FROM cbt_questions WHERE id = ?
+        `, [questionId], (err2) => {
+
+            if (err2) {
+                console.log(err2);
+                return res.send("Error deleting question");
+            }
+
+            res.redirect(`/teacher/cbt/${examId}/questions`);
+        });
+    });
+});
+/////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////
+// ---------- STUDENT CBT: dashboard ----------
+app.get("/student/cbt", (req, res) => {
+    if (!req.session.userId || req.session.role !== "student") {
+        return res.redirect("/login");
+    }
+
+    const studentId = req.session.userId;
+
+    // 1. GET STUDENT CLASS
+    db.get(
+        `SELECT class_id FROM users WHERE id = ?`,
+        [studentId],
+        (err, student) => {
+
+            if (err) {
+                console.log("CBT CLASS ERROR:", err);
+                return res.send("Database error loading class.");
+            }
+
+            if (!student || !student.class_id) {
+                return res.send("Student class not assigned.");
+            }
+
+            const classId = student.class_id;
+
+            // 2. LOAD EXAMS FOR STUDENT’S CLASS
+            db.all(
+                `
+                SELECT ce.*, c.name AS course_name
+                FROM cbt_exams ce
+                JOIN courses c ON ce.course_id = c.id
+                WHERE ce.class_id = ?
+                ORDER BY ce.id DESC
+                `,
+                [classId],
+                (err2, exams) => {
+
+                    if (err2) {
+                        console.log("CBT EXAM LOAD ERROR:", err2);
+                        return res.send("Error loading exams");
+                    }
+
+                    // 3. RENDER STUDENT CBT DASHBOARD PAGE
+                    res.render("student_cbt_dashboard", {
+                        exams,
+                        classId
+                    });
+                }
+            );
+        }
+    );
+});
 
 
 
 
+app.get("/student/cbt/:examId/start", (req, res) => {
+
+    if (!req.session.userId || req.session.role !== "student") {
+        return res.redirect("/login");
+    }
+
+    const examId = req.params.examId;
+
+    db.get(`SELECT * FROM cbt_exams WHERE id = ?`, [examId], (err, exam) => {
+        if (!exam) return res.send("Exam not found");
+
+        res.render("student_cbt_instructions", { exam });
+    });
+});
+
+
+// ---------- STUDENT: Autosave answer ----------
+app.post('/student/cbt/:examId/answer-save', (req, res) => {
+  if (!req.session.userId || req.session.role !== 'student') {
+    return res.status(403).json({ error: 'Auth' });
+  }
+
+  const examId = Number(req.params.examId);
+  const studentId = req.session.userId;
+
+  const { answers, marks } = req.body;
+  // answers = { questionId: selectedOption }
+  // marks   = { questionId: "0" or "1" }
+
+  if (!answers || typeof answers !== 'object') {
+    return res.status(400).json({ error: 'Invalid answers payload' });
+  }
+
+  // =============== SAVE ANSWERS ===============
+  const answerKeys = Object.keys(answers);
+
+  const stmtAns = db.prepare(`
+    INSERT INTO cbt_answers (exam_id, student_id, question_id, selected_option)
+    VALUES (?, ?, ?, ?)
+    ON CONFLICT(exam_id, student_id, question_id)
+    DO UPDATE SET selected_option = excluded.selected_option,
+                  created_at = datetime('now')
+  `);
+
+  answerKeys.forEach(qid => {
+    const opt = answers[qid] ? Number(answers[qid]) : null;
+    stmtAns.run(examId, studentId, Number(qid), opt);
+  });
+
+  // finalize answers first
+  stmtAns.finalize(err => {
+    if (err) {
+      console.log("Autosave ANSWER error:", err);
+      return res.status(500).json({ error: "DB error (answers)" });
+    }
+
+    // =============== SAVE MARKS ===============
+    if (!marks || typeof marks !== 'object') {
+      // no marks sent → finish cleanly
+      return res.json({ success: true, savedAnswers: answerKeys.length, savedMarks: 0 });
+    }
+
+    const markKeys = Object.keys(marks);
+
+    if (markKeys.length === 0) {
+      return res.json({ success: true, savedAnswers: answerKeys.length, savedMarks: 0 });
+    }
+
+    const stmtMark = db.prepare(`
+      INSERT INTO cbt_marks (exam_id, student_id, question_id, marked)
+      VALUES (?, ?, ?, ?)
+      ON CONFLICT(exam_id, student_id, question_id)
+      DO UPDATE SET marked = excluded.marked
+    `);
+
+    markKeys.forEach(qid => {
+      const markValue = marks[qid] ? Number(marks[qid]) : 0; // 0 or 1
+      stmtMark.run(examId, studentId, Number(qid), markValue);
+    });
+
+    stmtMark.finalize(err2 => {
+      if (err2) {
+        console.log("Autosave MARK error:", err2);
+        return res.status(500).json({ error: "DB error (marks)" });
+      }
+
+      // final success response
+      res.json({
+        success: true,
+        savedAnswers: answerKeys.length,
+        savedMarks: markKeys.length
+      });
+    });
+
+  }); // end answers finalize
+});
+
+
+// ---------- STUDENT: Webcam snapshot ----------
+app.post('/student/cbt/webcam-snapshot', uploadWebcam.single('snapshot'), (req, res) => {
+  // expects form-data with 'snapshot' file and fields examId, studentId (or use session)
+  if (!req.session.userId || req.session.role !== 'student') return res.status(403).json({ error: 'Auth' });
+
+  const examId = req.body.examId ? Number(req.body.examId) : null;
+  const studentId = req.session.userId;
+
+  if (!req.file) return res.status(400).json({ error: 'No file' });
+
+  const filename = req.file.filename;
+  db.run('INSERT INTO cbt_snapshots (exam_id, student_id, filename) VALUES (?, ?, ?)', [examId, studentId, filename], (err) => {
+    if (err) {
+      console.log('Snapshot save error', err);
+      return res.status(500).json({ error: 'DB error' });
+    }
+    res.json({ success: true, filename });
+  });
+});
+
+// ---------- STUDENT: Flag infraction ----------
+app.post('/student/cbt/flag-infraction', express.json(), (req, res) => {
+  if (!req.session.userId || req.session.role !== 'student') return res.status(403).json({ error: 'Auth' });
+
+  const { examId, reason } = req.body;
+  if (!examId || !reason) return res.status(400).json({ error: 'Missing fields' });
+
+  db.run('INSERT INTO cbt_infractions (exam_id, student_id, reason) VALUES (?, ?, ?)', [examId, req.session.userId, reason], (err) => {
+    if (err) {
+      console.log('Infraction insert error', err);
+      return res.status(500).json({ error: 'DB error' });
+    }
+    // count strikes
+    db.get('SELECT COUNT(*) AS total FROM cbt_infractions WHERE exam_id = ? AND student_id = ?', [examId, req.session.userId], (err2, row) => {
+      const total = row ? row.total : 0;
+      res.json({ success: true, strikes: total });
+    });
+  });
+});
+
+// ---------- STUDENT: Submit exam (auto-marking) ----------
+app.post('/student/cbt/:examId/submit', (req, res) => {
+  if (!req.session.userId || req.session.role !== 'student') return res.status(403).json({ error: 'Auth' });
+
+  const examId = Number(req.params.examId);
+  const studentId = req.session.userId;
+
+  // 1) load all student's answers for this exam
+  db.all(`
+    SELECT a.question_id, a.selected_option, o.is_correct
+    FROM cbt_answers a
+    LEFT JOIN cbt_options o ON o.question_id = a.question_id AND o.option_number = a.selected_option
+    WHERE a.exam_id = ? AND a.student_id = ?
+  `, [examId, studentId], (err, rows) => {
+    if (err) {
+      console.log('Submit load answers error', err);
+      return res.status(500).json({ error: 'DB error' });
+    }
+
+    // count total questions for exam (to compute total)
+    db.get('SELECT COUNT(*) AS total_questions FROM cbt_questions WHERE exam_id = ?', [examId], (err2, totalRow) => {
+      const totalQuestions = totalRow ? totalRow.total_questions : 0;
+
+      // compute score (1 point per correct by default) — adapt weighting if needed
+      let correctCount = 0;
+      rows.forEach(r => {
+        if (r.is_correct === 1) correctCount++;
+      });
+
+      const score = correctCount;
+      const total = totalQuestions;
+
+      // upsert into cbt_results
+      db.run(`
+        INSERT INTO cbt_results (exam_id, student_id, score, total, submitted_at)
+        VALUES (?, ?, ?, ?, datetime('now'))
+        ON CONFLICT(exam_id, student_id) DO UPDATE SET score = excluded.score, total = excluded.total, submitted_at = excluded.submitted_at
+      `, [examId, studentId, score, total], (err3) => {
+        if (err3) {
+          console.log('Result save error', err3);
+          return res.status(500).json({ error: 'DB error' });
+        }
+        res.json({ success: true, score, total });
+      });
+    });
+  });
+});
+
+// ---------- TEACHER: Get submissions summary for exam ----------
+app.get('/teacher/cbt/:examId/submissions', (req, res) => {
+  if (!req.session.userId || req.session.role !== 'teacher') return res.redirect('/login');
+
+  const examId = Number(req.params.examId);
+  db.all(`
+    SELECT r.student_id, u.name, u.username, r.score, r.total, r.submitted_at
+    FROM cbt_results r
+    JOIN users u ON u.id = r.student_id
+    WHERE r.exam_id = ?
+    ORDER BY r.score DESC
+  `, [examId], (err, rows) => {
+    if (err) {
+      console.log('Teacher submissions error', err);
+      return res.send('Error loading submissions');
+    }
+    res.render('teacher_cbt_submissions', { rows: rows || [] });
+  });
+});
+
+// ---------- ADMIN/TEACHER: View infractions ----------
+app.get('/admin/cbt/:examId/infractions', (req, res) => {
+  if (!req.session.userId || (req.session.role !== 'admin' && req.session.role !== 'teacher')) return res.redirect('/login');
+
+  const examId = Number(req.params.examId);
+  db.all(`
+    SELECT i.*, u.name, u.username FROM cbt_infractions i
+    LEFT JOIN users u ON u.id = i.student_id
+    WHERE i.exam_id = ?
+    ORDER BY i.created_at DESC
+  `, [examId], (err, rows) => {
+    if (err) { console.log(err); return res.send('DB error'); }
+    res.render('admin_cbt_infractions', { infractions: rows || [] });
+  });
+});
+
+app.get('/student/cbt/:examId/write', (req, res) => {
+  if (!req.session.userId || req.session.role !== 'student') return res.redirect('/login');
+  const examId = Number(req.params.examId);
+
+  db.get(`SELECT ce.*, c.name AS course_name, cl.name AS class_name
+          FROM cbt_exams ce
+          JOIN courses c ON ce.course_id = c.id
+          JOIN classes cl ON ce.class_id = cl.id
+          WHERE ce.id = ?`, [examId], (err, exam) => {
+    if (err || !exam) return res.send('Exam not found');
+
+    db.all(`SELECT q.id, q.question, q.image_path,
+                   (SELECT COUNT(*) FROM cbt_options o WHERE o.question_id = q.id) AS opt_count
+            FROM cbt_questions q WHERE q.exam_id = ? ORDER BY q.id ASC`, [examId], (err2, questions) => {
+      if (err2) { console.log(err2); return res.send('Error loading'); }
+
+      // For easy rendering, load options and map them into option_map
+      const qIds = questions.map(q => q.id);
+      if (qIds.length === 0) return res.render('student_cbt_write', { exam, questions: [] });
+
+      const placeholders = qIds.map(()=>'?').join(',');
+      db.all(`SELECT question_id, option_number, option_text FROM cbt_options WHERE question_id IN (${placeholders})`, qIds, (err3, opts) => {
+        if (err3) { console.log(err3); return res.send('Error loading options'); }
+        const optsByQ = {};
+        opts.forEach(o => {
+          if (!optsByQ[o.question_id]) optsByQ[o.question_id] = {};
+          optsByQ[o.question_id][o.option_number] = o.option_text;
+        });
+        const questionsWithMap = questions.map(q => {
+          return { ...q, option_map: optsByQ[q.id] || {} };
+        });
+        res.render('student_cbt_write', { exam, questions: questionsWithMap });
+      });
+    });
+  });
+});
+
+app.get("/teacher/question-bank", (req, res) => {
+    if (!req.session.userId || req.session.role !== "teacher")
+        return res.redirect("/login");
+
+    const teacherId = req.session.userId;
+
+    const sql = `
+        SELECT 
+            q.course_id,
+            q.class_id,
+            c.name AS course_name,
+            cl.name AS class_name,
+            COUNT(q.id) AS total_questions
+        FROM question_bank q
+        JOIN courses c ON q.course_id = c.id
+        JOIN classes cl ON q.class_id = cl.id
+        WHERE q.teacher_id = ?
+        GROUP BY q.course_id, q.class_id
+        ORDER BY c.name;
+    `;
+
+    db.all(sql, [teacherId], (err, rows) => {
+        if (err) return res.send("DB Error");
+
+        res.render("teacher_question_bank", { banks: rows });
+    });
+});
+
+// VIEW QUESTIONS BY COURSE + CLASS
+app.get("/teacher/question-bank/:course_id/:class_id/questions", (req, res) => {
+    if (!req.session.userId || req.session.role !== "teacher") {
+        return res.redirect("/login");
+    }
+
+    const { course_id, class_id } = req.params;
+
+    // 1. Load all questions for that course/class
+    const qSql = `
+        SELECT * FROM question_bank 
+        WHERE course_id = ? AND class_id = ?
+        ORDER BY id DESC
+    `;
+
+    db.all(qSql, [course_id, class_id], (err, questions) => {
+        if (err) {
+            console.log("QUESTION ERROR:", err);
+            return res.send("Error loading questions");
+        }
+
+        // 2. Load CBT exams for that course/class
+        const examSql = `
+            SELECT e.id, e.title, e.course_id, e.class_id,
+                   c.name AS class_name
+            FROM cbt_exams e
+            JOIN classes c ON c.id = e.class_id
+            WHERE e.course_id = ? AND e.class_id = ?
+        `;
+
+        db.all(examSql, [course_id, class_id], (err2, exams) => {
+            if (err2) {
+                console.log("EXAM ERROR:", err2);
+                return res.send("Error loading exams");
+            }
+
+            // 3. Load course name
+            db.get(`SELECT name FROM courses WHERE id = ?`, [course_id], (err3, courseRow) => {
+                const course_name = courseRow ? courseRow.name : "";
+
+                // 4. Load class name
+                db.get(`SELECT name FROM classes WHERE id = ?`, [class_id], (err4, classRow) => {
+                    const class_name = classRow ? classRow.name : "";
+
+                    // 5. Render page with success flag
+                    res.render("teacher_question_list", {
+                        questions,
+                        exams,
+                        course_id,
+                        class_id,
+                        course_name,
+                        class_name,
+                        import_success: req.query.import === "success"
+                    });
+                });
+            });
+        });
+    });
+});
+
+
+app.post("/teacher/cbt/import-question", (req, res) => {
+    const examId = req.body.examId;
+    const questionId = req.body.qid;
+
+    console.log("IMPORT REQUEST → exam:", examId, "question:", questionId);
+
+    db.get(`SELECT * FROM question_bank WHERE id = ?`, [questionId], (err, q) => {
+        if (err) {
+            console.log("❌ SELECT ERROR:", err);
+            return res.redirect("back");
+        }
+
+        if (!q) {
+            return res.redirect("back");
+        }
+
+        db.run(
+            `INSERT INTO cbt_questions 
+             (exam_id, question, image, image_path, option1, option2, option3, option4, correct_option)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [
+                examId,
+                q.question,
+                q.image || null,
+                q.image_path || null,
+                q.option1,
+                q.option2,
+                q.option3,
+                q.option4,
+                q.correct_option
+            ],
+            function (err2) {
+                if (err2) {
+                    console.log("❌ INSERT ERROR:", err2);
+                    return res.redirect("back");
+                }
+
+                // SUCCESS → redirect back to question list
+                return res.redirect(
+                    `/teacher/question-bank/${q.course_id}/${q.class_id}/questions?import=success`
+                );
+            }
+        );
+    });
+});
+
+
+
+
+
+
+app.get("/teacher/cbt/import/bulk", (req, res) => {
+  const { course, class: classId } = req.query;
+
+  const teacherId = req.session.userId;
+
+  const examSql = `
+    SELECT cbt_exams.*, classes.name AS class_name
+    FROM cbt_exams
+    JOIN classes ON classes.id = cbt_exams.class_id
+    WHERE cbt_exams.teacher_id = ?
+    AND cbt_exams.course_id = ?
+    AND cbt_exams.class_id = ?
+  `;
+
+  const qSql = `
+    SELECT * FROM question_bank
+    WHERE course_id=? AND class_id=?
+    ORDER BY id ASC
+  `;
+
+  db.all(qSql, [course, classId], (err, questions) => {
+    if (err) return res.send("Cannot load questions");
+
+    db.all(examSql, [teacherId, course, classId], (err2, exams) => {
+      if (err2) return res.send("Cannot load exams");
+
+      res.render("teacher_bulk_import", {
+        questions,
+        exams,
+        course_id: course,
+        class_id: classId
+      });
+    });
+  });
+});
+
+app.post("/teacher/cbt/import/bulk", (req, res) => {
+  const { exam_id, questions } = req.body;
+
+  const ids = JSON.parse(questions); // array of question IDs
+
+  const stmt = db.prepare(`
+    INSERT INTO cbt_exam_questions (exam_id, question_id)
+    VALUES (?, ?)
+  `);
+
+  ids.forEach(id => stmt.run(exam_id, id));
+
+  stmt.finalize(() => {
+    res.json({ success: true, added: ids.length });
+  });
+});
+
+
+
+
+// ADD QUESTION (SAVE)
+app.post('/teacher/question-bank/add', bankUpload.single('image'), (req, res) => {
+
+    if (!req.session.userId || req.session.role !== 'teacher') {
+        return res.redirect('/login');
+    }
+
+    const teacherId = req.session.userId;
+    const { course_id, class_id, question, option1, option2, option3, option4, correct_option } = req.body;
+
+    const img = req.file ? req.file.filename : null;
+
+    const sql = `
+        INSERT INTO question_bank 
+        (teacher_id, course_id, class_id, question, option1, option2, option3, option4, correct_option, image_path)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `;
+
+    db.run(sql,
+        [
+            teacherId, 
+            course_id, 
+            class_id,
+            question,
+            option1,
+            option2,
+            option3,
+            option4,
+            correct_option,
+            img
+        ],
+        (err) => {
+            if (err) {
+                console.log("Question Bank Insert Error:", err);
+                return res.send("Database error while saving question.");
+            }
+
+            res.redirect('/teacher/question-bank');
+        }
+    );
+});
+app.get('/teacher/question-bank/add', (req, res) => {
+    if (!req.session.userId || req.session.role !== 'teacher')
+        return res.redirect('/login');
+
+    db.all("SELECT * FROM courses", [], (err, courses) => {
+        db.all("SELECT * FROM classes", [], (err2, classes) => {
+            res.render("teacher_question_bank_add", { courses, classes });
+        });
+    });
+});
+
+// 1️⃣ LOAD AI PAGE
+app.get("/teacher/question-bank/:course_id/:class_id/ai", (req, res) => {
+    if (!req.session.userId || req.session.role !== "teacher")
+        return res.redirect("/login");
+
+    res.render("teacher_question_bank_ai", {
+        course_id: req.params.course_id,
+        class_id: req.params.class_id
+    });
+});
+
+
+
+// 2️⃣ GENERATE QUESTIONS USING AI
+app.post('/teacher/question-bank/ai-generate', async (req, res) => {
+    const { topic, difficulty, count } = req.body;
+
+    try {
+        const prompt = `
+Generate ${count} multiple-choice questions on topic "${topic}".
+Difficulty: ${difficulty}.
+Return ONLY pure JSON array, NO markdown or explanation.
+
+Format:
+[
+  {
+    "question": "string",
+    "optionA": "string",
+    "optionB": "string",
+    "optionC": "string",
+    "optionD": "string",
+    "correct_option": A
+  }
+]
+        `;
+
+        const completion = await openai.chat.completions.create({
+            model: "gpt-4o-mini",
+            messages: [{ role: "user", content: prompt }],
+            temperature: 0
+        });
+
+        let output = completion.choices[0].message.content.trim();
+
+        // Remove markdown and ```json fences
+        output = output.replace(/```json/gi, "")
+                       .replace(/```/g, "")
+                       .trim();
+
+        // Parse safely
+        const json = JSON.parse(output);
+
+        res.json({ success: true, questions: json });
+
+    } catch (err) {
+        console.log("AI Error:", err);
+        res.status(500).json({ error: "AI generation failed", details: err.message });
+    }
+});
+
+
+// 3️⃣ SAVE GENERATED QUESTIONS TO DATABASE
+app.post('/teacher/question-bank/:course_id/:class_id/ai-generate/save', (req, res) => {
+    if (!req.session.userId || req.session.role !== "teacher")
+        return res.status(403).json({ error: "Unauthorized" });
+
+    const teacherId = req.session.userId;
+    const { course_id, class_id } = req.params;
+
+    let arr;
+    try {
+        arr = JSON.parse(req.body.questions);
+    } catch (e) {
+        return res.status(400).json({ error: "Invalid questions JSON" });
+    }
+
+    const stmt = db.prepare(`
+        INSERT INTO question_bank 
+        (teacher_id, course_id, class_id, question, option1, option2, option3, option4, correct_option)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `);
+
+    arr.forEach(q => {
+        stmt.run(
+            teacherId,
+            course_id,
+            class_id,
+            q.question,
+            q.optionA,
+            q.optionB,
+            q.optionC,
+            q.optionD,
+            q.correct_option
+        );
+    });
+
+    stmt.finalize(() => {
+        return res.json({ success: true, added: arr.length });
+    });
+});
+
+app.get("/teacher/question-bank/:qid/edit", (req, res) => {
+    const qid = req.params.qid;
+
+    db.get(`
+        SELECT * FROM question_bank WHERE id = ?
+    `, [qid], (err, q) => {
+        if (err || !q) return res.send("Question not found");
+
+        db.all("SELECT * FROM courses", [], (err2, courses) => {
+            db.all("SELECT * FROM classes", [], (err3, classes) => {
+                res.render("teacher_question_bank_edit", {
+                    question: q,
+                    courses,
+                    classes
+                });
+            });
+        });
+    });
+});
+
+app.post("/teacher/question-bank/:qid/edit", bankUpload.single("image"), (req, res) => {
+    const qid = req.params.qid;
+
+    const { course_id, class_id, question, option1, option2, option3, option4, correct_option } = req.body;
+    const image = req.file ? req.file.filename : req.body.old_image;
+
+    db.run(`
+        UPDATE question_bank 
+        SET course_id=?, class_id=?, question=?, option1=?, option2=?, option3=?, option4=?, correct_option=?, image_path=?
+        WHERE id=?
+    `,
+    [course_id, class_id, question, option1, option2, option3, option4, correct_option, image, qid],
+    err => {
+        if (err) return res.send("Update error");
+        res.redirect("/teacher/question-bank");
+    });
+});
+
+app.post("/teacher/question-bank/:qid/delete", (req, res) => {
+    const qid = req.params.qid;
+
+    db.run(`DELETE FROM question_bank WHERE id = ?`, [qid], err => {
+        if (err) return res.send("Delete error");
+        res.redirect("/teacher/question-bank");
+    });
+});
+
+app.get("/teacher/question-bank/:course_id/:class_id/preview", (req, res) => {
+  const { course_id, class_id } = req.params;
+
+  db.all(`
+    SELECT * FROM question_bank 
+    WHERE course_id=? AND class_id=?
+  `, [course_id, class_id], (err, questions) => {
+
+    if (err) return res.send("Database error");
+
+    res.render("teacher_question_bank_preview", {
+      questions,
+      course_id,
+      class_id
+    });
+  });
+});
+
+app.get("/teacher/question-bank/:course_id/:class_id/print", (req, res) => {
+  const { course_id, class_id } = req.params;
+
+  db.all(`
+    SELECT * FROM question_bank 
+    WHERE course_id=? AND class_id=?
+  `, [course_id, class_id], (err, questions) => {
+
+    if (err) return res.send("Database error");
+
+    res.render("teacher_question_bank_print", {
+      questions,
+      course_id,
+      class_id
+    });
+  });
+});
+
+app.post("/teacher/question-bank/:course_id/:class_id/delete", (req, res) => {
+  const { course_id, class_id } = req.params;
+
+  db.run(
+    `DELETE FROM question_bank WHERE course_id=? AND class_id=?`,
+    [course_id, class_id],
+    function (err) {
+      if (err) return res.send("Delete failed.");
+
+      res.redirect("/teacher/question-bank");
+    }
+  );
+});
+
+
+// GET - paginated question list
+app.get("/teacher/question-bank/:course_id/:class_id/questions", (req, res) => {
+  if (!req.session.userId || req.session.role !== "teacher") return res.redirect("/login");
+
+  const course_id = Number(req.params.course_id);
+  const class_id  = Number(req.params.class_id);
+
+  const pageSize = 10; // questions per page (you can change)
+  const currentPage = Math.max(1, Number(req.query.page) || 1);
+  const offset = (currentPage - 1) * pageSize;
+
+  // 1) total count
+  db.get(
+    `SELECT COUNT(*) AS cnt FROM question_bank WHERE course_id = ? AND class_id = ?`,
+    [course_id, class_id],
+    (err, row) => {
+      if (err) {
+        console.error("COUNT ERROR:", err);
+        return res.send("Error loading questions");
+      }
+      const total = row ? row.cnt : 0;
+      const totalPages = Math.max(1, Math.ceil(total / pageSize));
+
+      // 2) fetch page
+      db.all(
+        `SELECT * FROM question_bank
+         WHERE course_id = ? AND class_id = ?
+         ORDER BY id DESC
+         LIMIT ? OFFSET ?`,
+        [course_id, class_id, pageSize, offset],
+        (err2, questions) => {
+          if (err2) {
+            console.error("QUESTIONS ERROR:", err2);
+            return res.send("Error loading questions");
+          }
+
+          // 3) fetch exams for the import dropdown
+          db.all(
+            `SELECT e.id, e.title, c.name AS class_name
+             FROM cbt_exams e
+             LEFT JOIN classes c ON c.id = e.class_id
+             WHERE e.course_id = ? AND e.class_id = ?`,
+            [course_id, class_id],
+            (err3, exams) => {
+              if (err3) {
+                console.error("EXAM ERROR:", err3);
+                return res.send("Error loading exams");
+              }
+
+              // Pass flash-like query params: import_success, deleted_count (if present)
+              const import_success = req.query.import === "success";
+              const deleted_count = Number(req.query.deleted || 0);
+
+              res.render("teacher_question_list", {
+                questions,
+                exams,
+                course_id,
+                class_id,
+                course_name: req.query.courseName || '', // optional friendly name if you pass it
+                class_name: req.query.className || '',
+                currentPage,
+                totalPages,
+                pageSize,
+                total,
+                import_success,
+                deleted_count
+              });
+            }
+          );
+        }
+      );
+    }
+  );
+});
+
+// POST - bulk delete selected questions
+app.post("/teacher/question-bank/bulk-delete", (req, res) => {
+  if (!req.session.userId || req.session.role !== "teacher") return res.status(403).send("Auth");
+
+  // Expect body.ids = [1,2,3,...] (form or fetch)
+  const ids = Array.isArray(req.body.ids) ? req.body.ids.map(Number) : (req.body.ids ? [Number(req.body.ids)] : []);
+  if (ids.length === 0) {
+    // redirect back with no-op
+    return res.redirect("back");
+  }
+
+  // Build placeholders
+  const placeholders = ids.map(() => '?').join(',');
+  const sql = `DELETE FROM question_bank WHERE id IN (${placeholders})`;
+
+  db.run(sql, ids, function(err) {
+    if (err) {
+      console.error("BULK DELETE ERROR:", err);
+      return res.status(500).send("Database error");
+    }
+    // redirect back to list page that made the request; we'll rely on referrer
+    // If you want to force course/class, you can pass them in body and build redirect accordingly.
+    res.redirect(req.get('referer') ? (req.get('referer') + (req.get('referer').includes('?') ? '&' : '?') + 'deleted=' + this.changes) : '/teacher/question-bank');
+  });
+});
+
+
+
+
+
+
+// app.get("/teacher/question-bank/:examId?", (req, res) => {
+//     const currentExamId = req.params.examId || null;
+
+//     db.all(`
+//         SELECT qb.*, c.name AS course_name, cl.name AS class_name
+//         FROM question_bank qb
+//         JOIN courses c ON qb.course_id = c.id
+//         JOIN classes cl ON qb.class_id = cl.id
+//         WHERE qb.teacher_id = ?
+//     `, [req.session.userId], (err, rows) => {
+//         res.render("teacher_question_bank", {
+//             questions: rows,
+//             currentExamId
+//         });
+//     });
+// });
+
+
+
+
+
+
+
+
+// app.get("/teacher/question-bank/bulk", (req, res) => {
+//     if (req.session.role !== "teacher") return res.redirect("/login");
+//     res.render("teacher_question_bank_bulk");
+// });
+
+// app.post("/teacher/question-bank/bulk", bulkUpload.single("file"), (req, res) => {
+//     if (!req.file) return res.send("No file uploaded");
+
+//     const teacherId = req.session.userId;
+//     const filePath = req.file.path;
+//     const ext = req.file.originalname.split(".").pop().toLowerCase();
+
+//     let rows = [];
+
+//     function saveRows(rows) {
+//         const stmt = db.prepare(`
+//             INSERT INTO question_bank 
+//             (teacher_id, course_id, class_id, question, option1, option2, option3, option4, correct_option)
+//             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+//         `);
+
+//         rows.forEach(r => {
+//             stmt.run(
+//                 teacherId,
+//                 r.course_id,
+//                 r.class_id,
+//                 r.question,
+//                 r.option1,
+//                 r.option2,
+//                 r.option3,
+//                 r.option4,
+//                 r.correct_option
+//             );
+//         });
+
+//         stmt.finalize(() => {
+//             fs.unlinkSync(filePath);
+//             res.redirect("/teacher/question-bank");
+//         });
+//     }
+
+//     if (ext === "csv") {
+//         fs.createReadStream(filePath)
+//             .pipe(csv())
+//             .on("data", row => rows.push(row))
+//             .on("end", () => saveRows(rows));
+//     } else {
+//         const workbook = xlsx.readFile(filePath);
+//         const sheet = workbook.Sheets[workbook.SheetNames[0]];
+//         rows = xlsx.utils.sheet_to_json(sheet);
+//         saveRows(rows);
+//     }
+// });
+
+// app.post('/teacher/cbt/:examId/import-question/:qid', (req, res) => {
+//     const examId = req.params.examId;
+//     const qid = req.params.qid;
+
+//     db.get(`SELECT * FROM question_bank WHERE id=?`, [qid], (err, q) => {
+//         if (err || !q) return res.json({ error: "Question missing" });
+
+//         db.run(`
+//             INSERT INTO cbt_questions 
+//             (exam_id, question, option1, option2, option3, option4, correct_option, image_path)
+//             VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+//         `,
+//         [
+//             examId,
+//             q.question,
+//             q.option1,
+//             q.option2,
+//             q.option3,
+//             q.option4,
+//             q.correct_option,
+//             q.image_path
+//         ],
+//         err2 => {
+//             if (err2) return res.json({ error: "Import failed" });
+
+//             res.json({ success: true });
+//         });
+//     });
+// });
+
+// app.post('/teacher/cbt/:examId/import-all', (req, res) => {
+//     const { course_id, class_id } = req.body;
+//     const examId = req.params.examId;
+
+//     db.all(`
+//         SELECT * FROM question_bank 
+//         WHERE course_id=? AND class_id=?
+//     `, [course_id, class_id], (err, rows) => {
+//         if (err) return res.json({ error: "DB error" });
+
+//         const stmt = db.prepare(`
+//             INSERT INTO cbt_questions
+//             (exam_id, question, option1, option2, option3, option4, correct_option, image_path)
+//             VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+//         `);
+
+//         rows.forEach(q => {
+//             stmt.run(
+//                 examId,
+//                 q.question,
+//                 q.option1,
+//                 q.option2,
+//                 q.option3,
+//                 q.option4,
+//                 q.correct_option,
+//                 q.image_path
+//             );
+//         });
+
+//         stmt.finalize(() => res.json({ success: true, imported: rows.length }));
+//     });
+// });
 
 
 

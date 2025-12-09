@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<%- include('partials/student_head', { title: exam.title + ' • Instructions' }) %>
+
+<head>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+
+  <style>
+    :root {
+      --pink: #ff6b9d;
+      --light-pink: #ffe6f0;
+      --bg: #fdf5e6;
+      --card-bg: #ffffff;
+      --text: #333;
+      --shadow: 0 6px 16px rgba(255, 107, 157, 0.15);
+      --border: #ffe0e9;
+      --radius: 18px;
+    }
+
+    [data-theme="dark"] {
+      --pink: #ff8ab3;
+      --light-pink: #2d1b3a;
+      --bg: #121212;
+      --card-bg: #1e1e1e;
+      --text: #e0e0e0;
+      --border: #333;
+      --shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+    }
+
+    body {
+      background: var(--bg);
+      font-family: "Poppins", sans-serif;
+      color: var(--text);
+      display: flex;
+      min-height: 100vh;
+      transition: .3s;
+    }
+
+    .container { display: flex; width: 100%; max-width: 1600px; margin: auto; }
+
+    /* SIDEBAR */
+    .sidebar {
+      width: 310px;
+      background: var(--card-bg);
+      box-shadow: var(--shadow);
+      height: 100vh;
+      position: sticky;
+      top: 0;
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .sidebar::before {
+      content: '';
+      position: absolute;
+      right: 0; top: 0; bottom: 0;
+      width: 7px;
+      background: var(--pink);
+    }
+
+    .profile-top {
+      padding: 35px 20px;
+      text-align: center;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .profile-top img {
+      width: 90px; height: 90px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 5px solid var(--pink);
+      margin-bottom: 10px;
+    }
+
+    .sidebar-menu { padding: 25px; }
+
+    .menu-card {
+      background: var(--light-pink);
+      padding: 20px;
+      border-radius: var(--radius);
+      margin-bottom: 20px;
+    }
+
+    .menu-card a {
+      display: flex; gap: 10px;
+      padding: 12px;
+      border-radius: 12px;
+      text-decoration: none;
+      color: var(--text);
+      font-weight: 500;
+      transition: .3s;
+    }
+
+    .menu-card a:hover {
+      background: var(--card-bg);
+      color: var(--pink);
+      transform: translateX(6px);
+    }
+
+    /* MAIN CONTENT */
+    .main-content {
+      flex: 1;
+      padding: 30px 50px;
+    }
+
+    .top-bar {
+      display: flex; justify-content: space-between;
+      margin-bottom: 35px;
+    }
+
+    .session-badge {
+      background: var(--pink);
+      color: #fff;
+      padding: 6px 16px;
+      border-radius: 50px;
+      font-size: 0.85rem;
+      box-shadow: var(--shadow);
+    }
+
+    .theme-toggle {
+      width: 52px; height: 28px;
+      border-radius: 50px;
+      background: var(--card-bg);
+      border: 2px solid var(--border);
+      cursor: pointer;
+      position: relative;
+    }
+
+    .theme-toggle::before {
+      content: "";
+      width: 20px; height: 20px;
+      background: var(--pink);
+      border-radius: 50%;
+      position: absolute;
+      top: 4px; left: 4px;
+      transition: 0.3s;
+    }
+
+    [data-theme="dark"] .theme-toggle::before {
+      transform: translateX(24px);
+    }
+
+    /* INSTRUCTIONS CARD */
+    .instructions-card {
+      background: var(--card-bg);
+      padding: 40px;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      border-left: 8px solid var(--pink);
+      max-width: 850px;
+      margin: auto;
+      text-align: center;
+      animation: fadeIn .5s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(15px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .instructions-card h1 {
+      font-size: 2.2rem;
+      margin-bottom: 18px;
+      color: var(--pink);
+    }
+
+    .instructions-list {
+      text-align: left;
+      margin-top: 25px;
+      font-size: 1.1rem;
+    }
+
+    .instructions-list li {
+      margin-bottom: 12px;
+      padding-left: 10px;
+      line-height: 1.6em;
+    }
+
+    /* START BUTTON */
+    .start-btn {
+      display: inline-block;
+      margin-top: 35px;
+      padding: 14px 28px;
+      background: var(--pink);
+      color: #fff;
+      font-weight: 600;
+      font-size: 1.1rem;
+      text-decoration: none;
+      border-radius: 12px;
+      box-shadow: var(--shadow);
+      transition: .3s;
+    }
+
+    .start-btn:hover {
+      transform: translateY(-4px);
+      background: #ff4d8a;
+    }
+
+    .back-btn {
+      display: inline-block;
+      margin-top: 20px;
+      text-decoration: none;
+      color: var(--text);
+      font-weight: 600;
+      padding: 8px 16px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+      <div class="profile-top">
+        <img src="<%= user.photo ? '/uploads/' + user.photo : '/images/default-photo.jpg' %>">
+        <h3><%= user.userName %></h3>
+        <p style="color:var(--pink); font-weight:600;"><%= studentClass %></p>
+      </div>
+
+      <div class="sidebar-menu">
+        <div class="menu-card">
+          <h4 style="text-align:center;color:var(--pink)">E-Learning</h4>
+          <a href="/student/topics"><i class="fas fa-book"></i> Topics</a>
+          <a href="/student/e-library"><i class="fas fa-book-open"></i> E-Library</a>
+          <a href="/student/cbt"><i class="fas fa-laptop"></i> CBT Exam</a>
+          <a href="/student/virtual-class"><i class="fas fa-video"></i> Virtual Class</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div class="main-content">
+
+      <div class="top-bar">
+        <div class="session-badge">
+          <%= sessionYear %> • <%= studentClass %>
+        </div>
+
+        <div style="display:flex; gap:15px; align-items:center;">
+          <div class="theme-toggle" id="theme-toggle"></div>
+          <a href="/dashboard" class="back-btn"><i class="fas fa-arrow-left"></i> Back</a>
+          <a href="/logout" class="logout-btn">
+            <i class="fas fa-power-off"></i>
+          </a>
+        </div>
+      </div>
+
+      <!-- INSTRUCTIONS CARD -->
+      <div class="instructions-card">
+        <h1><%= exam.title %> – Instructions</h1>
+
+        <p>Please read the instructions carefully before starting:</p>
+
+        <ul class="instructions-list">
+          <li>No switching tabs during the exam</li>
+          <li>No refreshing or closing the exam window</li>
+          <li>Your activity is monitored for malpractice</li>
+          <li>Timer starts immediately once you begin</li>
+          <li>Ensure your internet is stable</li>
+        </ul>
+
+        <a href="/student/cbt/<%= exam.id %>/write" class="start-btn">
+          <i class="fas fa-play"></i> Start Exam
+        </a>
+      </div>
+
+    </div>
+  </div>
+
+<script>
+  const toggle = document.getElementById('theme-toggle');
+  const html = document.documentElement;
+  html.setAttribute('data-theme', localStorage.getItem('theme') || 'light');
+
+  toggle.addEventListener('click', () => {
+    const newTheme = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+    html.setAttribute('data-theme', newTheme);
+    localStorage.setItem('theme', newTheme);
+  });
+</script>
+
+</body>
+</html>

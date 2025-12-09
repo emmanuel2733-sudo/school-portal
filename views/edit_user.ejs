@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Edit User</title>
+  <style>
+    body { font-family: Arial; background: #f8f0f8; padding: 40px; }
+    .box { max-width: 700px; margin: auto; background: white; padding: 40px; border-radius: 20px; box-shadow: 0 10px 40px rgba(255,20,147,0.2); }
+    h1 { color: #ff1493; text-align: center; margin-bottom: 10px; }
+    input, select, textarea {
+      width: 100%; padding: 15px; margin: 10px 0;
+      border: 2px solid #ff69b4; border-radius: 10px;
+      font-size: 16px;
+    }
+    button { width: 100%; padding: 18px; background: #ff1493; color: white; border: none; font-size: 20px; cursor: pointer; border-radius: 10px; }
+    button:hover { background: #d8137f; }
+    .section { background: #fff0f5; padding: 25px; margin: 30px 0; border: 4px solid #ff1493; border-radius: 15px; }
+    .photo-preview { width: 150px; height: 150px; border-radius: 50%; object-fit: cover; border: 5px solid #ff69b4; display: block; margin: 15px auto; }
+    .change-photo { text-align: center; color: #ff1493; font-weight: bold; cursor: pointer; text-decoration: underline; }
+  </style>
+</head>
+<body>
+<div class="box">
+  <h1>EDIT USER DETAILS</h1>
+
+  <!-- FORM STARTS HERE (FIXED) -->
+  <form action="/admin/users/edit/<%= user.id %>" method="POST" enctype="multipart/form-data">
+
+    <input type="hidden" name="currentPhoto" value="<%= user.photo || 'default-photo.jpg' %>">
+
+    <!-- PHOTO SECTION -->
+    <div class="section">
+      <h2>PHOTO</h2>
+
+      <img src="<%= user.photo ? '/uploads/' + user.photo : '/images/default-photo.jpg' %>"
+           class="photo-preview" id="photoPreview"
+           onerror="this.src='/images/default-photo.jpg'">
+
+      <!-- MOVED INSIDE FORM (IMPORTANT FIX) -->
+      <input type="file" name="photo" accept="image/*" id="photoInput"
+             style="display:none" onchange="previewPhoto(event)">
+
+      <p class="change-photo" onclick="document.getElementById('photoInput').click()">
+        Click to change photo
+      </p>
+
+      <p><small>Current file: <%= user.photo || 'default-photo.jpg' %></small></p>
+    </div>
+
+    <!-- NAME -->
+    <label><strong>Full Name</strong></label>
+    <input type="text" name="name" value="<%= user.name || '' %>" required>
+
+    <!-- USERNAME -->
+    <label><strong>Username</strong></label>
+    <input type="text" name="username" value="<%= user.username || '' %>" required>
+
+    <!-- ROLE -->
+    <label><strong>Role</strong></label>
+    <select name="role" required>
+      <option value="student" <%= user.role === 'student' ? 'selected' : '' %>>Student</option>
+      <option value="teacher" <%= user.role === 'teacher' ? 'selected' : '' %>>Teacher</option>
+      <option value="admin" <%= user.role === 'admin' ? 'selected' : '' %>>Admin</option>
+    </select>
+
+    <!-- SEX -->
+    <label><strong>Sex</strong></label>
+    <select name="sex" required>
+      <option value="">-- Select --</option>
+      <option value="Male" <%= user.sex === 'Male' ? 'selected' : '' %>>Male</option>
+      <option value="Female" <%= user.sex === 'Female' ? 'selected' : '' %>>Female</option>
+    </select>
+
+    <!-- DOB -->
+    <label><strong>Date of Birth</strong></label>
+    <input type="date" name="dob" value="<%= user.dob || '' %>">
+
+    <!-- ADDRESS -->
+    <label><strong>Address</strong></label>
+    <textarea name="address" rows="3"><%= user.address || '' %></textarea>
+
+    <!-- PARENT / GUARDIAN SECTION -->
+    <div class="section">
+      <h2>PARENT / GUARDIAN INFO</h2>
+
+      <label>Parent Name</label>
+      <input type="text" name="parent_name" value="<%= user.parent_name || '' %>">
+
+      <label>Parent Phone</label>
+      <input type="text" name="parent_phone" value="<%= user.parent_phone || '' %>">
+
+      <label>Parent Address</label>
+      <input type="text" name="parent_address" value="<%= user.parent_address || '' %>">
+
+      <label>Relationship</label>
+      <select name="parent_relationship">
+        <option value="">-- Select --</option>
+        <option value="Father" <%= user.parent_relationship === 'Father' ? 'selected' : '' %>>Father</option>
+        <option value="Mother" <%= user.parent_relationship === 'Mother' ? 'selected' : '' %>>Mother</option>
+        <option value="Guardian" <%= user.parent_relationship === 'Guardian' ? 'selected' : '' %>>Guardian</option>
+        <option value="Other" <%= user.parent_relationship === 'Other' ? 'selected' : '' %>>Other</option>
+      </select>
+    </div>
+
+    <button type="submit">SAVE CHANGES</button>
+  </form>
+  <!-- FORM ENDS HERE -->
+
+</div>
+
+<script>
+  function previewPhoto(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = e => document.getElementById('photoPreview').src = e.target.result;
+    reader.readAsDataURL(file);
+  }
+</script>
+
+</body>
+</html>

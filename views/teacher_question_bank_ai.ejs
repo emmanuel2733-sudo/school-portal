@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>AI Question Generator</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #6366f1;
+      --success: #10b981;
+      --danger: #e74a3b;
+      --warning: #f59e0b;
+      --info: #3b82f6;
+      --card-bg: #f8fafc;
+    }
+    
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    body {
+      background: #f1f5f9;
+      min-height: 100vh;
+      font-family: 'Segoe UI', sans-serif;
+    }
+
+    /* NAVBAR - SAME AS TEACHER PROFILE */
+    .navbar {
+      background: white !important;
+      padding: 1.2rem 0;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+      border-bottom: 1px solid #e2e8f0;
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+    }
+    
+    .navbar-brand {
+      color: #1a202c !important;
+      font-weight: 800;
+      font-size: 1.8rem;
+    }
+
+    /* BACK BUTTON - SAME AS TEACHER PROFILE */
+    .back-nav-btn {
+      width: 50px; 
+      height: 50px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.4rem;
+      transition: all 0.3s;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.15);
+      background: var(--primary); 
+      color: white; 
+      text-decoration: none; 
+    }
+    
+    .back-nav-btn:hover { 
+      background: #4f46e5; 
+      transform: scale(1.1); 
+    }
+
+    /* CLASS TEACHER BADGE - SAME STYLE */
+    .class-teacher-badge {
+      background: linear-gradient(135deg, #ff6b9d, #ff8ab3);
+      color: white;
+      padding: 10px 24px;
+      border-radius: 50px;
+      font-weight: 700;
+      font-size: 1rem;
+      box-shadow: 0 5px 15px rgba(255,107,157,0.4);
+    }
+
+    /* MAIN CONTAINER - MATCHING STYLE */
+    .main-container {
+      width: 100%;
+      max-width: 1000px;
+      margin: 30px auto;
+      padding: 0 20px;
+    }
+
+    /* CARD STYLING */
+    .ai-card {
+      background: white;
+      border-radius: 12px;
+      padding: 40px;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 15px 40px rgba(0,0,0,0.1);
+    }
+
+    /* HEADER */
+    .ai-header {
+      text-align: center;
+      margin-bottom: 40px;
+      padding-bottom: 30px;
+      border-bottom: 2px solid #e2e8f0;
+    }
+    
+    .ai-title {
+      font-size: 2.5rem;
+      font-weight: 800;
+      color: #1a202c;
+      margin: 0 0 15px 0;
+    }
+    
+    .ai-subtitle {
+      font-size: 1.1rem;
+      color: #718096;
+    }
+
+    /* FORM STYLING */
+    .form-group {
+      margin-bottom: 25px;
+    }
+    
+    label {
+      font-weight: 700;
+      color: #475569;
+      margin-bottom: 8px;
+      display: block;
+      font-size: 1rem;
+    }
+    
+    select, input, textarea {
+      width: 100%;
+      padding: 14px 16px;
+      border-radius: 8px;
+      border: 1px solid #e2e8f0;
+      font-size: 1rem;
+      color: #334155;
+      background: white;
+      transition: all 0.3s;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+    
+    select:focus, input:focus, textarea:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+    }
+    
+    /* BUTTON STYLING */
+    .btn {
+      padding: 14px 28px;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      transition: all 0.3s;
+      color: white;
+      text-decoration: none;
+    }
+    
+    .btn-generate {
+      background: var(--primary);
+      box-shadow: 0 5px 15px rgba(99, 102, 241, 0.3);
+      width: 100%;
+      font-size: 1.1rem;
+      padding: 16px;
+      margin-top: 10px;
+    }
+    
+    .btn-generate:hover {
+      background: #4f46e5;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(99, 102, 241, 0.4);
+    }
+    
+    .btn-save {
+      background: var(--success);
+      box-shadow: 0 5px 15px rgba(16, 185, 129, 0.3);
+      width: 100%;
+      font-size: 1.1rem;
+      padding: 16px;
+      margin-top: 30px;
+    }
+    
+    .btn-save:hover {
+      background: #0da271;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(16, 185, 129, 0.4);
+    }
+    
+    /* GENERATED QUESTIONS BOX */
+    .result-container {
+      margin-top: 40px;
+    }
+    
+    .result-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #1a202c;
+      margin-bottom: 20px;
+      padding-bottom: 15px;
+      border-bottom: 2px solid #e2e8f0;
+    }
+    
+    .q-box {
+      background: var(--card-bg);
+      padding: 20px;
+      margin-top: 15px;
+      border-radius: 8px;
+      border-left: 4px solid var(--primary);
+      border: 1px solid #e2e8f0;
+      transition: all 0.3s;
+    }
+    
+    .q-box:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+      border-left: 4px solid var(--success);
+    }
+    
+    .q-box b {
+      color: #1e293b;
+      font-size: 1.1rem;
+      display: block;
+      margin-bottom: 12px;
+    }
+    
+    .q-box div {
+      color: #475569;
+      margin-bottom: 6px;
+      font-weight: 500;
+    }
+    
+    .q-box .correct {
+      color: var(--success);
+      font-weight: 700;
+      margin-top: 8px;
+      padding-top: 8px;
+      border-top: 1px dashed #e2e8f0;
+    }
+    
+    /* LOADING STATE */
+    .loading {
+      text-align: center;
+      padding: 30px;
+      color: #718096;
+      font-size: 1.1rem;
+    }
+    
+    .loading b {
+      color: var(--primary);
+      display: block;
+      margin-bottom: 10px;
+    }
+    
+    /* ERROR STATE */
+    .error {
+      text-align: center;
+      padding: 20px;
+      background: #fef2f2;
+      border-radius: 8px;
+      border: 1px solid #fecaca;
+      color: var(--danger);
+      font-weight: 600;
+    }
+    
+    /* RESPONSIVE */
+    @media (max-width: 768px) {
+      .main-container {
+        padding: 0 15px;
+        margin: 20px auto;
+      }
+      
+      .ai-card {
+        padding: 25px;
+      }
+      
+      .ai-title {
+        font-size: 2rem;
+      }
+      
+      .ai-header {
+        margin-bottom: 30px;
+        padding-bottom: 20px;
+      }
+    }
+    
+    @media (max-width: 576px) {
+      .ai-title {
+        font-size: 1.8rem;
+      }
+      
+      .ai-card {
+        padding: 20px;
+      }
+      
+      select, input, textarea {
+        padding: 12px 14px;
+      }
+      
+      .btn {
+        padding: 14px 20px;
+        font-size: 1rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- SAME NAVBAR AS OTHER PAGES -->
+  <nav class="navbar">
+    <div class="container-fluid px-4">
+      <a class="navbar-brand" href="/dashboard">School Portal</a>
+      <div class="d-flex align-items-center gap-3">
+        <!-- Optional: Add class teacher badge if needed -->
+        <% if (typeof classTeacherOf !== 'undefined' && classTeacherOf && classTeacherOf.trim() !== '') { %>
+          <div class="class-teacher-badge">Class Teacher — <%= classTeacherOf %></div>
+        <% } %>
+        <!-- BACK BUTTON - SAME DESIGN AND POSITION -->
+        <a href="/teacher/question-bank" class="back-nav-btn" title="Back to Question Bank">
+          <i class="fas fa-arrow-left"></i>
+        </a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="main-container">
+    <div class="ai-card">
+      
+      <!-- HEADER -->
+      <div class="ai-header">
+        <h1 class="ai-title">AI Question Generator</h1>
+        <p class="ai-subtitle">Generate high-quality questions instantly using AI</p>
+      </div>
+
+      <!-- FORM -->
+      <div class="form-group">
+        <label for="topic">Topic/Note</label>
+        <input id="topic" type="text" placeholder="e.g., Photosynthesis, Newton's Laws, Algebra" required>
+      </div>
+
+      <div class="form-group">
+        <label for="difficulty">Difficulty Level</label>
+        <select id="difficulty">
+          <option value="easy">Easy</option>
+          <option value="medium">Medium</option>
+          <option value="hard">Hard</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="count">Number of Questions</label>
+        <select id="count">
+          <option value="5">5 Questions</option>
+          <option value="10">10 Questions</option>
+          <option value="20">20 Questions</option>
+        </select>
+      </div>
+
+      <button class="btn btn-generate" onclick="generateAI()">
+        <i class="fas fa-robot"></i> Generate Questions
+      </button>
+
+      <!-- RESULTS AREA -->
+      <div id="result" class="result-container"></div>
+
+      <!-- SAVE BUTTON (Hidden until generation) -->
+      <button id="saveBtn" class="btn btn-save" style="display:none;" onclick="saveToBank()">
+        <i class="fas fa-save"></i> Save All to Question Bank
+      </button>
+
+    </div>
+  </div>
+
+<script>
+let generatedQuestions = [];
+
+// ---------------------------------------
+// GENERATE QUESTIONS USING AI
+// ---------------------------------------
+async function generateAI() {
+  const topic = document.getElementById("topic").value.trim();
+  const count = document.getElementById("count").value;
+  const difficulty = document.getElementById("difficulty").value;
+
+  if (!topic) {
+    alert("Please enter a topic.");
+    return;
+  }
+
+  document.getElementById("result").innerHTML = `
+    <div class="loading">
+      <b>Generating Questions</b>
+      <p>Please wait while AI creates ${count} ${difficulty} questions about "${topic}"...</p>
+      <i class="fas fa-spinner fa-spin" style="font-size: 2rem; color: var(--primary); margin-top: 10px;"></i>
+    </div>
+  `;
+
+  try {
+    const res = await fetch("/teacher/question-bank/ai-generate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ topic, count, difficulty })
+    });
+
+    const data = await res.json();
+
+    if (!data.success) {
+      document.getElementById("result").innerHTML = `
+        <div class="error">
+          <i class="fas fa-exclamation-circle"></i>
+          <p>AI error. Please try again.</p>
+        </div>
+      `;
+      return;
+    }
+
+    generatedQuestions = data.questions;
+
+    let output = '<div class="result-title">Generated Questions</div>';
+    generatedQuestions.forEach((q, i) => {
+      output += `
+        <div class="q-box">
+          <b>${i+1}. ${q.question}</b>
+          <div>A: ${q.optionA}</div>
+          <div>B: ${q.optionB}</div>
+          <div>C: ${q.optionC}</div>
+          <div>D: ${q.optionD}</div>
+          <div class="correct">Correct Answer: ${q.correct_option}</div>
+        </div>
+      `;
+    });
+
+    document.getElementById("result").innerHTML = output;
+    document.getElementById("saveBtn").style.display = "inline-block";
+
+  } catch (err) {
+    console.log(err);
+    document.getElementById("result").innerHTML = `
+      <div class="error">
+        <i class="fas fa-exclamation-circle"></i>
+        <p>Failed to generate questions. Please check your connection and try again.</p>
+      </div>
+    `;
+  }
+}
+
+// ---------------------------------------
+// SAVE QUESTIONS INTO DATABASE
+// ---------------------------------------
+async function saveToBank() {
+  if (generatedQuestions.length === 0) return;
+
+  const course_id = prompt("Enter Course ID:");
+  if (!course_id) return;
+
+  const class_id = prompt("Enter Class ID:");
+  if (!class_id) return;
+
+  const res = await fetch("/teacher/question-bank/ai-generate/save", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      course_id,
+      class_id,
+      questions: JSON.stringify(generatedQuestions)
+    })
+  });
+
+  const data = await res.json();
+
+  if (data.success) {
+    alert("Saved " + data.added + " questions to the bank!");
+    window.location.href = "/teacher/question-bank";
+  } else {
+    alert("Error saving questions.");
+  }
+}
+</script>
+
+</body>
+</html>

@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>View Topics</title>
+
+  <!-- BOOTSTRAP -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <!-- FONT AWESOME 6 — THIS IS THE MISSING LINE! -->
+  <link rel="stylesheet" 
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css"
+        integrity="sha512-Kc323vGBEqzTmouAECnVceyQqyqdsSiqLQISBL29aUW4U/M7pSPA/gEUZQqv1cwx4OnYxTxve5UMg5GT6L4JJg==" 
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <style>
+    body { background: #f8fafc; font-family: 'Segoe UI', sans-serif; }
+    .navbar {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+      background: white !important; padding: 1.2rem 0;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08); border-bottom: 1px solid #e2e8f0;
+    }
+    .navbar-brand { color: #1a202c !important; font-weight: 800; font-size: 1.8rem; }
+
+    .power-btn, .back-nav-btn {
+      width: 50px; height: 50px; border-radius: 50%; display: flex;
+      align-items: center; justify-content: center; font-size: 1.4rem;
+      transition: all 0.3s; box-shadow: 0 5px 15px rgba(0,0,0,0.15);
+      text-decoration: none;
+    }
+    .power-btn { 
+      background: #e74a3b; 
+      color: white !important;        /* ← Force white */
+    }
+    .power-btn:hover { 
+      background: #c82333; 
+      transform: scale(1.1); 
+      color: white !important;
+    }
+    .back-nav-btn { 
+      background: #6366f1; 
+      color: white !important;        /* ← Force white arrow */
+    }
+    .back-nav-btn:hover { 
+      background: #4f46e5; 
+      transform: scale(1.1); 
+      color: white !important;
+    }
+
+    .class-teacher-badge {
+      background: linear-gradient(135deg, #ff6b9d, #ff8ab3); color: white;
+      padding: 10px 24px; border-radius: 50px; font-weight: 700; font-size: 1rem;
+      box-shadow: 0 5px 15px rgba(255,107,157,0.4);
+    }
+    .content { margin-top: 100px; padding: 40px 20px; }
+    .topic-list { background: white; padding: 35px; border: 1px solid #e2e8f0; box-shadow: 0 10px 30px rgba(0,0,0,0.08); }
+  </style>
+</head>
+<body>
+
+  <nav class="navbar">
+    <div class="container-fluid px-4">
+      <a class="navbar-brand" href="/dashboard">School Portal</a>
+      <div class="d-flex align-items-center gap-3">
+        <% if (classTeacherOf && classTeacherOf.trim() !== '') { %>
+          <div class="class-teacher-badge">Class Teacher — <%= classTeacherOf %></div>
+        <% } %>
+
+        <!-- Back Button — Now shows bright white arrow -->
+        <a href="/teacher/topics" class="back-nav-btn" title="Back">
+          <i class="fas fa-arrow-left"></i>
+        </a>
+
+        <!-- Logout Button — Now shows bright white power icon
+        <a href="/logout" class="power-btn">
+          <i class="fas fa-power-off"></i>
+        </a> -->
+      </div>
+    </div>
+  </nav>
+
+  <div class="content container">
+    <h2 style="font-size:2.4rem;font-weight:800;color:#1a202c;text-align:center;margin-bottom:30px;">
+      Topics — <%= course_name %> (<%= class_name %>)
+    </h2>
+
+    <div class="topic-list">
+      <% if (topics && topics.length > 0) { %>
+        <ol style="font-size:1.2rem;line-height:2.2;">
+          <% topics.forEach(topic => { %>
+            <li><%= topic.topic_name %></li>
+          <% }) %>
+        </ol>
+      <% } else { %>
+        <p class="text-center text-muted fs-3">No topics created yet.</p>
+      <% } %>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Print Exam</title>
+<style>
+body { font-family:Arial; padding:20px; }
+.question { margin-bottom:25px; }
+</style>
+</head>
+
+<body onload="window.print()">
+
+<h1>Exam Printout</h1>
+
+<% questions.forEach(q => { %>
+    <div class="question">
+        <strong><%= q.question_text %></strong><br><br>
+
+        <% q.options.split("||").forEach((o, i) => { %>
+            <div><%= String.fromCharCode(65+i) %>. <%= o %></div>
+        <% }) %>
+    </div>
+<% }) %>
+
+</body>
+</html>

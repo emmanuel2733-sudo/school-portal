@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Teacher CBT Dashboard</title>
+    <link rel="stylesheet" href="/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+    <style>
+        body { background:#f5f5f5; padding:20px; font-family:Arial; }
+        .box { background:white; padding:25px; border-radius:10px; max-width:1100px; margin:auto; }
+
+        table { width:100%; border-collapse:collapse; margin-top:20px; }
+        th, td { padding:10px; border:1px solid #ddd; }
+        th { background:#eee; }
+
+        .badge { padding:4px 8px; border-radius:4px; font-size:0.8em; }
+        .draft { background:#ffc107; }
+        .published { background:#28a745; color:white; }
+        .closed { background:#6c757d; color:white; }
+
+        .dropdown-menu {
+            display:none;
+            position:absolute;
+            background:white;
+            border:1px solid #ccc;
+            border-radius:5px;
+            padding:10px;
+            min-width:150px;
+            z-index:1000;
+        }
+
+        .dropdown-item {
+            display:block;
+            padding:6px 10px;
+            color:#333;
+            text-decoration:none;
+            border-radius:4px;
+            margin-bottom:3px;
+        }
+        .dropdown-item:hover { background:#f0f0f0; }
+
+        .btn { padding:6px 10px; text-decoration:none; border-radius:5px; font-size:0.85em; }
+        .btn-secondary { background:#6c757d; color:white; }
+            .back-nav-btn {
+        display: inline-block;
+        margin-top: 20px;
+        padding: 10px 15px;
+        background: #6c757d;
+        color: white;
+        text-decoration: none;
+        border-radius: 5px;
+        font-size: 1em;
+    }
+
+    .back-nav-btn:hover {
+        background: #5a6268;
+    }
+</style>
+    </style>
+
+    <script>
+        function toggleMenu(id) {
+            const menu = document.getElementById("menu-" + id);
+            menu.style.display = (menu.style.display === "block") ? "none" : "block";
+        }
+
+        document.addEventListener("click", function(e) {
+            document.querySelectorAll(".dropdown-menu").forEach(menu => {
+                if (!menu.contains(e.target) &&
+                    !menu.previousElementSibling.contains(e.target)) {
+                    menu.style.display = "none";
+                }
+            });
+        });
+    </script>
+</head>
+
+<body>
+
+<div class="box">
+
+    <h1>CBT Exams Assigned to You</h1>
+
+    <% if (exams.length === 0) { %>
+
+        <p>No CBT exams for your assigned courses yet.</p>
+
+    <% } else { %>
+
+        <table>
+            <tr>
+                <th>S/N</th>
+                <th>Exam Title</th>
+                <th>Class</th>
+                <th>Course</th>
+                <th>Status</th>
+                <th>Start</th>
+                <th>End</th>
+                <th>Actions</th>
+            </tr>
+
+            <% exams.forEach((ex, index) => { %>
+                <tr>
+                    <td><%= index + 1 %></td>
+                    <td><%= ex.title %></td>
+                    <td><%= ex.class_name %></td>
+                    <td><%= ex.course_name %></td>
+
+                    <td>
+                        <% if (ex.status === "draft") { %>
+                            <span class="badge draft">Draft</span>
+                        <% } else if (ex.status === "published") { %>
+                            <span class="badge published">Published</span>
+                        <% } else { %>
+                            <span class="badge closed">Closed</span>
+                        <% } %>
+                    </td>
+
+                    <td><%= ex.start_time || "—" %></td>
+                    <td><%= ex.end_time || "—" %></td>
+
+                    <td>
+                        <div style="position:relative; display:inline-block;">
+
+                            <button class="btn btn-secondary"
+                                onclick="toggleMenu(<%= ex.id %>)">
+                                Actions ▼
+                            </button>
+
+                            <div id="menu-<%= ex.id %>" class="dropdown-menu">
+
+                                <a class="dropdown-item"
+                                   href="/teacher/cbt/<%= ex.id %>/preview">
+                                   Preview
+                                </a>
+
+                                <a class="dropdown-item"
+                                   href="/teacher/cbt/<%= ex.id %>/questions">
+                                   Questions
+                                </a>
+
+                                <a class="dropdown-item"
+                                   href="/teacher/cbt/<%= ex.id %>/submissions">
+                                   Submissions
+                                </a>
+
+                                <!-- <a class="dropdown-item"
+                                   href="/teacher/cbt/<%= ex.id %>/edit">
+                                   Edit Exam
+                                </a> -->
+
+                                <a class="dropdown-item"
+                                   href="/teacher/cbt/<%= ex.id %>/print">
+                                   Print
+                                </a>
+
+                                <a class="dropdown-item"
+                                   href="/teacher/cbt/<%= ex.id %>/delete-questions"
+                                   onclick="return confirm('Delete all questions?');">
+                                   Delete Questions
+                                </a>
+
+                            </div>
+
+                        </div>
+                    </td>
+
+                </tr>
+            <% }) %>
+
+        </table>
+
+    <% } %>
+</div>
+<a href="/dashboard" class="back-nav-btn" title="Back to Dashboard">
+    <i class="fas fa-arrow-left"></i> Back
+</a>
+</body>
+</html>

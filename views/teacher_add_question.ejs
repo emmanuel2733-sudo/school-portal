@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Add Question</title>
+    <link rel="stylesheet" href="/style.css">
+
+    <!-- MathJax for formulas -->
+    <script>
+        window.MathJax = { tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] } };
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <style>
+        body { font-family: Arial; padding:20px; background:#f5f5f5; }
+        .box { background:white; padding:25px; border-radius:10px; max-width:800px; margin:auto; }
+        textarea { width:100%; height:120px; }
+        .option-input { width:100%; padding:8px; margin-bottom:10px; }
+        label { font-weight:bold; margin-top:10px; display:block; }
+    </style>
+</head>
+
+<body>
+
+<div class="box">
+
+    <h1>Add Question</h1>
+
+    <form action="" method="POST" enctype="multipart/form-data">
+
+        <!-- Question Text -->
+        <label>Question (supports formulas like $a^2 + b^2$):</label>
+        <textarea name="question" required></textarea>
+
+        <!-- Upload Image -->
+        <label>Attach Diagram / Image (optional):</label>
+        <input type="file" name="question_image" accept="image/*">
+
+        <hr>
+
+        <!-- OPTIONS -->
+        <label>Option A:</label>
+        <input class="option-input" type="text" name="option1" required>
+
+        <label>Option B:</label>
+        <input class="option-input" type="text" name="option2" required>
+
+        <label>Option C:</label>
+        <input class="option-input" type="text" name="option3" required>
+
+        <label>Option D:</label>
+        <input class="option-input" type="text" name="option4" required>
+
+        <!-- Correct Answer -->
+        <label>Correct Answer:</label>
+        <select name="correct" required>
+            <option value="1">A</option>
+            <option value="2">B</option>
+            <option value="3">C</option>
+            <option value="4">D</option>
+        </select>
+
+        <br><br>
+        <button class="btn btn-primary">Save Question</button>
+
+         <a class="btn btn-secondary" href="/teacher/cbt/<%= examId %>/questions">
+            ← Back
+        </a>
+
+    </form>
+
+</div>
+
+</body>
+</html>

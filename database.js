@@ -11,6 +11,34 @@ const db = new sqlite3.Database(dbPath, (err) => {
     console.error('ERROR opening database:', err.message);
   } else {
     console.log('Database opened successfully');
+
+    // FINAL 100% WORKING — SAFE PARENT COLUMNS ADDITION
+    const addParentColumnsSafely = () => {
+      db.all("PRAGMA table_info(users)", (err, rows) => {
+        if (err) return console.error("PRAGMA failed:", err);
+
+        const columns = rows.map(r => r.name);
+
+        const toAdd = [
+          { name: "parent_name", def: "TEXT" },
+          { name: "parent_phone", def: "TEXT" },
+          { name: "parent_address", def: "TEXT" },
+          { name: "parent_relationship", def: "TEXT CHECK(parent_relationship IN ('Father','Mother','Guardian','Other'))" }
+        ];
+
+        toAdd.forEach(col => {
+          if (!columns.includes(col.name)) {
+            db.run(`ALTER TABLE users ADD COLUMN ${col.name} ${col.def}`, err => {
+              if (err) console.error("Failed to add column:", col.name, err);
+              else console.log("Added column:", col.name);
+            });
+          }
+        });
+      });
+    };
+
+    addParentColumnsSafely();
+
         // === CREATE GRADES TABLE (SAFE) ===
     db.run(`
       CREATE TABLE IF NOT EXISTS grades (
@@ -39,18 +67,42 @@ const db = new sqlite3.Database(dbPath, (err) => {
 //  FINAL, BULLETPROOF QUERY & GET – COPY-PASTE THIS EXACTLY
 // ──────────────────────────────────────────────────────────────
 // REPLACE THESE TWO FUNCTIONS ONLY
+// function query(sql, params = []) {
+//   return new Promise((resolve, reject) => {
+//     db.all(sql, params, (err, rows) => {
+//       if (err) return reject(err);
+//       const clean = rows.map(row => {
+//         const o = {};
+//         for (const key in row) {
+//           o[key.split('.').pop()] = row[key];
+//         }
+//         return o;
+//       });
+//       resolve(clean);
+//     });
+//   });
+// }
+
+// function get(sql, params = []) {
+//   return new Promise((resolve, reject) => {
+//     db.get(sql, params, (err, row) => {
+//       if (err) return reject(err);
+//       if (!row) return resolve(null);
+//       const o = {};
+//       for (const key in row) {
+//         o[key.split('.').pop()] = row[key];
+//       }
+//       resolve(o);
+//     });
+//   });
+// }
+////////////////////////////////////////////////////////////////////////////
+// FINAL WORKING VERSION — DO NOT TOUCH AGAIN
 function query(sql, params = []) {
   return new Promise((resolve, reject) => {
     db.all(sql, params, (err, rows) => {
       if (err) return reject(err);
-      const clean = rows.map(row => {
-        const o = {};
-        for (const key in row) {
-          o[key.split('.').pop()] = row[key];
-        }
-        return o;
-      });
-      resolve(clean);
+      resolve(rows); // ← RETURN RAW ROWS, NO MODIFICATION
     });
   });
 }
@@ -59,15 +111,11 @@ function get(sql, params = []) {
   return new Promise((resolve, reject) => {
     db.get(sql, params, (err, row) => {
       if (err) return reject(err);
-      if (!row) return resolve(null);
-      const o = {};
-      for (const key in row) {
-        o[key.split('.').pop()] = row[key];
-      }
-      resolve(o);
+      resolve(row || null); // ← RETURN RAW ROW
     });
   });
 }
+//////////////////////////////////////////////////////////////////////////////
 
 function run(sql, params = []) {
   return new Promise((resolve, reject) => {
@@ -170,6 +218,7 @@ db.run(`
     }
     console.log('users table ready');
 
+    
     // === NOW INSERT ADMIN — 100% SAFE ===
     bcrypt.hash('adminpass', 10, (err, hash) => {
       if (err) {
@@ -289,6 +338,36 @@ db.run(`
   });
 });
 
+// === TOPICS TABLE (for teacher to add topics per course) ===
+db.run(`
+  CREATE TABLE IF NOT EXISTS topics (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    course_id INTEGER NOT NULL,
+    topic_name TEXT NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE CASCADE,
+    UNIQUE(course_id, topic_name)
+  )
+`, (err) => {
+  if (err) console.error('Error creating topics table:', err);
+  else console.log('topics table ready');
+});
+
+
+db.run(`
+    CREATE TABLE IF NOT EXISTS cbt_exams (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        teacher_id INTEGER,
+        course_id INTEGER,
+        class_id INTEGER,
+        title TEXT,
+        total_questions INTEGER DEFAULT 0
+    )
+`);
+
+
+
+
 // === ENSURE enrollment_id EXISTS IN GRADES ===
 db.run(`
   ALTER TABLE grades ADD COLUMN enrollment_id INTEGER REFERENCES student_enrollments(id)
@@ -391,6 +470,8 @@ db.run(`
     console.error('Error adding class_teacher_id:', err);
   }
 });
+
+
 
 
 // Run once on startup

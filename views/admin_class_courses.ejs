@@ -70,6 +70,10 @@
             <% } else { %>
               <button onclick="assignCourseTeacher(<%= c.id %>)" class="btn btn-primary" style="font-size:0.8em;">Assign Teacher</button>
             <% } %>
+
+          <a href="/admin/courses/<%= c.id %>/cbt" class="btn btn-warning">CBT</a>
+
+
           </td>
         </tr>
       <% }) %>

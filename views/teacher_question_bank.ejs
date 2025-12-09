@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Question Bank</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #6366f1;
+      --success: #10b981;
+      --danger: #e74a3b;
+      --warning: #f59e0b;
+      --info: #3b82f6;
+      --card-bg: #f8fafc;
+    }
+    
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    body {
+      background: #f1f5f9;
+      min-height: 100vh;
+      font-family: 'Segoe UI', sans-serif;
+    }
+
+    /* NAVBAR - SAME AS TEACHER PROFILE */
+    .navbar {
+      background: white !important;
+      padding: 1.2rem 0;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+      border-bottom: 1px solid #e2e8f0;
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+    }
+    
+    .navbar-brand {
+      color: #1a202c !important;
+      font-weight: 800;
+      font-size: 1.8rem;
+    }
+
+    /* BUTTONS - SAME AS TEACHER PROFILE */
+    .power-btn, .back-nav-btn {
+      width: 50px; 
+      height: 50px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.4rem;
+      transition: all 0.3s;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.15);
+    }
+    
+    .power-btn { 
+      background: var(--danger); 
+      color: white; 
+    }
+    
+    .power-btn:hover { 
+      background: #c82333; 
+      transform: scale(1.1); 
+    }
+    
+    .back-nav-btn { 
+      background: var(--primary); 
+      color: white; 
+      text-decoration: none; 
+    }
+    
+    .back-nav-btn:hover { 
+      background: #4f46e5; 
+      transform: scale(1.1); 
+    }
+
+    /* CLASS TEACHER BADGE - SAME AS TEACHER PROFILE */
+    .class-teacher-badge {
+      background: linear-gradient(135deg, #ff6b9d, #ff8ab3);
+      color: white;
+      padding: 10px 24px;
+      border-radius: 50px;
+      font-weight: 700;
+      font-size: 1rem;
+      box-shadow: 0 5px 15px rgba(255,107,157,0.4);
+    }
+
+    /* FULL SCREEN TABLE CONTAINER */
+    .table-container {
+      width: 100%;
+      max-width: 1400px;
+      margin: 30px auto;
+      padding: 0 20px;
+    }
+
+    /* HEADER SECTION */
+    .header-section {
+      background: white;
+      border-radius: 12px;
+      padding: 25px 30px;
+      margin-bottom: 20px;
+      box-shadow: 0 8px 25px rgba(0,0,0,0.08);
+      border: 1px solid #e2e8f0;
+    }
+    
+    .header-title {
+      font-size: 2.2rem;
+      font-weight: 800;
+      color: #1a202c;
+      margin: 0 0 10px 0;
+    }
+    
+    .header-subtitle {
+      font-size: 1.1rem;
+      color: #718096;
+      margin-bottom: 20px;
+    }
+
+    /* ADD BUTTON */
+    .btn-success-custom {
+      background: var(--success);
+      color: white;
+      padding: 12px 28px;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 1rem;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      transition: all 0.3s;
+      border: none;
+      box-shadow: 0 5px 15px rgba(16, 185, 129, 0.3);
+    }
+    
+    .btn-success-custom:hover {
+      background: #0da271;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(16, 185, 129, 0.4);
+      color: white;
+    }
+
+    /* TABLE HEADER */
+    .table-header {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr 1fr 1fr 1.5fr;
+      gap: 15px;
+      padding: 20px;
+      background: white;
+      border-radius: 10px 10px 0 0;
+      font-weight: 700;
+      color: #475569;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      font-size: 0.9rem;
+      border: 1px solid #e2e8f0;
+      border-bottom: 2px solid #e2e8f0;
+      margin-top: 20px;
+    }
+
+    /* TABLE BODY - EACH ROW AS A CARD */
+    .table-body {
+      display: flex;
+      flex-direction: column;
+      gap: 15px; /* Very close spacing between cards */
+      margin-bottom: 30px;
+    }
+
+    /* TABLE ROW CARD */
+    .table-row-card {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr 1fr 1fr 1.5fr;
+      gap: 15px;
+      align-items: center;
+      background: var(--card-bg); /* Grey background */
+      border-radius: 10px;
+      padding: 20px;
+      border: 1px solid #e2e8f0;
+      transition: all 0.3s ease;
+      min-height: 85px;
+      position: relative; /* Added for dropdown positioning */
+    }
+    
+    .table-row-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 12px 25px rgba(0,0,0,0.12);
+      border-color: #cbd5e1;
+      background: #f1f5f9; /* Slightly darker grey on hover */
+      z-index: 10; /* Bring card forward on hover */
+    }
+
+    /* TABLE CELL STYLES */
+    .table-cell {
+      padding: 8px 5px;
+      color: #334155;
+      font-weight: 500;
+      font-size: 1rem;
+      display: flex;
+      align-items: center;
+    }
+    
+    .title-cell {
+      font-weight: 700;
+      font-size: 1.1rem;
+      color: #1e293b;
+    }
+    
+    .class-cell, .subject-cell {
+      font-weight: 600;
+      color: #475569;
+    }
+
+    /* BADGES */
+    .type-badge {
+      background: var(--primary);
+      color: white;
+      padding: 8px 16px;
+      border-radius: 50px;
+      font-weight: 600;
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      display: inline-block;
+      text-align: center;
+      min-width: 140px;
+    }
+    
+    .count-badge {
+      background: var(--success);
+      color: white;
+      padding: 10px 20px;
+      border-radius: 50px;
+      font-weight: 700;
+      font-size: 1.1rem;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      min-width: 80px;
+      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+    }
+
+    /* FIXED: ACTIONS DROPDOWN - NOW APPEARS IN FRONT */
+    .actions-dropdown {
+      position: relative;
+      display: inline-block;
+      z-index: 100; /* Ensure dropdown container has higher z-index */
+    }
+    
+    .dropdown-btn {
+      background: var(--primary);
+      color: white;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-weight: 600;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.3s;
+      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2);
+      width: 100%;
+      max-width: 160px;
+      position: relative;
+      z-index: 101; /* Button should be above card */
+    }
+    
+    .dropdown-btn:hover {
+      background: #4f46e5;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 15px rgba(99, 102, 241, 0.3);
+    }
+    
+    .dropdown-content {
+      display: none;
+      position: absolute;
+      background: white;
+      min-width: 220px;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.25);
+      border-radius: 8px;
+      z-index: 1050; /* Very high z-index to appear above everything */
+      border: 1px solid #e2e8f0;
+      padding: 10px 0;
+      right: 0;
+      top: 100%;
+      margin-top: 5px;
+    }
+    
+    .dropdown-content a {
+      padding: 12px 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+      color: #4a5568;
+      font-weight: 500;
+      transition: all 0.2s;
+    }
+    
+    .dropdown-content a:hover {
+      background: #f8fafc;
+      color: var(--primary);
+    }
+    
+    .dropdown-content form {
+      margin: 0;
+      padding: 0;
+    }
+    
+    .dropdown-content button.delete-btn {
+      width: 100%;
+      text-align: left;
+      border: none;
+      background: none;
+      padding: 12px 20px;
+      cursor: pointer;
+      font-size: 1rem;
+      font-weight: 500;
+      color: var(--danger);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      transition: all 0.2s;
+    }
+    
+    .dropdown-content button.delete-btn:hover {
+      background: #fef2f2;
+      color: #dc2626;
+    }
+    
+    /* Show dropdown on hover - FIXED */
+    .actions-dropdown:hover .dropdown-content {
+      display: block;
+      animation: fadeIn 0.2s ease;
+    }
+    
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    /* Ensure the dropdown stays above subsequent cards */
+    .table-row-card:hover .actions-dropdown {
+      z-index: 200;
+    }
+    
+    .table-row-card:hover .dropdown-content {
+      z-index: 1050;
+    }
+
+    /* EMPTY STATE */
+    .empty-state {
+      text-align: center;
+      padding: 80px 20px;
+      background: white;
+      border-radius: 12px;
+      border: 2px dashed #e2e8f0;
+      margin-top: 20px;
+    }
+    
+    .empty-icon {
+      font-size: 4rem;
+      color: #cbd5e1;
+      margin-bottom: 20px;
+    }
+    
+    .empty-text {
+      font-size: 1.3rem;
+      color: #64748b;
+      margin-bottom: 25px;
+    }
+
+    /* RESPONSIVE */
+    @media (max-width: 1200px) {
+      .table-header,
+      .table-row-card {
+        grid-template-columns: 1.5fr 1fr 1fr 1fr 1fr 1.5fr;
+      }
+    }
+    
+    @media (max-width: 992px) {
+      .table-container {
+        padding: 0 15px;
+      }
+      
+      .table-header,
+      .table-row-card {
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 12px;
+      }
+      
+      /* Hide some columns on mobile */
+      .table-header .header-cell:nth-child(3),
+      .table-row-card .table-cell:nth-child(3),
+      .table-header .header-cell:nth-child(5),
+      .table-row-card .table-cell:nth-child(5) {
+        display: none;
+      }
+      
+      .type-badge {
+        min-width: 120px;
+      }
+      
+      /* Adjust dropdown for mobile */
+      .dropdown-content {
+        right: -50px; /* Position dropdown more to the left on mobile */
+        min-width: 200px;
+      }
+    }
+    
+    @media (max-width: 768px) {
+      .table-header,
+      .table-row-card {
+        grid-template-columns: 1fr 1fr;
+        padding: 15px;
+      }
+      
+      /* Hide more columns on smaller screens */
+      .table-header .header-cell:nth-child(4),
+      .table-row-card .table-cell:nth-child(4) {
+        display: none;
+      }
+      
+      .header-section {
+        padding: 20px;
+      }
+      
+      .header-title {
+        font-size: 1.8rem;
+      }
+      
+      /* Adjust dropdown for very small screens */
+      .dropdown-content {
+        right: -80px;
+        min-width: 180px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- SAME NAVBAR AS TEACHER PROFILE -->
+  <nav class="navbar">
+    <div class="container-fluid px-4">
+      <a class="navbar-brand" href="/dashboard">School Portal</a>
+      <div class="d-flex align-items-center gap-3">
+        <% if (typeof classTeacherOf !== 'undefined' && classTeacherOf && classTeacherOf.trim() !== '') { %>
+          <div class="class-teacher-badge">Class Teacher — <%= classTeacherOf %></div>
+        <% } %>
+        <!-- BACK BUTTON - SAME DESIGN AND POSITION -->
+        <a href="/dashboard" class="back-nav-btn" title="Back to Dashboard">
+          <i class="fas fa-arrow-left"></i>
+        </a>
+        <!-- LOGOUT BUTTON - SAME DESIGN -->
+        <a href="/logout" class="power-btn">
+          <i class="fas fa-power-off"></i>
+        </a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="table-container">
+    <!-- HEADER SECTION -->
+    <div class="header-section">
+      <h1 class="header-title">QUESTION BANK</h1>
+      <p class="header-subtitle">Manage all your question banks in one place</p>
+      
+      <!-- ADD QUESTION BANK BUTTON -->
+      <a class="btn-success-custom" href="/teacher/question-bank/add">
+        <i class="fas fa-plus-circle"></i> ADD QUESTION BANK
+      </a>
+    </div>
+
+    <!-- TABLE HEADER -->
+    <div class="table-header">
+      <div class="header-cell">Title</div>
+      <div class="header-cell">Class</div>
+      <div class="header-cell">Subject</div>
+      <div class="header-cell">Type</div>
+      <div class="header-cell">Total Questions</div>
+      <div class="header-cell">Actions</div>
+    </div>
+
+    <!-- TABLE BODY WITH CARD ROWS -->
+    <div class="table-body">
+      <% if (banks.length === 0) { %>
+        <div class="empty-state">
+          <div class="empty-icon">
+            <i class="fas fa-file-alt"></i>
+          </div>
+          <h3 class="empty-text">No question banks found</h3>
+          <a class="btn-success-custom" href="/teacher/question-bank/add">
+            <i class="fas fa-plus-circle"></i> CREATE YOUR FIRST QUESTION BANK
+          </a>
+        </div>
+      <% } else { %>
+        <% banks.forEach(b => { %>
+        <div class="table-row-card">
+          <!-- TITLE -->
+          <div class="table-cell title-cell">
+            <%= b.course_name %> QUESTION BANK
+          </div>
+          
+          <!-- CLASS -->
+          <div class="table-cell class-cell">
+            <%= b.class_name %>
+          </div>
+          
+          <!-- SUBJECT -->
+          <div class="table-cell subject-cell">
+            <%= b.course_name %>
+          </div>
+          
+          <!-- TYPE -->
+          <div class="table-cell">
+            <span class="type-badge">MULTIPLE CHOICE</span>
+          </div>
+          
+          <!-- TOTAL QUESTIONS -->
+          <div class="table-cell">
+            <span class="count-badge">
+              <i class="fas fa-question-circle"></i>
+              <%= b.total_questions %>
+            </span>
+          </div>
+          
+          <!-- ACTIONS - FIXED DROPDOWN -->
+          <div class="table-cell">
+            <div class="actions-dropdown">
+              <button class="dropdown-btn">
+                ACTIONS <i class="fas fa-chevron-down"></i>
+              </button>
+              <div class="dropdown-content">
+                <!-- View questions -->
+                <a href="/teacher/question-bank/<%= b.course_id %>/<%= b.class_id %>/questions">
+                  <i class="fas fa-eye"></i> VIEW QUESTIONS
+                </a>
+                
+                <!-- Preview -->
+                <a href="/teacher/question-bank/<%= b.course_id %>/<%= b.class_id %>/preview" target="_blank">
+                  <i class="fas fa-search"></i> PREVIEW
+                </a>
+                
+                <!-- Print -->
+                <a href="/teacher/question-bank/<%= b.course_id %>/<%= b.class_id %>/print" target="_blank">
+                  <i class="fas fa-print"></i> PRINT
+                </a>
+                
+                <!-- Duplicate -->
+                <a href="/teacher/question-bank/<%= b.course_id %>/<%= b.class_id %>/duplicate">
+                  <i class="fas fa-copy"></i> DUPLICATE
+                </a>
+                
+                <!-- Delete -->
+                <form action="/teacher/question-bank/<%= b.course_id %>/<%= b.class_id %>/delete" 
+                      method="POST">
+                  <button class="delete-btn" 
+                          onclick="return confirm('Delete this question bank? All contained questions will be removed!')">
+                    <i class="fas fa-trash-alt"></i> DELETE
+                  </button>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+        <% }); %>
+      <% } %>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    // Add animation to rows when they appear
+    document.addEventListener('DOMContentLoaded', function() {
+      const rows = document.querySelectorAll('.table-row-card');
+      rows.forEach((row, index) => {
+        row.style.opacity = '0';
+        row.style.transform = 'translateY(10px)';
+        
+        setTimeout(() => {
+          row.style.transition = 'opacity 0.4s ease, transform 0.4s ease';
+          row.style.opacity = '1';
+          row.style.transform = 'translateY(0)';
+        }, index * 50);
+      });
+      
+      // Close dropdowns when clicking elsewhere
+      document.addEventListener('click', function(event) {
+        if (!event.target.closest('.actions-dropdown')) {
+          const dropdowns = document.querySelectorAll('.dropdown-content');
+          dropdowns.forEach(dropdown => {
+            dropdown.style.display = 'none';
+          });
+        }
+      });
+    });
+  </script>
+</body>
+</html>

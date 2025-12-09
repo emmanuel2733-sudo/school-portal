@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Edit CBT Exam</title>
+  <link rel="stylesheet" href="/style.css">
+  <style>
+    body { background:#f6f7fb; padding:25px; font-family:Arial; }
+    .box { background:white; padding:20px; max-width:700px; margin:auto; border-radius:10px; box-shadow:0 6px 18px rgba(0,0,0,0.05); }
+    label { font-weight:bold; margin-top:14px; display:block; }
+    input[type="text"], input[type="datetime-local"], input[type="number"] {
+      width:100%; padding:9px; border-radius:6px; border:1px solid #ddd; margin-top:5px;
+    }
+    .btn { padding:10px 14px; border:none; border-radius:6px; cursor:pointer; margin-top:20px; }
+    .btn-primary { background:#007bff; color:white; }
+    .btn-secondary { background:#6c757d; color:white; }
+    .error { background:#fdecea; padding:10px; border-radius:6px; color:#721c24; margin-top:10px; }
+  </style>
+</head>
+<body>
+
+<div class="box">
+
+  <h2>Edit Exam – <%= exam.course_name %> ( <%= exam.class_name %> )</h2>
+
+  <% if (errors && errors.length > 0) { %>
+    <div class="error">
+      <ul style="padding-left:20px; margin:0;">
+        <% errors.forEach(e => { %>
+          <li><%= e.msg %></li>
+        <% }) %>
+      </ul>
+    </div>
+  <% } %>
+
+  <form method="POST">
+
+    <input type="hidden" name="course_id" value="<%= exam.course_id %>">
+
+    <label>Exam Title</label>
+    <input type="text" name="title" value="<%= exam.title %>" required>
+
+    <label>Start Date & Time</label>
+    <input type="datetime-local" name="start_time" value="<%= exam.start_time %>" required>
+
+    <label>End Date & Time</label>
+    <input type="datetime-local" name="end_time" value="<%= exam.end_time %>" required>
+
+    <label>Duration (minutes)</label>
+    <input type="number" name="duration_minutes" value="<%= exam.duration_minutes %>">
+
+    <button class="btn btn-primary" type="submit">Save Changes</button>
+    <a href="/admin/courses/<%= exam.course_id %>/cbt" class="btn btn-secondary">Cancel</a>
+
+  </form>
+
+</div>
+
+</body>
+</html>

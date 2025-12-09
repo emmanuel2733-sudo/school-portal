@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Print Question Bank</title>
+  <style>
+    body { font-family: Arial; padding: 20px; }
+    img { max-width: 200px; margin-top: 8px; border-radius:4px; }
+
+    @media print {
+      .no-print { display: none; }
+    }
+  </style>
+</head>
+<body onload="window.print()">
+
+<button class="no-print" onclick="window.print()">Print Again</button>
+
+<h2>Printable Question Bank</h2>
+<hr>
+
+<% questions.forEach((q, i) => { %>
+  <div style="margin-bottom:25px;">
+    <h4><%= i+1 %>. <%= q.question %></h4>
+
+    <p>A. <%= q.option1 %></p>
+    <p>B. <%= q.option2 %></p>
+    <p>C. <%= q.option3 %></p>
+    <p>D. <%= q.option4 %></p>
+
+    <% if(q.image_path) { %>
+      <img src="/uploads/questions/<%= q.image_path %>">
+    <% } %>
+  </div>
+<% }) %>
+
+</body>
+</html>

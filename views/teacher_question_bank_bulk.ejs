@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Bulk Upload Questions</title>
+</head>
+<body>
+
+<h1>Bulk Upload Questions</h1>
+
+<form action="/teacher/question-bank/bulk" method="POST" enctype="multipart/form-data">
+  <label>Select Excel/CSV File:</label><br><br>
+
+  <input type="file" name="file" accept=".csv, .xlsx" required><br><br>
+
+  <button type="submit">Upload File</button>
+</form>
+
+<hr>
+
+<h3>Required Columns:</h3>
+<pre>
+course_id
+class_id
+question
+option1
+option2
+option3
+option4
+correct_option
+</pre>
+
+</body>
+</html>

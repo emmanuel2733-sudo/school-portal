@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Class Activities</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css"
+        integrity="sha512-Kc323vGBEqzTmouAECnVceyQqyqdsSiqLQISBL29aUW4U/M7pSPA/gEUZQqv1cwx4OnYxTxve5UMg5GT6L4JJg=="
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <style>
+    body { background: #f8fafc; font-family: 'Segoe UI', sans-serif; }
+    .navbar { position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+      background: white !important; padding: 1.2rem 0;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08); border-bottom: 1px solid #e2e8f0;
+    }
+    .navbar-brand { color: #1a202c !important; font-weight: 800; font-size: 1.8rem; }
+    .back-btn { width: 50px; height: 50px; border-radius: 50%; background: #6366f1; color: white !important;
+      display: flex; align-items: center; justify-content: center; font-size: 1.4rem;
+      text-decoration: none; box-shadow: 0 5px 15px rgba(0,0,0,0.15); transition: all 0.3s;
+    }
+    .back-btn:hover { background: #4f46e5; transform: scale(1.1); }
+    .content { margin-top: 100px; padding: 40px 20px; }
+    .card { background: white; padding: 40px; border: 1px solid #e2e8f0;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.08); text-align: center; border-radius: 16px; }
+    .big-icon { font-size: 4.5rem; color: #6366f1; margin-bottom: 20px; }
+    .upload-btn-big {
+      background: linear-gradient(135deg, #10b981, #059669); color: white;
+      padding: 18px 50px; font-size: 1.4rem; font-weight: 700; border-radius: 12px;
+      text-decoration: none; display: inline-block; margin: 20px 0;
+      box-shadow: 0 8px 25px rgba(16,185,129,0.3);
+    }
+    .upload-btn-big:hover { transform: translateY(-3px); box-shadow: 0 12px 30px rgba(16,185,129,0.4); }
+  </style>
+</head>
+<body>
+
+  <!-- SAME NAVBAR AS EVERYWHERE -->
+  <nav class="navbar">
+    <div class="container-fluid px-4">
+      <a class="navbar-brand" href="/dashboard">School Portal</a>
+      <div class="d-flex align-items-center gap-3">
+        <% if (classTeacherOf && classTeacherOf.trim() !== '') { %>
+          <div style="background: linear-gradient(135deg,#ff6b9d,#ff8ab3); color:white; padding:10px 24px; border-radius:50px; font-weight:700; box-shadow:0 5px 15px rgba(255,107,157,0.4);">
+            Class Teacher — <%= classTeacherOf %>
+          </div>
+        <% } %>
+        <a href="/dashboard" class="back-btn" title="Back to Dashboard">
+          <i class="fas fa-arrow-left"></i>
+        </a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="content container">
+    <h2 style="font-size:2.8rem;font-weight:800;color:#1a202c;text-align:center;margin-bottom:50px;">
+      Class Activities
+    </h2>
+
+    <div class="row g-4">
+
+      <!-- UPLOAD TIMETABLE CARD (THIS IS WHERE THE LINK GOES) -->
+      <div class="col-md-6 col-lg-4">
+        <div class="card">
+          <i class="fas fa-calendar-alt big-icon"></i>
+          <h4 style="font-size:1.6rem;font-weight:700;color:#1a202c;">Class Timetable</h4>
+          <p style="color:#718096;margin:20px 0;">
+            Upload and manage the weekly timetable for <%= classTeacherOf || 'your class' %>
+          </p>
+
+          <!-- THIS IS THE BUTTON YOU ASKED FOR -->
+          <a href="/teacher/class-activities/upload-timetable" class="upload-btn-big">
+            <i class="fas fa-upload"></i> Upload / Update Timetable
+          </a>
+
+          <!-- Optional: Show current timetable link if exists -->
+          <% if (currentTimetable) { %>
+            <div class="mt-3">
+              <a href="/uploads/e-library/<%= currentTimetable.filename %>" target="_blank" class="text-success">
+                <i class="fas fa-eye"></i> View Current Timetable
+              </a>
+            </div>
+          <% } %>
+        </div>
+      </div>
+
+      <!-- You can add more activity cards here later -->
+      <!-- Example placeholder -->
+      <div class="col-md-6 col-lg-4">
+        <div class="card">
+          <i class="fas fa-bell big-icon" style="color:#f56565;"></i>
+          <h4 style="font-size:1.6rem;font-weight:700;color:#1a202c;">Announcements</h4>
+          <p style="color:#718096;margin:20px 0;">Coming soon...</p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</body>
+</html>

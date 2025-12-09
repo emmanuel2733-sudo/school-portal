@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Bulk Import to CBT Exam</title>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f6f9;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 1100px;
+      margin: auto;
+      background: white;
+      padding: 25px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    h1 {
+      margin-bottom: 20px;
+      font-size: 28px;
+      font-weight: 700;
+      color: #1a202c;
+    }
+
+    .btn-back {
+      padding: 10px 16px;
+      background: #6c757d;
+      color: white;
+      border-radius: 6px;
+      text-decoration: none;
+    }
+    .btn-back:hover { background: #565e64; }
+
+    .exam-box {
+      padding: 15px;
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      border-radius: 8px;
+      margin-bottom: 20px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 15px;
+      background: white;
+    }
+
+    th, td {
+      border: 1px solid #dee2e6;
+      padding: 12px;
+      vertical-align: top;
+    }
+
+    th {
+      background: #f1f5f9;
+      font-weight: 700;
+      font-size: 14px;
+    }
+
+    .q-select {
+      width: 22px;
+      height: 22px;
+      cursor: pointer;
+    }
+
+    .submit-btn {
+      margin-top: 20px;
+      padding: 12px 20px;
+      background: #0d6efd;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    .submit-btn:hover { background: #0a58ca; }
+
+    .exam-select {
+      padding: 10px;
+      width: 100%;
+      margin-top: 8px;
+      border: 1px solid #bbb;
+      border-radius: 6px;
+    }
+
+    .image-box img {
+      width: 120px;
+      border-radius: 6px;
+      border: 1px solid #ddd;
+      margin-top: 5px;
+    }
+
+    .empty {
+      text-align: center;
+      color: #888;
+      padding: 15px;
+      font-size: 16px;
+    }
+  </style>
+
+</head>
+<body>
+
+<div class="container">
+
+  <a href="/teacher/question-bank/<%= course_id %>/<%= class_id %>/questions" class="btn-back">⬅ Back</a>
+
+  <h1>Bulk Import into CBT Exam</h1>
+
+  <!-- EXAM SELECTION BOX -->
+  <div class="exam-box">
+    <h3>Select CBT Exam</h3>
+
+    <% if (exams.length === 0) { %>
+      <div class="empty">❗ No CBT exam found for this Course & Class.</div>
+    <% } else { %>
+      <select id="examSelect" class="exam-select">
+        <option value="">Select an Exam</option>
+        <% exams.forEach(ex => { %>
+          <option value="<%= ex.id %>">
+            <%= ex.title %> — <%= ex.class_name %>
+          </option>
+        <% }) %>
+      </select>
+    <% } %>
+  </div>
+
+  <h3>Select Questions to Import</h3>
+
+  <% if (questions.length === 0) { %>
+    <p class="empty">No questions available in this question bank.</p>
+  <% } else { %>
+
+  <table>
+    <tr>
+      <th width="50"></th>
+      <th>Question</th>
+      <th width="300">Options</th>
+      <th width="150">Correct</th>
+      <th width="200">Image</th>
+    </tr>
+
+    <% questions.forEach(q => { %>
+    <tr>
+      <td>
+        <input type="checkbox" class="q-select" value="<%= q.id %>">
+      </td>
+
+      <td><%= q.question %></td>
+
+      <td>
+        A. <%= q.option1 %><br><br>
+        B. <%= q.option2 %><br><br>
+        C. <%= q.option3 || "---" %><br><br>
+        D. <%= q.option4 || "---" %>
+      </td>
+
+      <td><strong><%= q.correct_option %></strong></td>
+
+      <td class="image-box">
+        <% if (q.image_path) { %>
+          <img src="/uploads/questions/<%= q.image_path %>">
+        <% } else { %>
+          ---
+        <% } %>
+      </td>
+    </tr>
+    <% }) %>
+
+  </table>
+
+  <% } %>
+
+  <button class="submit-btn" onclick="submitBulk()">Import Selected Questions</button>
+
+</div>
+
+<script>
+function submitBulk() {
+  const examId = document.getElementById("examSelect").value;
+  if (!examId) return alert("Please select an exam");
+
+  const selected = [...document.querySelectorAll(".q-select:checked")].map(x => x.value);
+  if (selected.length === 0) return alert("Please select at least 1 question");
+
+  fetch("/teacher/cbt/import/bulk", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      exam_id: examId,
+      questions: JSON.stringify(selected)
+    })
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.success) {
+      alert("Successfully imported " + data.added + " questions!");
+      window.location.reload();
+    } else {
+      alert("Import failed.");
+    }
+  });
+}
+</script>
+
+</body>
+</html>

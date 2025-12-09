@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Exam Preview – <%= exam.course_name %></title>
+
+    <style>
+        body {
+            background:#e9ecef;
+            font-family: Arial;
+            padding: 25px;
+        }
+
+        .exam-box {
+            background: white;
+            max-width: 900px;
+            margin: auto;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow:0 4px 20px rgba(0,0,0,0.15);
+        }
+
+        h1 {
+            text-align:center;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            text-align:center;
+            color:#555;
+            margin-bottom: 25px;
+        }
+
+        .question-card {
+            background:#fdfdfd;
+            padding:20px;
+            border-radius:10px;
+            border:1px solid #ddd;
+            margin-bottom:20px;
+        }
+
+        .question-text {
+            font-size:1.15em;
+            margin-bottom:15px;
+            line-height:1.6em;
+        }
+
+        .question-image img {
+            max-width:300px;
+            max-height:250px;
+            border-radius:8px;
+            border:1px solid #ccc;
+            margin-top:10px;
+            margin-bottom:15px;
+        }
+
+        .option {
+            padding:8px 12px;
+            margin:6px 0;
+            background:#f8f9fa;
+            border-radius:6px;
+            border:1px solid #ddd;
+            font-size:1.05em;
+        }
+
+        .correct {
+            border-color:#28a745;
+            background:#e9f9ee;
+            font-weight:bold;
+        }
+
+        .back-btn {
+            display:inline-block;
+            padding:10px 15px;
+            background:#6c757d;
+            color:white;
+            border-radius:6px;
+            text-decoration:none;
+            margin-top:25px;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="exam-box">
+
+    <h1>Preview – <%= exam.course_name %></h1>
+    <div class="subtitle"><%= exam.class_name %></div>
+
+    <% if (questions.length === 0) { %>
+        <p>No questions added yet.</p>
+    <% } %>
+
+    <% questions.forEach((q, i) => { %>
+        <div class="question-card">
+
+            <div class="question-text">
+                <strong>Question <%= i+1 %>:</strong> <%= q.question %>
+            </div>
+
+            <% if (q.image_path) { %>
+                <div class="question-image">
+                    <img src="/uploads/questions/<%= q.image_path %>">
+                </div>
+            <% } %>
+
+            <!-- OPTIONS -->
+            <% q.options.forEach((opt, index) => { %>
+                <div class="option <%= q.correct == index + 1 ? 'correct' : '' %>">
+                    <strong><%= String.fromCharCode(65 + index) %>.</strong>
+                    <%= opt %>
+                </div>
+            <% }) %>
+
+        </div>
+    <% }) %>
+
+    <a href="/teacher/cbt" class="back-btn">⬅ Back</a>
+
+</div>
+
+</body>
+</html>

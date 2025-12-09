@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Manage Topics</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    body { background: #f8fafc; font-family: 'Segoe UI', sans-serif; }
+    .navbar {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+      background: white !important; padding: 1.2rem 0;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08); border-bottom: 1px solid #e2e8f0;
+    }
+    .navbar-brand { color: #1a202c !important; font-weight: 800; font-size: 1.8rem; }
+    .power-btn, .back-nav-btn {
+      width: 50px; height: 50px; border-radius: 50%; display: flex;
+      align-items: center; justify-content: center; font-size: 1.4rem;
+      transition: all 0.3s; box-shadow: 0 5px 15px rgba(0,0,0,0.15);
+    }
+    .power-btn { background: #e74a3b; color: white; }
+    .power-btn:hover { background: #c82333; transform: scale(1.1); }
+    .back-nav-btn { background: #6366f1; color: white; text-decoration: none; }
+    .back-nav-btn:hover { background: #4f46e5; transform: scale(1.1); }
+    .class-teacher-badge {
+      background: linear-gradient(135deg, #ff6b9d, #ff8ab3); color: white;
+      padding: 10px 24px; border-radius: 50px; font-weight: 700; font-size: 1rem;
+      box-shadow: 0 5px 15px rgba(255,107,157,0.4);
+    }
+    .content { margin-top: 100px; padding: 40px 20px; }
+    .course-card {
+      background: white; padding: 25px; margin-bottom: 25px;
+      border: 1px solid #e2e8f0; box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .course-name { font-size: 1.4rem; font-weight: 700; color: #1a202c; }
+    .topic-links a {
+      font-size: 1rem; color: #6366f1; text-decoration: underline; margin-left: 20px;
+    }
+    .topic-links a:hover { color: #4f46e5; }
+    .no-courses { text-align: center; color: #718096; font-size: 1.3rem; padding: 60px; }
+  </style>
+</head>
+<body>
+
+  <!-- NAVBAR - SAME AS DASHBOARD -->
+  <nav class="navbar">
+    <div class="container-fluid px-4">
+      <a class="navbar-brand" href="/dashboard">School Portal</a>
+      <div class="d-flex align-items-center gap-3">
+        <% if (classTeacherOf && classTeacherOf.trim() !== '') { %>
+          <div class="class-teacher-badge">Class Teacher — <%= classTeacherOf %></div>
+        <% } %>
+        <a href="/dashboard" class="back-nav-btn" title="Back">
+          <i class="fas fa-arrow-left"></i>
+        </a>
+        <!-- <a href="/logout" class="power-btn">
+          <i class="fas fa-power-off"></i> -->
+        </a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="content container">
+    <h2 style="font-size:2.8rem;font-weight:800;color:#1a202c;text-align:center;margin-bottom:40px;">
+      Manage Topics
+    </h2>
+
+    <% if (courses && courses.length > 0) { %>
+      <% courses.forEach(course => { %>
+        <div class="course-card">
+          <div class="course-name">
+            <%= course.course_name %> <small class="text-muted">(<%= course.class_name %>)</small>
+          </div>
+          <div class="topic-links">
+            <a href="/teacher/topics/create/<%= course.id %>">Create Topic</a>
+            <a href="/teacher/topics/view/<%= course.id %>">View Topics</a>
+          </div>
+        </div>
+      <% }) %>
+    <% } else { %>
+      <p class="no-courses">No courses assigned yet.</p>
+    <% } %>
+  </div>
+
+</body>
+</html>

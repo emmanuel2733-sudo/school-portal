@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Preview Question Bank</title>
+  <style>
+    body { font-family: Arial; padding: 25px; }
+    .q { margin-bottom: 25px; }
+    img { max-width: 180px; margin-top: 5px; border-radius: 4px; }
+  </style>
+</head>
+<body>
+
+<h2>Question Bank Preview</h2>
+<hr>
+
+<% questions.forEach((q, i) => { %>
+  <div class="q">
+    <h4><%= i+1 %>. <%= q.question %></h4>
+
+    <p>A. <%= q.option1 %></p>
+    <p>B. <%= q.option2 %></p>
+    <p>C. <%= q.option3 %></p>
+    <p>D. <%= q.option4 %></p>
+
+    <% if(q.image_path) { %>
+      <img src="/uploads/questions/<%= q.image_path %>">
+    <% } %>
+  </div>
+<% }) %>
+
+</body>
+</html>

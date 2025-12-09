@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Upload Timetable</title>
+
+  <!-- Bootstrap -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <!-- Font Awesome 6 -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css"
+        integrity="sha512-Kc323vGBEqzTmouAECnVceyQqyqdsSiqLQISBL29aUW4U/M7pSPA/gEUZQqv1cwx4OnYxTxve5UMg5GT6L4JJg=="
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <style>
+    body { 
+      background: #f8fafc; 
+      font-family: 'Segoe UI', sans-serif; 
+    }
+    .navbar { 
+      position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+      background: white !important; padding: 1.2rem 0;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08); 
+      border-bottom: 1px solid #e2e8f0;
+    }
+    .navbar-brand { 
+      color: #1a202c !important; font-weight: 800; font-size: 1.8rem; 
+    }
+    .back-btn { 
+      width: 50px; height: 50px; border-radius: 50%; 
+      background: #6366f1; color: white !important;
+      display: flex; align-items: center; justify-content: center; 
+      font-size: 1.4rem; text-decoration: none; 
+      box-shadow: 0 5px 15px rgba(0,0,0,0.15); transition: all 0.3s;
+    }
+    .back-btn:hover { 
+      background: #4f46e5; transform: scale(1.1); 
+    }
+    .content { margin-top: 100px; padding: 40px 20px; }
+    .upload-card { 
+      background: white; padding: 60px 40px; border: 1px solid #e2e8f0; 
+      box-shadow: 0 10px 30px rgba(0,0,0,0.08); text-align: center; border-radius: 16px;
+    }
+    .upload-btn { 
+      background: #10b981; color: white; padding: 16px 60px; font-size: 1.4rem; 
+      font-weight: 700; border: none; border-radius: 12px; margin-top: 20px;
+    }
+    .upload-btn:hover { background: #059669; }
+    .timetable-icon {
+      font-size: 4rem; color: #6366f1; margin-bottom: 20px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- SAME NAVBAR AS YOUR DASHBOARD + E-LIBRARY -->
+  <nav class="navbar">
+    <div class="container-fluid px-4">
+      <a class="navbar-brand" href="/dashboard">School Portal</a>
+      <div class="d-flex align-items-center gap-3">
+        <% if (classTeacherOf && classTeacherOf.trim() !== '') { %>
+          <div class="class-teacher-badge" style="background: linear-gradient(135deg, #ff6b9d, #ff8ab3); color: white; padding: 10px 24px; border-radius: 50px; font-weight: 700; box-shadow: 0 5px 15px rgba(255,107,157,0.4);">
+            Class Teacher — <%= classTeacherOf %>
+          </div>
+        <% } %>
+        <a href="/teacher/class-activities" class="back-btn" title="Back to Class Activities">
+          <i class="fas fa-arrow-left"></i>
+        </a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="content container">
+    <div class="upload-card">
+      <i class="fas fa-calendar-alt timetable-icon"></i>
+      <h3 style="font-size:2.4rem;font-weight:800;color:#1a202c;margin-bottom:10px;">
+        Upload Class Timetable
+      </h3>
+      <p style="color:#718096;font-size:1.2rem;margin-bottom:30px;">
+        Upload the weekly timetable for your class (<strong><%= classTeacherOf %></strong>)
+      </p>
+
+      <form action="/teacher/class-activities/upload-timetable" method="POST" enctype="multipart/form-data">
+        <div class="mb-4">
+          <input type="file" name="timetable" class="form-control form-control-lg" accept=".pdf" required>
+          <small class="text-muted">Only PDF files are allowed (Max: 20MB)</small>
+        </div>
+        <button type="submit" class="upload-btn">
+          <i class="fas fa-upload"></i> Upload Timetable
+        </button>
+      </form>
+
+      <% if (typeof success !== 'undefined' && success) { %>
+        <div class="alert alert-success mt-4" role="alert">
+          <i class="fas fa-check-circle"></i> Timetable uploaded successfully!
+        </div>
+      <% } %>
+      <% if (typeof error !== 'undefined' && error) { %>
+        <div class="alert alert-danger mt-4" role="alert">
+          <i class="fas fa-exclamation-triangle"></i> <%= error %>
+        </div>
+      <% } %>
+    </div>
+  </div>
+</body>
+</html>

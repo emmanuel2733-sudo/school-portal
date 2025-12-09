@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Questions – <%= exam.course_name %></title>
+    <link rel="stylesheet" href="/style.css">
+
+    <style>
+        body { padding:20px; background:#f5f5f5; font-family:Arial; }
+        .box { background:white; padding:20px; max-width:900px; margin:auto; border-radius:8px; }
+        table { width:100%; border-collapse:collapse; margin-top:20px; }
+        th, td { border:1px solid #ddd; padding:10px; }
+        th { background:#eee; }
+        .btn { padding:8px 12px; border-radius:5px; text-decoration:none; color:white; }
+        .btn-primary { background:#007bff; }
+        .btn-danger { background:#dc3545; }
+    </style>
+</head>
+
+<body>
+
+<div class="box">
+
+<h2>Exam Questions – <%= exam.course_name %></h2>
+
+<p style="color:#666">
+    These questions were added by the teacher.
+</p>
+
+<hr>
+
+<table>
+    <tr>
+        <th>#</th>
+        <th>Question</th>
+        <th>A</th>
+        <th>B</th>
+        <th>C</th>
+        <th>D</th>
+        <th>Correct</th>
+    </tr>
+
+    <% questions.forEach(q => { %>
+    <tr>
+        <td><%= q.id %></td>
+        <td><%= q.question %></td>
+        <td><%= q.option_a %></td>
+        <td><%= q.option_b %></td>
+        <td><%= q.option_c %></td>
+        <td><%= q.option_d %></td>
+        <td><strong><%= q.correct_option %></strong></td>
+    </tr>
+    <% }) %>
+
+</table>
+
+<br>
+
+<a href="/admin/courses/<%= exam.course_id %>/cbt" class="btn btn-primary">⬅ Back</a>
+
+</div>
+
+</body>
+</html>

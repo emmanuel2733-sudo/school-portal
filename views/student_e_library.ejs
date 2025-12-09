@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>E-Library • LYTEBRIDGE ACADEMY</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <style>
+    :root {
+      --pink: #ff6b9d;
+      --cream: #fdf5e6;
+      --light-pink: #ffe6f0;
+      --gray: #6c757d;
+      --shadow: 0 6px 16px rgba(255, 107, 157, 0.15);
+      --bg: #fdf5e6;
+      --card-bg: #ffffff;
+      --text: #333333;
+      --border: #ffe0e9;
+      --radius: 16px;
+    }
+    [data-theme="dark"] {
+      --pink: #ff8ab3;
+      --light-pink: #2d1b3a;
+      --gray: #b0b0b0;
+      --shadow: 0 6px 16px rgba(0,0,0,0.4);
+      --bg: #121212;
+      --card-bg: #1e1e1e;
+      --text: #e0e0e0;
+      --border: #333333;
+    }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      transition: all 0.4s;
+    }
+
+    .top-bar {
+      position: fixed; top:0; left:0; right:0;
+      background: var(--card-bg);
+      padding: 1.2rem 1.5rem;
+      box-shadow: var(--shadow);
+      z-index: 1030;
+      display: flex; justify-content: space-between; align-items: center;
+      border-bottom: 1px solid var(--border);
+    }
+    .school-name {
+      font-size: 1.8rem; font-weight: 800;
+      background: linear-gradient(90deg, var(--pink), #ff8ab3);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .top-controls { display: flex; align-items: center; gap: 16px; }
+    .theme-toggle {
+      background: var(--card-bg);
+      border: 2px solid var(--border);
+      border-radius: 50px;
+      width: 52px; height: 28px;
+      position: relative; cursor: pointer;
+    }
+    .theme-toggle::before {
+      content: ''; position: absolute;
+      top: 4px; left: 4px;
+      width: 20px; height: 20px;
+      background: var(--pink);
+      border-radius: 50%;
+      transition: 0.3s;
+    }
+    [data-theme="dark"] .theme-toggle::before { transform: translateX(24px); }
+
+    .back-btn, .logout-btn {
+      padding: 10px 18px; border-radius: 50px;
+      font-weight: 600; text-decoration: none;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .back-btn { background: transparent; color: var(--text); border: 2px solid var(--pink); }
+    .back-btn:hover { background: var(--pink); color: white; }
+    .logout-btn { background: var(--pink); color: white; box-shadow: var(--shadow); }
+
+    .main-content {
+      margin-top: 90px;
+      padding: 30px 20px;
+      max-width: 1000px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .page-title {
+      text-align: center; margin-bottom: 40px;
+      font-size: 2.4rem; font-weight: 800;
+      background: linear-gradient(90deg, var(--pink), #ff8ab3);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .library-card {
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      margin-bottom: 24px;
+      border-left: 6px solid var(--pink);
+    }
+    .card-header {
+      background: var(--light-pink);
+      padding: 20px 24px;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-weight: 700;
+      font-size: 1.25rem;
+      color: var(--text);
+      transition: 0.3s;
+    }
+    .card-header:hover { background: var(--pink); color: white; }
+    .card-header i { transition: transform 0.3s; font-size: 1.4rem; }
+
+    .file-item {
+      padding: 18px 24px;
+      border-bottom: 1px dashed var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: 0.3s;
+    }
+    .file-item:hover { background: var(--light-pink); }
+    .file-info { display: flex; align-items: center; gap: 14px; }
+    .file-icon { font-size: 1.8rem; color: var(--pink); }
+    .file-name { font-weight: 600; }
+    .file-meta { font-size: 0.9rem; color: var(--gray); margin-top: 4px; }
+    .download-btn {
+      background: var(--pink);
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 50px;
+      font-size: 0.9rem;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: 0.3s;
+    }
+    .download-btn:hover { background: #ff4d8a; transform: translateY(-2px); }
+    .no-files { text-align: center; padding: 50px; color: var(--gray); }
+
+    @media (max-width: 768px) {
+      .top-bar { flex-direction: column; gap: 16px; text-align: center; }
+      .file-item { flex-direction: column; align-items: start; gap: 12px; }
+      .download-btn { align-self: flex-end; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="top-bar">
+    <div class="school-name">LYTEBRIDGE ACADEMY</div>
+    <div class="top-controls">
+      <button class="theme-toggle" id="theme-toggle"></button>
+      <a href="/dashboard" class="back-btn">Back to Dashboard</a>
+      <a href="/logout" class="logout-btn">Logout</a>
+    </div>
+  </div>
+
+  <div class="main-content">
+    <h1 class="page-title">E-Library</h1>
+    <p class="text-center text-muted mb-5">Download study materials uploaded by your teachers</p>
+
+    <% if (courses && courses.length > 0) { %>
+      <% courses.forEach((course, index) => { %>
+        <div class="library-card">
+          <div class="card-header"
+               data-bs-toggle="collapse"
+               data-bs-target="#libraryCollapse<%= index %>"
+               aria-expanded="<%= index === 0 %>"
+               role="button">
+            <div class="d-flex align-items-center gap-3">
+              <i class="fas fa-chevron-down"></i>
+              <div>
+                <strong><%= course.course_name %></strong>
+                <small class="opacity-75 ms-2">— <%= course.class_name %></small>
+              </div>
+            </div>
+            <span style="background:var(--pink);color:white;padding:6px 14px;border-radius:50px;font-size:0.9rem;">
+              <%= course.files.length %> file<%= course.files.length !== 1 ? 's' : '' %>
+            </span>
+          </div>
+
+          <div class="collapse <%= index === 0 ? 'show' : '' %>" id="libraryCollapse<%= index %>">
+            <div class="card-body p-0">
+              <% if (course.files.length > 0) { %>
+                <% course.files.forEach(file => { %>
+                  <div class="file-item">
+                    <div class="file-info">
+                      <i class="fas fa-file-pdf file-icon"></i>
+                      <div>
+                        <div class="file-name"><%= file.original_name %></div>
+                        <div class="file-meta">
+                          <%= file.size_kb %> KB • <%= new Date(file.uploaded_at).toLocaleDateString() %>
+                        </div>
+                      </div>
+                    </div>
+                    <a href="/downloads/<%= file.filename %>" 
+                       class="download-btn" 
+                       download="<%= file.original_name %>">
+                      <i class="fas fa-download"></i> Download
+                    </a>
+                  </div>
+                <% }) %>
+              <% } else { %>
+                <div class="no-files">
+                  <i class="fas fa-folder-open fa-3x mb-3 text-muted"></i>
+                  <p>No files uploaded yet for this subject.</p>
+                </div>
+              <% } %>
+            </div>
+          </div>
+        </div>
+      <% }) %>
+    <% } else { %>
+      <div class="text-center py-5">
+        <i class="fas fa-book-reader fa-5x text-muted mb-4"></i>
+        <h3>No subjects found this term</h3>
+      </div>
+    <% } %>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    // Dark mode
+    const toggle = document.getElementById('theme-toggle');
+    const html = document.documentElement;
+    html.setAttribute('data-theme', localStorage.getItem('theme') || 'light');
+
+    toggle.addEventListener('click', () => {
+      const newTheme = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+      html.setAttribute('data-theme', newTheme);
+      localStorage.setItem('theme', newTheme);
+    });
+
+    // Rotate chevron
+    document.querySelectorAll('[data-bs-toggle="collapse"]').forEach(el => {
+      el.addEventListener('click', function() {
+        const expanded = this.getAttribute('aria-expanded') === 'true';
+        this.setAttribute('aria-expanded', !expanded);
+      });
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Questions List</title>
+
+  <!-- Bootstrap & Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+
+  <style>
+    :root {
+      --primary: #6366f1;
+      --success: #10b981;
+      --danger: #e74a3b;
+      --warning: #f59e0b;
+      --info: #3b82f6;
+      --card-bg: #f8fafc;
+    }
+
+    body {
+      background: #f1f5f9;
+      font-family: 'Segoe UI', sans-serif;
+      padding-bottom: 60px;
+    }
+
+    /* HEADER NAV */
+    .header-actions {
+      display: flex;
+      justify-content: space-between;
+      margin: 20px auto;
+      max-width: 1300px;
+      padding: 0 20px;
+    }
+
+    .btn-back {
+      background: var(--primary);
+      color: white;
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-weight: 600;
+      text-decoration: none;
+    }
+    .btn-back:hover { background: #4f46e5; }
+
+    .btn-bulk, .btn-ai {
+      background: var(--success);
+      color: white;
+      padding: 12px 22px;
+      border-radius: 8px;
+      font-weight: 600;
+      text-decoration: none;
+      box-shadow: 0 5px 15px rgba(16,185,129,0.3);
+      transition: .2s;
+    }
+    .btn-bulk:hover, .btn-ai:hover { background: #0da271; transform: translateY(-2px); }
+
+    /* SUCCESS ALERT */
+    .success-alert {
+      max-width: 1300px;
+      margin: 10px auto 0;
+      padding: 15px 20px;
+      background: #d1fae5;
+      border-left: 6px solid #047857;
+      color: #065f46;
+      border-radius: 8px;
+      font-weight: 600;
+    }
+
+    /* HEADER SECTION */
+    .header-section {
+      max-width: 1300px;
+      margin: 20px auto;
+      background: white;
+      padding: 25px 30px;
+      border-radius: 12px;
+      box-shadow: 0 8px 25px rgba(0,0,0,0.08);
+      border: 1px solid #e2e8f0;
+    }
+
+    .header-title { font-size: 2rem; font-weight: 800; color: #1e293b; }
+    .header-subtitle { font-size: 1.1rem; color: #64748b; margin-bottom: 10px; }
+
+    /* Table header */
+    .table-header {
+      max-width: 1300px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 0.5fr 3fr 2fr 1fr 1fr 1fr;
+      gap: 15px;
+      padding: 20px;
+      background: white;
+      border-radius: 10px 10px 0 0;
+      font-weight: 700;
+      text-transform: uppercase;
+      border: 1px solid #e2e8f0;
+      border-bottom: 2px solid #e2e8f0;
+      color: #475569;
+    }
+
+    /* Row cards */
+    .table-body {
+      max-width: 1300px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+
+    .table-row-card {
+      display: grid;
+      grid-template-columns: 0.5fr 3fr 2fr 1fr 1fr 1fr;
+      gap: 15px;
+      background: var(--card-bg);
+      padding: 20px;
+      border-radius: 10px;
+      border: 1px solid #e2e8f0;
+      transition: .3s;
+      position: relative;
+    }
+    .table-row-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+    }
+
+    .table-cell { color: #334155; font-weight: 500; }
+    .question-text { font-weight: 700; color: #1e293b; }
+
+    .correct-badge {
+      background: var(--success);
+      color: white;
+      padding: 8px 15px;
+      border-radius: 8px;
+      font-weight: 700;
+      text-align: center;
+      min-width: 60px;
+    }
+
+    img.question-img {
+      width: 100%;
+      max-width: 110px;
+      border-radius: 8px;
+      border: 1px solid #e2e8f0;
+    }
+
+    /* ACTIONS DROPDOWN */
+    .actions-dropdown {
+      position: relative;
+      width: 100%;
+    }
+
+    .action-btn {
+      background: var(--primary);
+      color: white;
+      padding: 12px 18px;
+      border-radius: 8px;
+      width: 100%;
+      border: none;
+      cursor: pointer;
+      font-weight: 600;
+      box-shadow: 0 4px 12px rgba(99,102,241,0.2);
+    }
+
+    .dropdown-menu-box {
+      display: none;
+      position: absolute;
+      right: 0;
+      top: 110%;
+      background: white;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      min-width: 200px;
+      box-shadow: 0 15px 40px rgba(0,0,0,0.15);
+      z-index: 20;
+    }
+
+    .dropdown-menu-box a,
+    .dropdown-menu-box button {
+      display: block;
+      padding: 10px 15px;
+      color: #334155;
+      text-decoration: none;
+      font-weight: 600;
+      width: 100%;
+      text-align: left;
+      border: none;
+      background: none;
+    }
+
+    .dropdown-menu-box a:hover,
+    .dropdown-menu-box button:hover {
+      background: #f1f5f9;
+      color: var(--primary);
+    }
+
+    .delete-item { color: var(--danger); }
+    .delete-item:hover { background: #ffe4e4 !important; color: #b91c1c !important; }
+
+    .actions-dropdown:hover .dropdown-menu-box {
+      display: block;
+    }
+
+  </style>
+</head>
+<body>
+
+
+<!-- SUCCESS MESSAGE -->
+<% if (import_success) { %>
+  <div class="success-alert">
+    <i class="fas fa-check-circle"></i> Question imported successfully!
+  </div>
+<% } %>
+
+<!-- TOP BUTTONS -->
+<div class="header-actions">
+
+  <a href="/teacher/question-bank" class="btn-back">
+    <i class="fas fa-arrow-left"></i> Back
+  </a>
+
+  <div>
+    <% if (questions.length > 0) { %>
+      <a href="/teacher/question-bank/ai?course=<%= course_id %>&class=<%= class_id %>" class="btn-ai">
+        <i class="fa-solid fa-robot"></i> Generate With AI
+      </a>
+    <% } %>
+
+    <a href="/teacher/cbt/import/bulk?course=<%= course_id %>&class=<%= class_id %>"
+       class="btn-bulk">
+      <i class="fa-solid fa-layer-group"></i> Bulk Add to CBT
+    </a>
+  </div>
+
+</div>
+
+<!-- HEADER -->
+<div class="header-section">
+  <h1 class="header-title">QUESTION LIST</h1>
+  <p class="header-subtitle">Manage questions for <%= course_name %> — <%= class_name %></p>
+</div>
+
+<!-- TABLE HEADER -->
+<div class="table-header">
+  <div>#</div>
+  <div>Question</div>
+  <div>Options</div>
+  <div>Correct</div>
+  <div>Image</div>
+  <div>Actions</div>
+</div>
+
+<!-- TABLE BODY -->
+<div class="table-body">
+
+  <% questions.forEach((q, i) => { %>
+  <div class="table-row-card">
+
+    <!-- Number -->
+    <div class="table-cell"><%= i + 1 %></div>
+
+    <!-- Question -->
+    <div class="table-cell question-text"><%= q.question %></div>
+
+    <!-- Options -->
+    <div class="table-cell">
+      <strong>A:</strong> <%= q.option1 %><br>
+      <strong>B:</strong> <%= q.option2 %><br>
+      <strong>C:</strong> <%= q.option3 || "—" %><br>
+      <strong>D:</strong> <%= q.option4 || "—" %>
+    </div>
+
+    <!-- Correct -->
+    <div class="table-cell">
+      <% const L = {1:"A",2:"B",3:"C",4:"D"}; %>
+      <span class="correct-badge"><%= L[q.correct_option] %></span>
+    </div>
+
+    <!-- Image -->
+    <div class="table-cell">
+      <% if (q.image_path) { %>
+        <img src="/uploads/questions/<%= q.image_path %>" class="question-img">
+      <% } else { %>
+        <em style="color:#94a3b8;">No Image</em>
+      <% } %>
+    </div>
+
+    <!-- ACTIONS DROPDOWN -->
+    <div class="table-cell actions-dropdown">
+
+      <button class="action-btn">
+        Actions <i class="fas fa-chevron-down"></i>
+      </button>
+
+      <div class="dropdown-menu-box">
+
+        <!-- Add to Exam -->
+        <form action="/teacher/cbt/import-question" method="POST" style="margin:0;">
+          <select name="examId" required class="form-select mb-2">
+            <option value="">Select Exam</option>
+            <% exams.forEach(ex => { %>
+              <option value="<%= ex.id %>"><%= ex.title %> — <%= ex.class_name %></option>
+            <% }) %>
+          </select>
+          <input type="hidden" name="qid" value="<%= q.id %>">
+          <button class="dropdown-item">Add → Exam</button>
+        </form>
+
+        <a href="/teacher/question-bank/<%= q.id %>/edit">✏️ Edit</a>
+
+        <form action="/teacher/question-bank/<%= q.id %>/delete" method="POST">
+          <button class="delete-item" onclick="return confirm('Delete this question?')">❌ Delete</button>
+        </form>
+
+      </div>
+
+    </div>
+
+  </div>
+  <% }) %>
+
+</div>
+
+</body>
+</html>

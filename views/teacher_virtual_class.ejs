@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Virtual Classes</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+  <style>
+    body { background: #f8fafc; font-family: 'Segoe UI', sans-serif; }
+    .navbar { position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+      background: white !important; padding: 1.2rem 0;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08); border-bottom: 1px solid #e2e8f0;
+    }
+    .navbar-brand { color: #1a202c !important; font-weight: 800; font-size: 1.8rem; }
+    .back-btn { width: 50px; height: 50px; border-radius: 50%; background: #6366f1; color: white !important;
+      display: flex; align-items: center; justify-content: center; font-size: 1.4rem;
+      text-decoration: none; box-shadow: 0 5px 15px rgba(0,0,0,0.15); transition: all 0.3s;
+    }
+    .back-btn:hover { background: #4f46e5; transform: scale(1.1); }
+    .content { margin-top: 100px; padding: 40px 20px; }
+    .course-card { background: white; padding: 30px; margin-bottom: 25px; border: 1px solid #e2e8f0;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.08); border-radius: 16px; }
+    .current-link { background: #d1e7dd; padding: 12px; border-radius: 10px; font-size: 0.95rem; word-break: break-all; }
+  </style>
+</head>
+<body>
+
+  <nav class="navbar">
+    <div class="container-fluid px-4">
+      <a class="navbar-brand" href="/dashboard">School Portal</a>
+      <div class="d-flex align-items-center gap-3">
+        <a href="/dashboard" class="back-btn" title="Back">
+          <i class="fas fa-arrow-left"></i>
+        </a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="content container">
+    <h2 class="text-center mb-5" style="font-size:2.8rem;font-weight:800;color:#1a202c;">
+      <i class="fas fa-video text-primary"></i> Virtual Classes
+    </h2>
+
+    <% if (courses.length === 0) { %>
+      <div class="alert alert-info text-center fs-4">
+        You are not assigned to any course yet.
+      </div>
+    <% } else { %>
+      <% courses.forEach(c => { %>
+        <div class="course-card">
+          <h4 class="mb-3">
+            <strong><%= c.course_name %></strong> 
+            <small class="text-muted">— <%= c.class_name %></small>
+          </h4>
+
+          <% if (c.meet_link) { %>
+            <div class="current-link mb-3">
+              <strong>Current Link:</strong><br>
+              <a href="<%= c.meet_link %>" target="_blank" style="color:#0d6efd;">
+                <%= c.meet_link %>
+              </a>
+            </div>
+          <% } %>
+
+          <form action="/teacher/virtual-class/update/<%= c.course_id %>" method="POST">
+            <div class="input-group">
+              <input type="url" name="meet_link" class="form-control form-control-lg"
+                     placeholder="https://meet.google.com/xxx-yyy-zzz"
+                     value="<%= c.meet_link || '' %>" required>
+              <button type="submit" class="btn btn-primary btn-lg">
+                <%= c.meet_link ? 'Update' : 'Set' %> Link
+              </button>
+            </div>
+            <small class="text-muted">Students will join your class using this link</small>
+          </form>
+        </div>
+      <% }) %>
+    <% } %>
+
+    <% if (success) { %>
+      <div class="alert alert-success text-center mt-4">
+        <%= success %>
+      </div>
+    <% } %>
+  </div>
+</body>
+</html>

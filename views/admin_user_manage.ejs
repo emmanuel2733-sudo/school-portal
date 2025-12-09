@@ -94,9 +94,13 @@
                 </form>
 
                 <!-- EDIT BUTTON (toggle form) -->
-                <button type="button" id="editBtn" class="btn-edit">
-                    Edit Details
-                </button>
+              <a href="/admin/users/edit/<%= user.id %>" 
+   class="btn-edit" 
+   style="text-decoration:none; padding:9px 16px; display:inline-block;">
+    Edit Details
+</a>
+
+
             </div>
         </div>
 
@@ -118,10 +122,14 @@
                 <p><strong>Created:</strong> <%= user.created_at ? new Date(user.created_at).toLocaleDateString('en-GB') : 'Unknown' %></p>
             </div>
 
-            <% if (user.photo && user.photo !== 'default-photo.jpg') { %>
+           <% if (user.photo && user.photo.trim() !== '') { %>
+
                 <div style="margin: 15px 0;">
                     <strong>Photo:</strong><br>
-                    <img src="/uploads/<%= user.photo %>" alt="User Photo" class="photo-preview">
+                    <img src="<%= '/uploads/' + user.photo %>" 
+     onerror="this.src='/images/default-photo.jpg'"
+     class="photo-preview">
+
                 </div>
             <% } else { %>
                 <p><em>No photo uploaded</em></p>
@@ -142,10 +150,16 @@
                 </div>
             <% } %>
 
-            <form method="POST" action="/admin/users/manage/<%= user.id %>">
+           <form method="POST" action="/admin/users/edit/<%= user.id %>" enctype="multipart/form-data">
+
                 <div class="section-title">Edit User Details</div>
 
                 <div class="form-group">
+                    <div class="form-group">
+    <label>Change Photo:</label>
+    <input type="file" name="photo" accept="image/*">
+</div>
+
                     <label>Username:</label>
                     <input type="text" value="<%= user.username %>" disabled style="background:#f8f9fa; color:#6c757d;">
                     <small>Cannot be changed</small>
@@ -192,14 +206,6 @@
         </div>
     </div>
 
-    <script>
-        const container = document.querySelector('div[style*="max-width"]');
-        document.getElementById('editBtn').addEventListener('click', () => {
-            container.classList.add('editing');
-        });
-        document.getElementById('cancelBtn').addEventListener('click', () => {
-            container.classList.remove('editing');
-        });
-    </script>
+   
 </body>
 </html>

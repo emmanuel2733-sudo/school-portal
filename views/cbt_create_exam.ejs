@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Create CBT Exam</title>
+  <link rel="stylesheet" href="/style.css">
+  <style>
+    body{font-family:Arial;background:#f6f7fb;padding:30px}
+    .box{max-width:720px;margin:auto;background:#fff;padding:22px;border-radius:10px;box-shadow:0 6px 18px rgba(0,0,0,0.05)}
+    label{display:block;margin-top:12px;font-weight:600}
+    input[type="text"], input[type="datetime-local"], input[type="number"]{width:100%;padding:10px;border:1px solid #ddd;border-radius:6px;margin-top:6px}
+    .btn{display:inline-block;padding:10px 16px;background:#28a745;color:#fff;border-radius:6px;text-decoration:none;border:none;margin-top:14px;cursor:pointer}
+    .btn-secondary{background:#6c757d}
+    .error{background:#fdecea;color:#8a1f1f;padding:8px;border-radius:6px;margin-top:10px}
+  </style>
+</head>
+<body>
+  <div class="box">
+    <h2>Create CBT Exam for <%= course.course_name %> — <%= course.class_name %></h2>
+
+    <% if (errors && errors.length) { %>
+      <div class="error">
+        <ul style="margin:0;padding-left:18px">
+          <% errors.forEach(e=>{ %><li><%= e.msg %></li><% }) %>
+        </ul>
+      </div>
+    <% } %>
+
+    <form method="POST">
+      <label>Exam Title</label>
+      <input type="text" name="title" value="<%= form.title %>" required>
+
+      <label>Start Date & Time</label>
+      <input type="datetime-local" name="start_time" value="<%= form.start_time %>" required>
+
+      <label>End Date & Time</label>
+      <input type="datetime-local" name="end_time" value="<%= form.end_time %>" required>
+
+      <label>Duration (minutes)</label>
+      <input type="number" name="duration_minutes" min="1" value="<%= form.duration_minutes %>">
+
+      <div style="margin-top:18px">
+        <button type="submit" class="btn">Create Exam</button>
+        <a href="/admin/courses/<%= course.course_id %>/cbt" class="btn btn-secondary" style="margin-left:10px">Cancel</a>
+      </div>
+    </form>
+  </div>
+</body>
+</html>

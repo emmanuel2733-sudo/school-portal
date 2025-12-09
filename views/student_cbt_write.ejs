@@ -1,0 +1,609 @@
+<!DOCTYPE html> 
+<html lang="en" data-theme="light">
+<%- include('partials/student_head', { title: exam.title + ' • Write Exam' }) %>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title><%= exam.title %> — Write Exam</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+
+  <style>
+    :root{
+      --pink: #ff6b9d;
+      --light-pink: #ffe6f0;
+      --bg: #fdf5e6;
+      --card-bg: #fff;
+      --text: #222;
+      --muted: #777;
+      --radius: 14px;
+      --shadow: 0 10px 30px rgba(0,0,0,0.06);
+      --nav-size: 80px;
+    }
+    [data-theme="dark"]{
+      --pink: #ff8ab3;
+      --light-pink: #2d1b3a;
+      --bg: #121212;
+      --card-bg: #1e1e1e;
+      --text: #eaeaea;
+      --muted: #a0a0a0;
+    }
+
+    html,body{height:100%; margin:0; font-family:"Poppins",sans-serif; background:var(--bg); color:var(--text);}
+    .page { display:flex; max-width:1400px; margin:24px auto; gap:24px; padding:0 16px; }
+
+    /* LEFT: content */
+    .content {
+      flex:1;
+      min-width:0;
+    }
+
+    .topbar {
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:12px;
+      margin-bottom:18px;
+    }
+    .exam-title { font-size:1.4rem; color:var(--pink); font-weight:700; }
+    .exam-meta { color:var(--muted); font-size:0.95rem; }
+
+    .exam-body { display:flex; gap:20px; }
+    .questions-col { flex:1; min-width:0; }
+
+    /* question card */
+    .q-card {
+      background:var(--card-bg);
+      border-radius:var(--radius);
+      padding:18px;
+      margin-bottom:18px;
+      box-shadow:var(--shadow);
+      border-left:6px solid transparent;
+      transition:transform .12s, border-color .12s;
+      position:relative;
+    }
+    .q-card.marked { border-left-color: rebeccapurple; }
+    .q-card.answered { border-left-color: #28a745; }
+    .q-card.unanswered { border-left-color: #ccc; }
+
+    .q-top { display:flex; justify-content:space-between; align-items:center; gap:10px; }
+    .q-text { font-weight:600; margin-bottom:10px; font-size:1.03rem; white-space:pre-wrap; }
+    .q-image { margin-top:10px; max-width:620px; width:100%; height:auto; object-fit:contain; border-radius:10px; border:1px solid #eee; }
+
+    .options label {
+      display:flex;
+      align-items:center;
+      gap:12px;
+      padding:10px 12px;
+      margin-bottom:10px;
+      border-radius:10px;
+      background:var(--light-pink);
+      cursor:pointer;
+      transition:all .12s;
+      user-select:none;
+    }
+    .options input { transform:scale(1.05); }
+    .options label:hover { background:var(--pink); color:#fff; transform:translateX(6px); }
+
+    /* mark for review star */
+    .star-btn {
+      background:transparent;
+      border:none;
+      cursor:pointer;
+      font-size:1.15rem;
+      color:var(--muted);
+    }
+    .star-btn.marked { color: rebeccapurple; transform:scale(1.08); }
+
+    /* right nav panel */
+    .nav-panel {
+      width: var(--nav-size);
+      min-width: var(--nav-size);
+      position:sticky;
+      top:24px;
+      align-self:start;
+      height:fit-content;
+    }
+    .nav-box {
+      background:var(--card-bg);
+      padding:10px;
+      border-radius:12px;
+      box-shadow:var(--shadow);
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+    }
+    .nav-title { font-weight:700; font-size:0.95rem; color:var(--pink); text-align:center; margin-bottom:6px; }
+    .nav-grid { display:grid; grid-template-columns:repeat(1,1fr); gap:8px; }
+    .nav-item {
+      width:100%;
+      height:42px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      border-radius:10px;
+      background:#f3f3f3;
+      cursor:pointer;
+      font-weight:700;
+      color:var(--muted);
+      border:2px solid transparent;
+      transition:all .12s;
+    }
+    .nav-item.answered { background:#e6ffef; color:#19712b; border-color:#baf0c8; }
+    .nav-item.unanswered { background:#fff; color:#666; border-color:#eee; }
+    .nav-item.marked { background:rebeccapurple; color:white; border-color: #d6b5ff; }
+    .nav-item.current { outline:3px solid rgba(0,0,0,0.06); transform:scale(1.03); }
+
+    .nav-footer { margin-top:8px; display:flex; gap:8px; }
+    .small-btn { padding:8px 10px; border-radius:8px; border:none; cursor:pointer; font-weight:600; background:var(--pink); color:white; }
+    .small-btn.ghost { background:transparent; color:var(--pink); border:1px solid var(--pink); }
+
+    /* Pager */
+    .pager { display:flex; gap:8px; margin-top:12px; justify-content:center; align-items:center; }
+    .pager button { padding:8px 12px; border-radius:8px; border:none; background:#f1f1f1; cursor:pointer; }
+    .pager button:disabled { opacity:.5; cursor:not-allowed; }
+
+    /* submit area */
+    .submit-box { margin-top:18px; text-align:center; }
+
+    /* warn modal */
+    .modal-backdrop {
+      position:fixed; left:0; top:0; right:0; bottom:0; background:rgba(0,0,0,0.45); display:none; align-items:center; justify-content:center; z-index:9999;
+    }
+    .modal {
+      background:var(--card-bg); padding:20px; border-radius:12px; width:90%; max-width:520px; box-shadow:var(--shadow);
+    }
+    .modal h3 { margin:0 0 8px 0; color:var(--pink); }
+    .modal .list { margin:12px 0; color:var(--muted); }
+
+    /* responsive */
+    @media (max-width: 1000px){
+      .page{ padding:12px; }
+      .nav-panel{ display:none; }
+      .exam-body{ flex-direction:column; }
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="page">
+
+  <!-- CONTENT -->
+  <div class="content">
+    <div class="topbar">
+      <div>
+        <div class="exam-title"><%= exam.title %></div>
+        <div class="exam-meta">Course: <strong><%= exam.course_name %></strong> — Class: <strong><%= exam.class_name %></strong></div>
+      </div>
+
+      <div>
+        <div style="text-align:right;">
+          <div style="font-weight:700; color:var(--muted); font-size:0.9rem;">Time Left</div>
+          <div id="timer" style="font-weight:800; font-size:1.1rem; color:var(--pink);">--:--</div>
+          <div style="font-size:0.9rem; color:var(--muted); margin-top:6px;">Strikes: <span id="strikes">0</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="exam-body">
+
+      <!-- QUESTIONS COLUMN -->
+      <div class="questions-col">
+        <form id="examForm" autocomplete="off">
+          <!-- Hidden inputs to carry mark-for-review flags for each question -->
+          <% questions.forEach((q) => { %>
+            <input type="hidden" name="mark_<%= q.id %>" id="mark_<%= q.id %>" value="0">
+          <% }) %>
+
+          <!-- Questions will be rendered into the DOM by server markup; we add data attributes for JS pagination -->
+          <% questions.forEach((q, idx) => { %>
+            <div class="q-card unanswered" data-qid="<%= q.id %>" data-index="<%= idx %>" data-page="<%= Math.floor(idx/4) %>">
+              <div class="q-top">
+                <div style="display:flex;align-items:center;gap:12px;">
+                  <div style="font-weight:700;">Q<%= idx + 1 %></div>
+                  <div class="q-text"><%= q.question %></div>
+                </div>
+
+                <div style="display:flex;align-items:center;gap:8px;">
+                  <button type="button" title="Mark for review" class="star-btn" data-qid="<%= q.id %>">
+                    <i class="fa-regular fa-star"></i>
+                  </button>
+                </div>
+              </div>
+
+              <% if (q.image_path) { %>
+                <img class="q-image" src="/uploads/questions/<%= q.image_path %>" alt="Diagram for Q<%= idx+1 %>">
+              <% } %>
+
+              <div class="options" style="margin-top:12px;">
+                <% [1,2,3,4].forEach(function(num) { %>
+                  <label>
+                    <input type="radio" name="q_<%= q.id %>" value="<%= num %>">
+                    <div style="flex:1;"><%= (q.option_map && q.option_map[num]) ? q.option_map[num] : '' %></div>
+                  </label>
+                <% }) %>
+              </div>
+            </div>
+          <% }) %>
+
+          <div class="submit-box">
+            <button type="button" id="submitBtn" class="btn"><i class="fas fa-paper-plane"></i> Submit Exam</button>
+          </div>
+        </form>
+
+        <!-- Pagination controls -->
+        <div class="pager" id="pager"></div>
+      </div>
+
+      <!-- RIGHT NAV PANEL -->
+      <div class="nav-panel" aria-hidden="false">
+        <div class="nav-box">
+          <div class="nav-title">Questions</div>
+          <div class="nav-grid" id="navGrid">
+            <% questions.forEach((q, idx) => { %>
+              <div class="nav-item unanswered" data-qid="<%= q.id %>" data-index="<%= idx %>" tabindex="0">
+                <%= idx+1 %>
+              </div>
+            <% }) %>
+          </div>
+
+          <div class="nav-footer">
+            <button id="prevPage" class="small-btn ghost">Prev</button>
+            <button id="nextPage" class="small-btn">Next</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<!-- BEFORE SUBMIT WARNING MODAL -->
+<div class="modal-backdrop" id="warnModal">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="warnTitle">
+    <h3 id="warnTitle">Unanswered Questions</h3>
+    <div class="list" id="unansweredList">Checking...</div>
+    <div style="text-align:right; margin-top:12px;">
+      <button id="cancelSubmit" class="small-btn ghost" style="margin-right:8px;">Go Back</button>
+      <button id="forceSubmit" class="small-btn">Submit Anyway</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // CONFIG from server
+  const EXAM_ID = <%= exam.id %>;
+  const SERVER_END_TS = <%= exam.end_time ? ("new Date('" + exam.end_time + "').getTime()") : "null" %>;
+  const AUTOSAVE_MS = 10000; // keep same as your backend uses
+  const PAGE_SIZE = 4;
+
+  // Elements
+  const qCards = Array.from(document.querySelectorAll('.q-card'));
+  const navItems = Array.from(document.querySelectorAll('.nav-item'));
+  const totalQuestions = qCards.length;
+  const totalPages = Math.ceil(totalQuestions / PAGE_SIZE);
+  const pagerEl = document.getElementById('pager');
+
+  // state
+  let currentPage = 0;
+  let snapshotTimer = null;
+  let autosaveTimer = null;
+  let videoStream = null;
+  let strikes = 0;
+
+  // helper: show page
+  function showPage(page) {
+    currentPage = Math.max(0, Math.min(page, totalPages - 1));
+
+    qCards.forEach(card => {
+      const p = parseInt(card.dataset.page, 10);
+      card.style.display = (p === currentPage) ? 'block' : 'none';
+    });
+
+    // update nav highlight (current page -> highlight first question on that page)
+    navItems.forEach((n,i) => {
+      n.classList.remove('current');
+      if (Math.floor(i / PAGE_SIZE) === currentPage && i === (currentPage * PAGE_SIZE)) {
+        n.classList.add('current');
+      }
+    });
+
+    // pager UI
+    renderPager();
+  }
+
+  function renderPager() {
+    pagerEl.innerHTML = '';
+    const prev = document.createElement('button');
+    prev.textContent = 'Prev';
+    prev.disabled = currentPage === 0;
+    prev.onclick = () => showPage(currentPage - 1);
+    pagerEl.appendChild(prev);
+
+    const info = document.createElement('div');
+    info.style.padding = '6px 12px';
+    info.style.color = 'var(--muted)';
+    info.textContent = `Page ${currentPage + 1} / ${totalPages}`;
+    pagerEl.appendChild(info);
+
+    const next = document.createElement('button');
+    next.textContent = 'Next';
+    next.disabled = currentPage >= totalPages - 1;
+    next.onclick = () => showPage(currentPage + 1);
+    pagerEl.appendChild(next);
+  }
+
+  // initialize visibility
+  showPage(0);
+
+  // nav item click -> go to the page that contains that question and scroll to it
+  navItems.forEach((nav, idx) => {
+    nav.addEventListener('click', () => {
+      const page = Math.floor(idx / PAGE_SIZE);
+      showPage(page);
+      // highlight the nav item and question
+      setTimeout(() => {
+        scrollToQuestion(idx);
+      }, 80);
+    });
+    nav.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); nav.click(); }
+    });
+  });
+
+  function scrollToQuestion(index) {
+    const q = qCards[index];
+    if (!q) return;
+    q.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    // also set that nav item as current
+    navItems.forEach(n => n.classList.remove('current'));
+    navItems[index].classList.add('current');
+  }
+
+  // update answered/unanswered/marked classes on change
+  function updateStatusForQuestion(qCard) {
+    const qid = qCard.dataset.qid;
+    const radios = qCard.querySelectorAll('input[type=radio]');
+    const checked = Array.from(radios).some(r => r.checked);
+    qCard.classList.toggle('answered', checked);
+    qCard.classList.toggle('unanswered', !checked);
+
+    // update nav tile
+    const idx = parseInt(qCard.dataset.index, 10);
+    const nav = navItems[idx];
+    nav.classList.toggle('answered', checked);
+    nav.classList.toggle('unanswered', !checked);
+
+    // if marked (hidden input value)
+    const markInp = document.getElementById('mark_' + qid);
+    const isMarked = markInp && markInp.value === '1';
+    nav.classList.toggle('marked', !!isMarked);
+    qCard.classList.toggle('marked', !!isMarked);
+  }
+
+  // wiring radios
+  qCards.forEach(card => {
+    const radios = Array.from(card.querySelectorAll('input[type=radio]'));
+    radios.forEach(r => {
+      r.addEventListener('change', () => {
+        updateStatusForQuestion(card);
+      });
+    });
+    // initial status update (in case student had saved answers loaded)
+    updateStatusForQuestion(card);
+  });
+
+  // star / mark for review toggles
+  document.querySelectorAll('.star-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const qid = btn.dataset.qid;
+      const hidden = document.getElementById('mark_' + qid);
+      const card = document.querySelector('.q-card[data-qid="' + qid + '"]');
+      const idx = parseInt(card.dataset.index, 10);
+      const nav = navItems[idx];
+
+      if (hidden.value === '1') {
+        hidden.value = '0';
+        btn.classList.remove('marked');
+        btn.innerHTML = '<i class="fa-regular fa-star"></i>';
+        card.classList.remove('marked');
+        nav.classList.remove('marked');
+      } else {
+        hidden.value = '1';
+        btn.classList.add('marked');
+        btn.innerHTML = '<i class="fa-solid fa-star"></i>';
+        card.classList.add('marked');
+        nav.classList.add('marked');
+      }
+    });
+  });
+
+  // NAV panel next/prev page
+  document.getElementById('prevPage').addEventListener('click', () => showPage(currentPage - 1));
+  document.getElementById('nextPage').addEventListener('click', () => showPage(currentPage + 1));
+
+  // AUTOSAVE logic (sends answers & marks)
+  async function autosave() {
+    const form = document.getElementById('examForm');
+    const fd = new FormData(form);
+
+    // build answers + marks object
+    const answers = {};
+    const marks = {};
+    for (const [k,v] of fd.entries()) {
+      if (k.startsWith('q_')) answers[k.substring(2)] = v;
+      if (k.startsWith('mark_')) marks[k.substring(5)] = v;
+    }
+
+    try {
+      await fetch(`/student/cbt/${EXAM_ID}/answer-save`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ answers, marks })
+      });
+      // you can show a small saved indicator if you like
+    } catch (e) {
+      console.warn('Autosave failed', e);
+    }
+  }
+
+  autosaveTimer = setInterval(autosave, AUTOSAVE_MS);
+
+  // SNAPSHOT (webcam) logic (keeps your existing endpoint)
+  async function sendSnapshot() {
+    if (!videoStream) return;
+    const v = document.getElementById('videoPreview');
+    const canvas = document.createElement('canvas');
+    canvas.width = v.videoWidth || 320;
+    canvas.height = v.videoHeight || 240;
+    canvas.getContext('2d').drawImage(v, 0, 0, canvas.width, canvas.height);
+    const blob = await new Promise(r => canvas.toBlob(r, 'image/jpeg', 0.75));
+    const fd = new FormData();
+    fd.append('snapshot', blob, 'snapshot.jpg');
+    fd.append('examId', EXAM_ID);
+    try {
+      await fetch('/student/cbt/webcam-snapshot', { method: 'POST', body: fd });
+    } catch(e) { console.warn('snapshot failed', e); }
+  }
+
+  // START CAMERA button
+  document.getElementById('startCam').addEventListener('click', async () => {
+    try {
+      videoStream = await navigator.mediaDevices.getUserMedia({ video: true });
+      const v = document.getElementById('videoPreview');
+      v.srcObject = videoStream;
+      if (!snapshotTimer) snapshotTimer = setInterval(sendSnapshot, 20000);
+    } catch (e) {
+      alert('Camera access required for monitored exam');
+    }
+  });
+
+  // Visibility tracking (tab switch)
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) reportInfraction('tab_switch');
+  });
+  window.addEventListener('blur', () => reportInfraction('blur'));
+
+  async function reportInfraction(reason) {
+    strikes++;
+    document.getElementById('strikes').innerText = strikes;
+    try {
+      await fetch('/student/cbt/flag-infraction', {
+        method:'POST',
+        headers:{ 'Content-Type':'application/json' },
+        body: JSON.stringify({ examId: EXAM_ID, reason })
+      });
+    } catch(e){ console.warn('infraction report failed', e); }
+  }
+
+  // BEFORE SUBMIT: check unanswered and show modal
+  function getUnansweredList() {
+    const list = [];
+    qCards.forEach((card, i) => {
+      const qid = card.dataset.qid;
+      const any = card.querySelector('input[type=radio]:checked');
+      if (!any) list.push({ index: i, qid });
+    });
+    return list;
+  }
+
+  const warnModal = document.getElementById('warnModal');
+  const unansweredListEl = document.getElementById('unansweredList');
+  document.getElementById('cancelSubmit').addEventListener('click', () => {
+    warnModal.style.display = 'none';
+  });
+  document.getElementById('forceSubmit').addEventListener('click', async () => {
+    warnModal.style.display = 'none';
+    await doSubmit(true);
+  });
+
+  document.getElementById('submitBtn').addEventListener('click', async () => {
+    const missing = getUnansweredList();
+    if (missing.length > 0) {
+      // show modal with question numbers and allow student to continue
+      unansweredListEl.innerHTML = '';
+      const ul = document.createElement('div');
+      ul.innerHTML = '<strong>' + missing.length + '</strong> question(s) unanswered. They are:';
+      const seq = document.createElement('div');
+      seq.style.marginTop = '8px';
+      seq.style.display = 'flex';
+      seq.style.flexWrap = 'wrap';
+      seq.style.gap = '8px';
+      missing.forEach(m => {
+        const btn = document.createElement('button');
+        btn.textContent = 'Q' + (m.index + 1);
+        btn.className = 'small-btn ghost';
+        btn.style.padding = '6px 10px';
+        btn.onclick = () => {
+          warnModal.style.display = 'none';
+          const page = Math.floor(m.index / PAGE_SIZE);
+          showPage(page);
+          setTimeout(() => scrollToQuestion(m.index), 80);
+        };
+        seq.appendChild(btn);
+      });
+      unansweredListEl.appendChild(ul);
+      unansweredListEl.appendChild(seq);
+      warnModal.style.display = 'flex';
+      return;
+    }
+    // all answered -> submit directly
+    if (confirm('All questions answered. Submit exam now?')) {
+      await doSubmit(false);
+    }
+  });
+
+  // FINAL SUBMIT (autosave then call endpoint)
+  async function doSubmit(force = false) {
+    // final autosave
+    await autosave();
+
+    try {
+      const resp = await fetch(`/student/cbt/${EXAM_ID}/submit`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ force })
+      });
+      const result = await resp.json();
+      if (result.success) {
+        alert('Submitted. Score: ' + result.score + ' / ' + result.total);
+        window.location.href = '/student/dashboard';
+      } else {
+        alert(result.message || 'Submit failed');
+      }
+    } catch (e) {
+      console.error('submit error', e);
+      alert('Submit error');
+    }
+  }
+
+  // Timer (end-time) — keep your existing behavior
+  if (SERVER_END_TS) {
+    let timerI = setInterval(() => {
+      const now = Date.now();
+      const remain = Math.max(0, SERVER_END_TS - now);
+      const mins = Math.floor(remain / 60000);
+      const secs = Math.floor((remain % 60000) / 1000);
+      document.getElementById('timer').innerText = `${String(mins).padStart(2,'0')}:${String(secs).padStart(2,'0')}`;
+      if (remain <= 0) {
+        clearInterval(timerI);
+        doSubmit();
+      }
+    }, 1000);
+  }
+
+  // final: update nav & card statuses on load (in case some answers were preloaded)
+  qCards.forEach(card => updateStatusForQuestion(card));
+
+  // expose small helper for debugging
+  window.__cbtState = {
+    totalQuestions, totalPages, showPage
+  };
+</script>
+
+</body>
+</html>

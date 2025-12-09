@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Class Activities • LYTEBRIDGE ACADEMY</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <style>
+    :root {
+      --pink: #ff6b9d;
+      --cream: #fdf5e6;
+      --light-pink: #ffe6f0;
+      --gray: #6c757d;
+      --shadow: 0 6px 16px rgba(255, 107, 157, 0.15);
+      --bg: #fdf5e6;
+      --card-bg: #ffffff;
+      --text: #333333;
+      --border: #ffe0e9;
+      --radius: 16px;
+    }
+    [data-theme="dark"] {
+      --pink: #ff8ab3;
+      --light-pink: #2d1b3a;
+      --gray: #b0b0b0;
+      --shadow: 0 6px 16px rgba(0,0,0,0.4);
+      --bg: #121212;
+      --card-bg: #1e1e1e;
+      --text: #e0e0e0;
+      --border: #333333;
+    }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      transition: all 0.4s;
+    }
+
+    .top-bar {
+      position: fixed; top:0; left:0; right:0;
+      background: var(--card-bg);
+      padding: 1.2rem 1.5rem;
+      box-shadow: var(--shadow);
+      z-index: 1030;
+      display: flex; justify-content: space-between; align-items: center;
+      border-bottom: 1px solid var(--border);
+    }
+    .school-name {
+      font-size: 1.8rem; font-weight: 800;
+      background: linear-gradient(90deg, var(--pink), #ff8ab3);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .top-controls { display: flex; align-items: center; gap: 16px; }
+    .theme-toggle {
+      background: var(--card-bg);
+      border: 2px solid var(--border);
+      border-radius: 50px;
+      width: 52px; height: 28px;
+      position: relative; cursor: pointer;
+    }
+    .theme-toggle::before {
+      content: ''; position: absolute;
+      top: 4px; left: 4px;
+      width: 20px; height: 20px;
+      background: var(--pink);
+      border-radius: 50%;
+      transition: 0.3s;
+    }
+    [data-theme="dark"] .theme-toggle::before { transform: translateX(24px); }
+
+    .back-btn, .logout-btn {
+      padding: 10px 18px; border-radius: 50px;
+      font-weight: 600; text-decoration: none;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .back-btn { background: transparent; color: var(--text); border: 2px solid var(--pink); }
+    .back-btn:hover { background: var(--pink); color: white; }
+    .logout-btn { background: var(--pink); color: white; box-shadow: var(--shadow); }
+
+    .main-content {
+      margin-top: 90px;
+      padding: 30px 20px;
+      max-width: 1000px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .page-title {
+      text-align: center; margin-bottom: 40px;
+      font-size: 2.4rem; font-weight: 800;
+      background: linear-gradient(90deg, var(--pink), #ff8ab3);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .activity-card {
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      margin-bottom: 24px;
+      border-left: 6px solid var(--pink);
+    }
+    .card-header {
+      background: var(--light-pink);
+      padding: 20px 24px;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-weight: 700;
+      font-size: 1.25rem;
+      color: var(--text);
+      transition: 0.3s;
+    }
+    .card-header:hover { background: var(--pink); color: white; }
+    .card-header i { transition: transform 0.3s; font-size: 1.4rem; }
+
+    .timetable-item {
+      padding: 30px 24px;
+      text-align: center;
+      background: var(--light-pink);
+    }
+    .timetable-item i {
+      font-size: 4rem;
+      color: var(--pink);
+      margin-bottom: 16px;
+    }
+    .download-btn {
+      background: var(--pink);
+      color: white;
+      border: none;
+      padding: 12px 32px;
+      border-radius: 50px;
+      font-size: 1.1rem;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      transition: 0.3s;
+      box-shadow: var(--shadow);
+    }
+    .download-btn:hover {
+      background: #ff4d8a;
+      transform: translateY(-3px);
+    }
+    .no-timetable {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--gray);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="top-bar">
+    <div class="school-name">LYTEBRIDGE ACADEMY</div>
+    <div class="top-controls">
+      <button class="theme-toggle" id="theme-toggle"></button>
+      <a href="/dashboard" class="back-btn">Back to Dashboard</a>
+      <a href="/logout" class="logout-btn">Logout</a>
+    </div>
+  </div>
+
+  <div class="main-content">
+    <h1 class="page-title">Class Activities & Timetable</h1>
+
+    <% if (className && timetable) { %>
+      <div class="activity-card">
+        <div class="card-header" data-bs-toggle="collapse" data-bs-target="#timetableCollapse" aria-expanded="true">
+          <div class="d-flex align-items-center gap-3">
+            <i class="fas fa-chevron-down"></i>
+            <div>
+              <strong>Class Timetable — <%= className %></strong>
+            </div>
+          </div>
+          <span style="background:var(--pink);color:white;padding:6px 14px;border-radius:50px;">
+            Latest Update
+          </span>
+        </div>
+
+        <div class="collapse show" id="timetableCollapse">
+          <div class="timetable-item">
+            <i class="fas fa-calendar-alt"></i>
+            <h3><%= timetable.original_name %></h3>
+            <p class="text-muted">
+              Uploaded on <%= new Date(timetable.uploaded_at).toLocaleDateString('en-GB') %>
+            </p>
+            <a href="/uploads/e-library/<%= timetable.filename %>" 
+               class="download-btn" 
+               download="<%= timetable.original_name %>">
+              <i class="fas fa-download"></i> Download Timetable
+            </a>
+          </div>
+        </div>
+      </div>
+    <% } else { %>
+      <div class="no-timetable">
+        <i class="fas fa-calendar-times fa-5x mb-4 text-muted"></i>
+        <h3>No timetable uploaded yet</h3>
+        <p>Your class teacher will upload the weekly timetable soon.</p>
+      </div>
+    <% } %>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    // Dark mode toggle
+    const toggle = document.getElementById('theme-toggle');
+    const html = document.documentElement;
+    html.setAttribute('data-theme', localStorage.getItem('theme') || 'light');
+
+    toggle.addEventListener('click', () => {
+      const newTheme = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+      html.setAttribute('data-theme', newTheme);
+      localStorage.setItem('theme', newTheme);
+    });
+
+    // Rotate chevron
+    document.querySelectorAll('[data-bs-toggle="collapse"]').forEach(el => {
+      el.addEventListener('click', () => {
+        el.querySelector('i').style.transform = 
+          el.getAttribute('aria-expanded') === 'true' ? 'rotate(0deg)' : 'rotate(-90deg)';
+      });
+    });
+  </script>
+</body>
+</html>

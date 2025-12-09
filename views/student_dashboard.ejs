@@ -370,11 +370,11 @@
         <div class="menu-card">
           <h4>E-Learning</h4>
           <ul>
-            <a href="#"><i class="fas fa-book"></i> Topics</a>
+            <a href="/student/topics"><i class="fas fa-book"></i> Topics</a>
             <a href="/announcements"><i class="fas fa-bullhorn"></i> Announcement</a>
-            <a href="#"><i class="fas fa-book-open"></i> E-Library</a>
-            <a href="#"><i class="fas fa-laptop"></i> CBT Exam</a>
-            <a href="#"><i class="fas fa-video"></i> Virtual Class</a>
+            <a href="/student/e-library"><i class="fas fa-book-open"></i> E-Library</a>
+            <a href="/student/cbt"><i class="fas fa-laptop"></i> CBT Exam</a>
+            <a href="/student/virtual-class"><i class="fas fa-video"></i> Virtual Class</a>
           </ul>
         </div>
 
@@ -384,7 +384,7 @@
           <ul>
             <a href="/student/current-term"><i class="fas fa-chart-bar"></i> Check Results</a>
             <a href="/student/history"><i class="fas fa-history"></i> History</a>
-            <a href="#"><i class="fas fa-users"></i> Class Activity</a>
+            <a href="/student/class-activities"><i class="fas fa-users"></i> Class Activity</a>
           </ul>
         </div>
       </div>
@@ -393,7 +393,7 @@
     <!-- MAIN CONTENT -->
     <div class="main-content">
       <div class="top-bar">
-        <div class="school-name">LA-VOGUE BRITISH INTERNATIONAL SCHOOL</div>
+        <div class="school-name">LYTEBRIDGE ACADEMY</div>
         <div class="top-controls">
           <div class="session-badge">
             <%= sessionYear || '2024/2025' %> • <%= studentClass || 'JSS 2' %>
@@ -421,20 +421,31 @@
       <img src="/images/slide3.png" alt="3">
       <img src="/images/slide4.png" alt="4">
     </div>
+    <div class="slide">
+      <img src="/images/slide5.png" alt="3">
+      <img src="/images/slide6.png" alt="4">
+    </div>
   </div>
 </div>
 
       <div class="bottom-grid">
-        <div class="bottom-card">
-          <h3 class="card-title">My Subjects</h3>
-          <div class="subject-list">
-            <div class="subject-card"><div class="subject-icon">E</div><div>English Studies</div></div>
-            <div class="subject-card"><div class="subject-icon">M</div><div>Mathematics</div></div>
-            <div class="subject-card"><div class="subject-icon">S</div><div>Basic Science</div></div>
-            <div class="subject-card"><div class="subject-icon">H</div><div>History</div></div>
-            <div class="subject-card"><div class="subject-icon">C</div><div>Civic Education</div></div>
-          </div>
+        <div class="subject-list">
+  <% if (enrolledCourses && enrolledCourses.length > 0) { %>
+    <% enrolledCourses.forEach((course, index) => { %>
+      <div class="subject-card">
+        <div class="subject-icon">
+          <%= course.charAt(0).toUpperCase() %>
         </div>
+        <div><%= course %></div>
+      </div>
+    <% }) %>
+  <% } else { %>
+    <div class="text-center text-muted py-4">
+      <i class="fas fa-book-open fa-2x mb-3 opacity-50"></i>
+      <p>No courses enrolled yet</p>
+    </div>
+  <% } %>
+</div>
 
         <div class="bottom-card">
           <h3 class="card-title">General Information</h3>

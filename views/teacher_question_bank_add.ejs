@@ -1,0 +1,144 @@
+<!DOCTYPE html> 
+<html>
+<head>
+  <title>Add Question</title>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f7f7f7;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 700px;
+      margin: auto;
+      background: #fff;
+      padding: 25px;
+      border-radius: 10px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    h1 {
+      text-align: center;
+      color: #333;
+      margin-bottom: 25px;
+    }
+
+    label {
+      font-weight: bold;
+      color: #333;
+      display: block;
+      margin-bottom: 6px;
+    }
+
+    select, input[type="text"], input[type="number"], textarea {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      margin-bottom: 15px;
+      font-size: 15px;
+    }
+
+    input[type="file"] {
+      margin-top: 5px;
+    }
+
+    .btn {
+      padding: 10px 18px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 15px;
+      font-weight: bold;
+      transition: 0.2s ease;
+    }
+
+    .btn-submit {
+      background: #007bff;
+      color: white;
+      width: 100%;
+      margin-top: 10px;
+    }
+    .btn-submit:hover {
+      background: #0056b3;
+    }
+
+    .btn-back {
+      background: #6c757d;
+      color: white;
+      text-decoration: none;
+      display: inline-block;
+      margin-bottom: 15px;
+      padding: 10px 18px;
+      border-radius: 6px;
+      font-size: 15px;
+      font-weight: bold;
+    }
+    .btn-back:hover {
+      background: #555;
+    }
+  </style>
+
+</head>
+<body>
+
+<div class="container">
+
+  <!-- FIXED BACK BUTTON -->
+  <a href="/teacher/question-bank" class="btn btn-back">← Back to Question Bank</a>
+
+  <h1>Add Question</h1>
+
+  <form action="/teacher/question-bank/add" method="POST" enctype="multipart/form-data">
+
+    <label>Course</label>
+    <select name="course_id" required>
+      <% courses.forEach(c => { %>
+        <option value="<%= c.id %>"><%= c.name %></option>
+      <% }) %>
+    </select>
+
+    <label>Class</label>
+    <select name="class_id" required>
+      <% classes.forEach(cl => { %>
+        <option value="<%= cl.id %>"><%= cl.name %></option>
+      <% }) %>
+    </select>
+
+    <label>Question</label>
+    <textarea name="question" required rows="4"></textarea>
+
+    <label>Option A</label>
+    <input type="text" name="option1" required>
+
+    <label>Option B</label>
+    <input type="text" name="option2" required>
+
+    <label>Option C</label>
+    <input type="text" name="option3">
+
+    <label>Option D</label>
+    <input type="text" name="option4">
+
+    <label>Correct Option</label>
+<select name="correct_option" required>
+  <option value="">-- Select Correct Option --</option>
+  <option value="1">A</option>
+  <option value="2">B</option>
+  <option value="3">C</option>
+  <option value="4">D</option>
+</select>
+
+    <label>Image (optional)</label>
+    <input type="file" name="image" accept="image/*">
+
+    <button type="submit" class="btn btn-submit">Submit</button>
+
+  </form>
+
+</div>
+
+</body>
+</html>
