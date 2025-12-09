@@ -4,315 +4,230 @@
   <meta charset="UTF-8">
   <title>Login – School Portal</title>
   <link rel="stylesheet" href="/style.css">
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
-    :root {
-      --primary: #4361ee;
-      --primary-light: #4895ef;
-      --primary-dark: #3a56d4;
-      --secondary: #7209b7;
-      --accent: #4cc9f0;
-      --background: #f8fafc;
-      --surface: #ffffff;
-      --text: #2d3748;
-      --text-light: #718096;
-      --error: #ef4444;
-      --success: #10b981;
-      --border: #e2e8f0;
-      --radius: 12px;
-      --shadow: 0 20px 40px rgba(67, 97, 238, 0.15);
-      --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
+    /* ====== CORE STYLES ====== */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
     body {
-      font-family: 'Poppins', sans-serif;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      font-family: Arial, sans-serif;
+      background: linear-gradient(135deg, #FF9A9E 0%, #FAD0C4 100%);
       display: flex;
       align-items: center;
       justify-content: center;
-      min-height: 100vh;
+      height: 100vh;
       margin: 0;
-      padding: 20px;
       position: relative;
       overflow: hidden;
     }
-
-    /* Animated background elements */
-    body::before {
-      content: '';
+    
+    /* ====== GRAFFITI BACKGROUND ====== */
+    .graffiti-bg {
       position: fixed;
       top: 0;
       left: 0;
       width: 100%;
       height: 100%;
-      background: 
-        radial-gradient(circle at 20% 80%, rgba(67, 97, 238, 0.15) 0%, transparent 50%),
-        radial-gradient(circle at 80% 20%, rgba(114, 9, 183, 0.1) 0%, transparent 50%);
+      pointer-events: none;
       z-index: 1;
     }
-
+    
+    .graffiti-text {
+      position: absolute;
+      font-family: 'Comic Sans MS', cursive, sans-serif;
+      font-size: 120px;
+      color: rgba(255, 255, 255, 0.1);
+      font-weight: bold;
+      transform: rotate(-20deg);
+      white-space: nowrap;
+    }
+    
+    .gt1 { top: 15%; left: 5%; }
+    .gt2 { top: 60%; right: 5%; transform: rotate(15deg); }
+    .gt3 { top: 35%; left: 10%; font-size: 80px; }
+    
+    /* ====== LOGIN BOX ====== */
     .login-box {
-      background: var(--surface);
-      padding: 48px 40px;
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      width: 100%;
-      max-width: 420px;
+      background: white;
+      padding: 40px;
+      border-radius: 20px;
+      box-shadow: 0 20px 40px rgba(255, 107, 107, 0.3);
+      width: 400px;
       position: relative;
       z-index: 2;
-      overflow: hidden;
-      animation: slideUp 0.6s ease-out;
+      border-top: 5px solid #FF6B6B;
+      border-bottom: 5px solid #4ECDC4;
+      transform: translateY(0);
+      animation: float 3s ease-in-out infinite;
     }
-
-    @keyframes slideUp {
-      from {
-        opacity: 0;
-        transform: translateY(30px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
+    
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
     }
-
-    /* Decorative elements */
+    
+    /* ====== GRAFFITI ACCENTS ON BOX ====== */
     .login-box::before {
-      content: '';
+      content: "✏️";
       position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 4px;
-      background: linear-gradient(90deg, var(--primary), var(--secondary));
+      top: -25px;
+      left: -25px;
+      font-size: 40px;
+      transform: rotate(-15deg);
+      z-index: 3;
     }
-
+    
     .login-box::after {
-      content: '';
+      content: "📚";
       position: absolute;
-      top: -50%;
-      right: -50%;
-      width: 200px;
-      height: 200px;
-      background: radial-gradient(circle, rgba(67, 97, 238, 0.1) 0%, transparent 70%);
-      z-index: -1;
+      bottom: -25px;
+      right: -25px;
+      font-size: 40px;
+      transform: rotate(15deg);
+      z-index: 3;
     }
-
+    
+    /* ====== HEADER ====== */
     h2 {
       text-align: center;
-      color: var(--text);
-      margin-bottom: 32px;
+      color: #2E2E3A;
+      margin-bottom: 30px;
       font-size: 28px;
-      font-weight: 600;
-      background: linear-gradient(90deg, var(--primary), var(--secondary));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
       position: relative;
-      padding-bottom: 16px;
+      padding-bottom: 15px;
     }
-
+    
     h2::after {
       content: '';
       position: absolute;
       bottom: 0;
       left: 50%;
       transform: translateX(-50%);
-      width: 60px;
-      height: 3px;
-      background: linear-gradient(90deg, var(--primary), var(--secondary));
+      width: 80px;
+      height: 4px;
+      background: linear-gradient(90deg, #FF6B6B, #4ECDC4);
       border-radius: 2px;
     }
-
+    
+    /* ====== FORM STYLES (YOUR ORIGINAL + ENHANCED) ====== */
     .form-group {
-      margin-bottom: 24px;
-      position: relative;
+      margin-bottom: 20px;
     }
-
+    
     label {
       display: block;
       margin-bottom: 8px;
-      color: var(--text);
-      font-weight: 500;
+      font-weight: bold;
+      color: #2E2E3A;
       font-size: 14px;
       text-transform: uppercase;
-      letter-spacing: 0.5px;
     }
-
-    .input-wrapper {
-      position: relative;
-    }
-
-    .input-wrapper i {
-      position: absolute;
-      left: 16px;
-      top: 50%;
-      transform: translateY(-50%);
-      color: var(--primary);
-      font-size: 18px;
-    }
-
+    
     input {
       width: 100%;
-      padding: 16px 16px 16px 48px;
-      border: 2px solid var(--border);
-      border-radius: 8px;
+      padding: 15px;
+      border: 2px solid #E1E5EB;
+      border-radius: 10px;
       font-size: 16px;
-      font-family: 'Poppins', sans-serif;
-      transition: var(--transition);
-      background: var(--background);
-      color: var(--text);
+      transition: all 0.3s;
+      background: #F8F9FF;
     }
-
+    
     input:focus {
       outline: none;
-      border-color: var(--primary);
+      border-color: #FF6B6B;
+      box-shadow: 0 0 0 3px rgba(255, 107, 107, 0.2);
       background: white;
-      box-shadow: 0 0 0 4px rgba(67, 97, 238, 0.1);
     }
-
-    input::placeholder {
-      color: #94a3b8;
-    }
-
-    /* Password toggle (optional enhancement) */
-    .password-toggle {
-      position: absolute;
-      right: 16px;
-      top: 50%;
-      transform: translateY(-50%);
-      background: none;
-      border: none;
-      color: #94a3b8;
-      cursor: pointer;
-      font-size: 18px;
-      transition: var(--transition);
-    }
-
-    .password-toggle:hover {
-      color: var(--primary);
-    }
-
+    
     button {
-      background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+      background: linear-gradient(135deg, #FF6B6B 0%, #FF8E8E 100%);
       color: white;
       padding: 16px;
       border: none;
-      border-radius: 8px;
+      border-radius: 10px;
       cursor: pointer;
       width: 100%;
       font-size: 16px;
-      font-weight: 600;
-      font-family: 'Poppins', sans-serif;
-      letter-spacing: 0.5px;
-      transition: var(--transition);
+      font-weight: bold;
+      margin-top: 10px;
+      transition: all 0.3s;
       position: relative;
       overflow: hidden;
     }
-
+    
     button:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 10px 20px rgba(67, 97, 238, 0.3);
+      transform: translateY(-3px);
+      box-shadow: 0 10px 20px rgba(255, 107, 107, 0.3);
     }
-
+    
     button:active {
-      transform: translateY(0);
+      transform: translateY(-1px);
     }
-
-    /* Ripple effect */
-    button::after {
+    
+    /* ====== GRAFFITI SPRAY EFFECT ON HOVER ====== */
+    button::before {
       content: '';
       position: absolute;
-      top: 50%;
-      left: 50%;
-      width: 5px;
-      height: 5px;
-      background: rgba(255, 255, 255, 0.5);
-      opacity: 0;
-      border-radius: 100%;
-      transform: scale(1, 1) translate(-50%);
-      transform-origin: 50% 50%;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+      transition: left 0.5s;
     }
-
-    button:focus:not(:active)::after {
-      animation: ripple 1s ease-out;
+    
+    button:hover::before {
+      left: 100%;
     }
-
-    @keyframes ripple {
-      0% {
-        transform: scale(0, 0);
-        opacity: 0.5;
-      }
-      100% {
-        transform: scale(20, 20);
-        opacity: 0;
-      }
-    }
-
+    
+    /* ====== ERROR STYLES ====== */
     .error {
-      background: linear-gradient(135deg, #fee 0%, #ffeaea 100%);
-      color: var(--error);
-      padding: 14px 16px;
-      border-radius: 8px;
-      margin-top: 10px;
+      background: #FFE5E5;
+      color: #FF6B6B;
+      padding: 12px 15px;
+      border-radius: 10px;
+      margin-top: 15px;
       font-size: 14px;
-      font-weight: 500;
-      border-left: 4px solid var(--error);
-      animation: shake 0.5s ease-in-out;
+      border-left: 5px solid #FF6B6B;
+      animation: shake 0.5s;
     }
-
+    
     @keyframes shake {
       0%, 100% { transform: translateX(0); }
       25% { transform: translateX(-5px); }
       75% { transform: translateX(5px); }
     }
-
-    /* Footer note */
-    .footer-note {
+    
+    /* ====== GRAFFITI TAG AT BOTTOM ====== */
+    .graffiti-tag {
       text-align: center;
-      margin-top: 32px;
-      color: var(--text-light);
-      font-size: 13px;
-      padding-top: 16px;
-      border-top: 1px solid var(--border);
+      margin-top: 25px;
+      padding-top: 15px;
+      border-top: 2px dashed #E1E5EB;
+      color: #666;
+      font-size: 14px;
     }
-
-    .footer-note a {
-      color: var(--primary);
-      text-decoration: none;
-      font-weight: 500;
-      transition: var(--transition);
-    }
-
-    .footer-note a:hover {
-      color: var(--secondary);
-      text-decoration: underline;
-    }
-
-    /* Responsive adjustments */
-    @media (max-width: 480px) {
-      .login-box {
-        padding: 32px 24px;
-        margin: 0 16px;
-      }
-      
-      h2 {
-        font-size: 24px;
-      }
-      
-      input {
-        padding: 14px 14px 14px 44px;
-      }
+    
+    .graffiti-tag::before {
+      content: "#EDULIFE";
+      display: block;
+      font-family: 'Comic Sans MS', cursive, sans-serif;
+      color: #FF6B6B;
+      font-size: 18px;
+      font-weight: bold;
+      margin-bottom: 5px;
     }
   </style>
 </head>
 <body>
+  <!-- GRAFFITI BACKGROUND ELEMENTS -->
+  <div class="graffiti-bg">
+    <div class="graffiti-text gt1">LEARN</div>
+    <div class="graffiti-text gt2">GROW</div>
+    <div class="graffiti-text gt3">SCHOOL</div>
+  </div>
+  
+  <!-- YOUR ORIGINAL LOGIN BOX (NO CHANGES TO EJS) -->
   <div class="login-box">
     <h2>School Portal Login</h2>
 
@@ -326,71 +241,64 @@
     <form action="/login" method="POST">
       <div class="form-group">
         <label for="username">Username</label>
-        <div class="input-wrapper">
-          <i class="fas fa-user"></i>
-          <input type="text"
-                 id="username"
-                 name="username"
-                 value="<%= (userInput && userInput.username) ? userInput.username : '' %>"
-                 placeholder="Enter your username"
-                 required>
-        </div>
+        <input type="text"
+               id="username"
+               name="username"
+               value="<%= (userInput && userInput.username) ? userInput.username : '' %>"
+               required>
       </div>
 
       <div class="form-group">
         <label for="password">Password</label>
-        <div class="input-wrapper">
-          <i class="fas fa-lock"></i>
-          <input type="password"
-                 id="password"
-                 name="password"
-                 placeholder="Enter your password"
-                 required>
-          <button type="button" class="password-toggle" onclick="togglePassword()">
-            <i class="fas fa-eye"></i>
-          </button>
-        </div>
+        <input type="password"
+               id="password"
+               name="password"
+               required>
       </div>
 
       <button type="submit">Login</button>
     </form>
     
-    <div class="footer-note">
-      Need help? <a href="#">Contact Support</a>
+    <div class="graffiti-tag">
+      Secure student portal access
     </div>
   </div>
 
   <script>
-    function togglePassword() {
-      const passwordInput = document.getElementById('password');
-      const toggleIcon = document.querySelector('.password-toggle i');
-      
-      if (passwordInput.type === 'password') {
-        passwordInput.type = 'text';
-        toggleIcon.className = 'fas fa-eye-slash';
-      } else {
-        passwordInput.type = 'password';
-        toggleIcon.className = 'fas fa-eye';
+    // Simple graffiti effect on button click
+    document.querySelector('button').addEventListener('click', function(e) {
+      // Only create effect if form is valid
+      const form = document.querySelector('form');
+      if (form.checkValidity()) {
+        // Add spray paint effect
+        const spray = document.createElement('div');
+        spray.innerHTML = '💥';
+        spray.style.position = 'absolute';
+        spray.style.fontSize = '30px';
+        spray.style.opacity = '0';
+        spray.style.animation = 'sprayEffect 0.5s';
+        document.body.appendChild(spray);
+        
+        // Position near button
+        const rect = this.getBoundingClientRect();
+        spray.style.top = (rect.top - 30) + 'px';
+        spray.style.left = (rect.left + rect.width/2 - 15) + 'px';
+        
+        // Remove after animation
+        setTimeout(() => spray.remove(), 500);
       }
-    }
-    
-    // Add focus effects to inputs
-    document.querySelectorAll('input').forEach(input => {
-      input.addEventListener('focus', function() {
-        this.parentElement.style.transform = 'translateY(-2px)';
-      });
-      
-      input.addEventListener('blur', function() {
-        this.parentElement.style.transform = 'translateY(0)';
-      });
     });
     
-    // Form submission animation
-    document.querySelector('form').addEventListener('submit', function(e) {
-      const button = this.querySelector('button[type="submit"]');
-      button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Logging in...';
-      button.disabled = true;
-    });
+    // Add CSS for spray effect
+    const style = document.createElement('style');
+    style.textContent = `
+      @keyframes sprayEffect {
+        0% { transform: scale(0); opacity: 1; }
+        50% { transform: scale(1.5); opacity: 0.7; }
+        100% { transform: scale(2); opacity: 0; }
+      }
+    `;
+    document.head.appendChild(style);
   </script>
 </body>
 </html>
