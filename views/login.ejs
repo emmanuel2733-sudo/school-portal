@@ -4,15 +4,312 @@
   <meta charset="UTF-8">
   <title>Login – School Portal</title>
   <link rel="stylesheet" href="/style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
-    body{font-family:Arial,sans-serif;background:#f4f6f9;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;}
-    .login-box{background:#fff;padding:30px;border-radius:8px;box-shadow:0 0 12px rgba(0,0,0,.1);width:320px;}
-    .form-group{margin-bottom:15px;}
-    label{display:block;margin-bottom:5px;font-weight:bold;}
-    input{width:100%;padding:10px;border:1px solid #ccc;border-radius:4px;}
-    button{background:#007bff;color:#fff;padding:10px 15px;border:none;border-radius:4px;cursor:pointer;width:100%;}
-    button:hover{background:#0056b3;}
-    .error{color:#dc3545;margin-top:10px;font-size:0.9em;}
+    :root {
+      --primary: #4361ee;
+      --primary-light: #4895ef;
+      --primary-dark: #3a56d4;
+      --secondary: #7209b7;
+      --accent: #4cc9f0;
+      --background: #f8fafc;
+      --surface: #ffffff;
+      --text: #2d3748;
+      --text-light: #718096;
+      --error: #ef4444;
+      --success: #10b981;
+      --border: #e2e8f0;
+      --radius: 12px;
+      --shadow: 0 20px 40px rgba(67, 97, 238, 0.15);
+      --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      padding: 20px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Animated background elements */
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: 
+        radial-gradient(circle at 20% 80%, rgba(67, 97, 238, 0.15) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(114, 9, 183, 0.1) 0%, transparent 50%);
+      z-index: 1;
+    }
+
+    .login-box {
+      background: var(--surface);
+      padding: 48px 40px;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      width: 100%;
+      max-width: 420px;
+      position: relative;
+      z-index: 2;
+      overflow: hidden;
+      animation: slideUp 0.6s ease-out;
+    }
+
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Decorative elements */
+    .login-box::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 4px;
+      background: linear-gradient(90deg, var(--primary), var(--secondary));
+    }
+
+    .login-box::after {
+      content: '';
+      position: absolute;
+      top: -50%;
+      right: -50%;
+      width: 200px;
+      height: 200px;
+      background: radial-gradient(circle, rgba(67, 97, 238, 0.1) 0%, transparent 70%);
+      z-index: -1;
+    }
+
+    h2 {
+      text-align: center;
+      color: var(--text);
+      margin-bottom: 32px;
+      font-size: 28px;
+      font-weight: 600;
+      background: linear-gradient(90deg, var(--primary), var(--secondary));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      position: relative;
+      padding-bottom: 16px;
+    }
+
+    h2::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 60px;
+      height: 3px;
+      background: linear-gradient(90deg, var(--primary), var(--secondary));
+      border-radius: 2px;
+    }
+
+    .form-group {
+      margin-bottom: 24px;
+      position: relative;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 8px;
+      color: var(--text);
+      font-weight: 500;
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .input-wrapper {
+      position: relative;
+    }
+
+    .input-wrapper i {
+      position: absolute;
+      left: 16px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--primary);
+      font-size: 18px;
+    }
+
+    input {
+      width: 100%;
+      padding: 16px 16px 16px 48px;
+      border: 2px solid var(--border);
+      border-radius: 8px;
+      font-size: 16px;
+      font-family: 'Poppins', sans-serif;
+      transition: var(--transition);
+      background: var(--background);
+      color: var(--text);
+    }
+
+    input:focus {
+      outline: none;
+      border-color: var(--primary);
+      background: white;
+      box-shadow: 0 0 0 4px rgba(67, 97, 238, 0.1);
+    }
+
+    input::placeholder {
+      color: #94a3b8;
+    }
+
+    /* Password toggle (optional enhancement) */
+    .password-toggle {
+      position: absolute;
+      right: 16px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      color: #94a3b8;
+      cursor: pointer;
+      font-size: 18px;
+      transition: var(--transition);
+    }
+
+    .password-toggle:hover {
+      color: var(--primary);
+    }
+
+    button {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+      color: white;
+      padding: 16px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      width: 100%;
+      font-size: 16px;
+      font-weight: 600;
+      font-family: 'Poppins', sans-serif;
+      letter-spacing: 0.5px;
+      transition: var(--transition);
+      position: relative;
+      overflow: hidden;
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 20px rgba(67, 97, 238, 0.3);
+    }
+
+    button:active {
+      transform: translateY(0);
+    }
+
+    /* Ripple effect */
+    button::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 5px;
+      height: 5px;
+      background: rgba(255, 255, 255, 0.5);
+      opacity: 0;
+      border-radius: 100%;
+      transform: scale(1, 1) translate(-50%);
+      transform-origin: 50% 50%;
+    }
+
+    button:focus:not(:active)::after {
+      animation: ripple 1s ease-out;
+    }
+
+    @keyframes ripple {
+      0% {
+        transform: scale(0, 0);
+        opacity: 0.5;
+      }
+      100% {
+        transform: scale(20, 20);
+        opacity: 0;
+      }
+    }
+
+    .error {
+      background: linear-gradient(135deg, #fee 0%, #ffeaea 100%);
+      color: var(--error);
+      padding: 14px 16px;
+      border-radius: 8px;
+      margin-top: 10px;
+      font-size: 14px;
+      font-weight: 500;
+      border-left: 4px solid var(--error);
+      animation: shake 0.5s ease-in-out;
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-5px); }
+      75% { transform: translateX(5px); }
+    }
+
+    /* Footer note */
+    .footer-note {
+      text-align: center;
+      margin-top: 32px;
+      color: var(--text-light);
+      font-size: 13px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border);
+    }
+
+    .footer-note a {
+      color: var(--primary);
+      text-decoration: none;
+      font-weight: 500;
+      transition: var(--transition);
+    }
+
+    .footer-note a:hover {
+      color: var(--secondary);
+      text-decoration: underline;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 480px) {
+      .login-box {
+        padding: 32px 24px;
+        margin: 0 16px;
+      }
+      
+      h2 {
+        font-size: 24px;
+      }
+      
+      input {
+        padding: 14px 14px 14px 44px;
+      }
+    }
   </style>
 </head>
 <body>
@@ -29,23 +326,71 @@
     <form action="/login" method="POST">
       <div class="form-group">
         <label for="username">Username</label>
-        <input type="text"
-               id="username"
-               name="username"
-               value="<%= (userInput && userInput.username) ? userInput.username : '' %>"
-               required>
+        <div class="input-wrapper">
+          <i class="fas fa-user"></i>
+          <input type="text"
+                 id="username"
+                 name="username"
+                 value="<%= (userInput && userInput.username) ? userInput.username : '' %>"
+                 placeholder="Enter your username"
+                 required>
+        </div>
       </div>
 
       <div class="form-group">
         <label for="password">Password</label>
-        <input type="password"
-               id="password"
-               name="password"
-               required>
+        <div class="input-wrapper">
+          <i class="fas fa-lock"></i>
+          <input type="password"
+                 id="password"
+                 name="password"
+                 placeholder="Enter your password"
+                 required>
+          <button type="button" class="password-toggle" onclick="togglePassword()">
+            <i class="fas fa-eye"></i>
+          </button>
+        </div>
       </div>
 
       <button type="submit">Login</button>
     </form>
+    
+    <div class="footer-note">
+      Need help? <a href="#">Contact Support</a>
+    </div>
   </div>
+
+  <script>
+    function togglePassword() {
+      const passwordInput = document.getElementById('password');
+      const toggleIcon = document.querySelector('.password-toggle i');
+      
+      if (passwordInput.type === 'password') {
+        passwordInput.type = 'text';
+        toggleIcon.className = 'fas fa-eye-slash';
+      } else {
+        passwordInput.type = 'password';
+        toggleIcon.className = 'fas fa-eye';
+      }
+    }
+    
+    // Add focus effects to inputs
+    document.querySelectorAll('input').forEach(input => {
+      input.addEventListener('focus', function() {
+        this.parentElement.style.transform = 'translateY(-2px)';
+      });
+      
+      input.addEventListener('blur', function() {
+        this.parentElement.style.transform = 'translateY(0)';
+      });
+    });
+    
+    // Form submission animation
+    document.querySelector('form').addEventListener('submit', function(e) {
+      const button = this.querySelector('button[type="submit"]');
+      button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Logging in...';
+      button.disabled = true;
+    });
+  </script>
 </body>
 </html>
