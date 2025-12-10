@@ -7,475 +7,237 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
   <style>
-    :root {
-      --primary: #6366f1;
-      --success: #10b981;
-      --danger: #e74a3b;
-      --warning: #f59e0b;
-      --info: #3b82f6;
-      --card-bg: #f8fafc;
-    }
-    
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    
-    body {
-      background: #f1f5f9;
-      min-height: 100vh;
-      font-family: 'Segoe UI', sans-serif;
-    }
-
-    /* NAVBAR - SAME AS TEACHER PROFILE */
-    .navbar {
-      background: white !important;
-      padding: 1.2rem 0;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-      border-bottom: 1px solid #e2e8f0;
-      position: sticky;
-      top: 0;
-      z-index: 1000;
-    }
-    
-    .navbar-brand {
-      color: #1a202c !important;
-      font-weight: 800;
-      font-size: 1.8rem;
-    }
-
-    /* BACK BUTTON - SAME AS TEACHER PROFILE */
-    .back-nav-btn {
-      width: 50px; 
-      height: 50px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.4rem;
-      transition: all 0.3s;
-      box-shadow: 0 5px 15px rgba(0,0,0,0.15);
-      background: var(--primary); 
-      color: white; 
-      text-decoration: none; 
-    }
-    
-    .back-nav-btn:hover { 
-      background: #4f46e5; 
-      transform: scale(1.1); 
-    }
-
-    /* CLASS TEACHER BADGE - SAME STYLE */
-    .class-teacher-badge {
-      background: linear-gradient(135deg, #ff6b9d, #ff8ab3);
-      color: white;
-      padding: 10px 24px;
-      border-radius: 50px;
-      font-weight: 700;
-      font-size: 1rem;
-      box-shadow: 0 5px 15px rgba(255,107,157,0.4);
-    }
-
-    /* MAIN CONTAINER - MATCHING STYLE */
-    .main-container {
-      width: 100%;
-      max-width: 1000px;
-      margin: 30px auto;
-      padding: 0 20px;
-    }
-
-    /* CARD STYLING */
-    .ai-card {
-      background: white;
-      border-radius: 12px;
-      padding: 40px;
-      border: 1px solid #e2e8f0;
-      box-shadow: 0 15px 40px rgba(0,0,0,0.1);
-    }
-
-    /* HEADER */
-    .ai-header {
-      text-align: center;
-      margin-bottom: 40px;
-      padding-bottom: 30px;
-      border-bottom: 2px solid #e2e8f0;
-    }
-    
-    .ai-title {
-      font-size: 2.5rem;
-      font-weight: 800;
-      color: #1a202c;
-      margin: 0 0 15px 0;
-    }
-    
-    .ai-subtitle {
-      font-size: 1.1rem;
-      color: #718096;
-    }
-
-    /* FORM STYLING */
-    .form-group {
-      margin-bottom: 25px;
-    }
-    
-    label {
-      font-weight: 700;
-      color: #475569;
-      margin-bottom: 8px;
-      display: block;
-      font-size: 1rem;
-    }
-    
-    select, input, textarea {
-      width: 100%;
-      padding: 14px 16px;
-      border-radius: 8px;
-      border: 1px solid #e2e8f0;
-      font-size: 1rem;
-      color: #334155;
-      background: white;
-      transition: all 0.3s;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-    }
-    
-    select:focus, input:focus, textarea:focus {
-      outline: none;
-      border-color: var(--primary);
-      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
-    }
-    
-    /* BUTTON STYLING */
-    .btn {
-      padding: 14px 28px;
-      border: none;
-      border-radius: 8px;
-      font-size: 1rem;
-      font-weight: 600;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
-      transition: all 0.3s;
-      color: white;
-      text-decoration: none;
-    }
-    
-    .btn-generate {
-      background: var(--primary);
-      box-shadow: 0 5px 15px rgba(99, 102, 241, 0.3);
-      width: 100%;
-      font-size: 1.1rem;
-      padding: 16px;
-      margin-top: 10px;
-    }
-    
-    .btn-generate:hover {
-      background: #4f46e5;
-      transform: translateY(-2px);
-      box-shadow: 0 8px 20px rgba(99, 102, 241, 0.4);
-    }
-    
-    .btn-save {
-      background: var(--success);
-      box-shadow: 0 5px 15px rgba(16, 185, 129, 0.3);
-      width: 100%;
-      font-size: 1.1rem;
-      padding: 16px;
-      margin-top: 30px;
-    }
-    
-    .btn-save:hover {
-      background: #0da271;
-      transform: translateY(-2px);
-      box-shadow: 0 8px 20px rgba(16, 185, 129, 0.4);
-    }
-    
-    /* GENERATED QUESTIONS BOX */
-    .result-container {
-      margin-top: 40px;
-    }
-    
-    .result-title {
-      font-size: 1.5rem;
-      font-weight: 700;
-      color: #1a202c;
-      margin-bottom: 20px;
-      padding-bottom: 15px;
-      border-bottom: 2px solid #e2e8f0;
-    }
-    
-    .q-box {
-      background: var(--card-bg);
-      padding: 20px;
-      margin-top: 15px;
-      border-radius: 8px;
-      border-left: 4px solid var(--primary);
-      border: 1px solid #e2e8f0;
-      transition: all 0.3s;
-    }
-    
-    .q-box:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 20px rgba(0,0,0,0.08);
-      border-left: 4px solid var(--success);
-    }
-    
-    .q-box b {
-      color: #1e293b;
-      font-size: 1.1rem;
-      display: block;
-      margin-bottom: 12px;
-    }
-    
-    .q-box div {
-      color: #475569;
-      margin-bottom: 6px;
-      font-weight: 500;
-    }
-    
-    .q-box .correct {
-      color: var(--success);
-      font-weight: 700;
-      margin-top: 8px;
-      padding-top: 8px;
-      border-top: 1px dashed #e2e8f0;
-    }
-    
-    /* LOADING STATE */
-    .loading {
-      text-align: center;
-      padding: 30px;
-      color: #718096;
-      font-size: 1.1rem;
-    }
-    
-    .loading b {
-      color: var(--primary);
-      display: block;
-      margin-bottom: 10px;
-    }
-    
-    /* ERROR STATE */
-    .error {
-      text-align: center;
-      padding: 20px;
-      background: #fef2f2;
-      border-radius: 8px;
-      border: 1px solid #fecaca;
-      color: var(--danger);
-      font-weight: 600;
-    }
-    
-    /* RESPONSIVE */
-    @media (max-width: 768px) {
-      .main-container {
-        padding: 0 15px;
-        margin: 20px auto;
-      }
-      
-      .ai-card {
-        padding: 25px;
-      }
-      
-      .ai-title {
-        font-size: 2rem;
-      }
-      
-      .ai-header {
-        margin-bottom: 30px;
-        padding-bottom: 20px;
-      }
-    }
-    
-    @media (max-width: 576px) {
-      .ai-title {
-        font-size: 1.8rem;
-      }
-      
-      .ai-card {
-        padding: 20px;
-      }
-      
-      select, input, textarea {
-        padding: 12px 14px;
-      }
-      
-      .btn {
-        padding: 14px 20px;
-        font-size: 1rem;
-      }
-    }
+    :root{--primary:#6366f1;--success:#10b981;--danger:#e74a3b;--card-bg:#f8fafc}
+    *{box-sizing:border-box}
+    body{background:#f1f5f9;font-family:Segoe UI,system-ui,Arial;margin:0;padding:24px}
+    .container-card{max-width:1100px;margin:20px auto;background:#fff;border-radius:12px;padding:28px;border:1px solid #e6eef9;box-shadow:0 12px 30px rgba(16,24,40,0.06)}
+    .row-grid{display:grid;grid-template-columns:1fr 420px;gap:22px}
+    @media(max-width:900px){.row-grid{grid-template-columns:1fr}}
+    h1{margin:0 0 6px;font-size:1.6rem}
+    p.lead{margin:0 0 20px;color:#6b7280}
+    label{font-weight:700;margin-bottom:6px;display:block}
+    input,select,textarea{width:100%;padding:10px 12px;border:1px solid #e6eef9;border-radius:8px}
+    .btn-primary{background:var(--primary);border:none}
+    .btn-primary:disabled{opacity:0.6}
+    .result-area{background:var(--card-bg);padding:12px;border-radius:8px;border:1px solid #eef2ff;max-height:560px;overflow:auto}
+    .q-card{background:white;border-radius:8px;padding:12px;border:1px solid #e8eefc;margin-bottom:12px}
+    .q-card b{display:block;margin-bottom:8px}
+    .meta-row{display:flex;gap:8px;align-items:center;margin-bottom:10px}
+    .chip{background:#eef2ff;color:var(--primary);padding:6px 10px;border-radius:999px;font-weight:700}
+    .toast-wrap{position:fixed;right:20px;bottom:20px;z-index:1200}
+    .small-muted{color:#6b7280;font-size:0.95rem}
   </style>
 </head>
 <body>
 
-  <!-- SAME NAVBAR AS OTHER PAGES -->
-  <nav class="navbar">
-    <div class="container-fluid px-4">
-      <a class="navbar-brand" href="/dashboard">School Portal</a>
-      <div class="d-flex align-items-center gap-3">
-        <!-- Optional: Add class teacher badge if needed -->
-        <% if (typeof classTeacherOf !== 'undefined' && classTeacherOf && classTeacherOf.trim() !== '') { %>
-          <div class="class-teacher-badge">Class Teacher — <%= classTeacherOf %></div>
-        <% } %>
-        <!-- BACK BUTTON - SAME DESIGN AND POSITION -->
-        <a href="/teacher/question-bank" class="back-nav-btn" title="Back to Question Bank">
-          <i class="fas fa-arrow-left"></i>
-        </a>
-      </div>
+  <nav style="max-width:1100px;margin:0 auto 18px;display:flex;justify-content:space-between;align-items:center">
+    <div style="display:flex;gap:12px;align-items:center">
+      <a href="/teacher/question-bank/<%= course_id %>/<%= class_id %>/questions" class="btn btn-outline-secondary"><i class="fas fa-arrow-left"></i> Back</a>
+      <h2 style="margin:0">AI Question Generator</h2>
     </div>
+    <div class="small-muted">Course: <strong><%= course_id %></strong> • Class: <strong><%= class_id %></strong></div>
   </nav>
 
-  <div class="main-container">
-    <div class="ai-card">
-      
-      <!-- HEADER -->
-      <div class="ai-header">
-        <h1 class="ai-title">AI Question Generator</h1>
-        <p class="ai-subtitle">Generate high-quality questions instantly using AI</p>
+  <div class="container-card">
+    <div class="row-grid">
+
+      <!-- LEFT: Form + Results -->
+      <div>
+        <p class="lead">Generate multiple-choice questions instantly. The generated questions will appear below and you can save them straight into this course's question bank (no extra prompts).</p>
+
+        <div style="margin-bottom:14px">
+          <label for="topic">Topic / Instruction</label>
+          <input id="topic" placeholder="e.g. Photosynthesis" />
+        </div>
+
+        <div style="display:flex;gap:12px;margin-bottom:14px">
+          <div style="flex:1">
+            <label for="difficulty">Difficulty</label>
+            <select id="difficulty">
+              <option value="easy">Easy</option>
+              <option value="medium" selected>Medium</option>
+              <option value="hard">Hard</option>
+            </select>
+          </div>
+
+          <div style="width:140px">
+            <label for="count">Count</label>
+            <select id="count">
+              <option value="5">5</option>
+              <option value="10">10</option>
+              <option value="20">20</option>
+            </select>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:12px;margin-bottom:18px">
+          <button id="genBtn" class="btn btn-primary" onclick="generateAI()"><i class="fas fa-robot"></i>&nbsp; Generate</button>
+          <button id="clearBtn" class="btn btn-outline-secondary" onclick="clearResults()">Clear</button>
+        </div>
+
+        <div id="result" class="result-area">
+          <div class="small-muted">No generated questions yet — click Generate to start.</div>
+        </div>
+
+        <div style="margin-top:16px;display:flex;gap:12px">
+          <button id="saveBtn" class="btn btn-success" style="flex:1;display:none" onclick="saveToBank()"><i class="fas fa-save"></i>&nbsp; Save all to question bank</button>
+          <button id="downloadBtn" class="btn btn-outline-secondary" style="display:none" onclick="downloadJSON()">Download JSON</button>
+        </div>
       </div>
 
-      <!-- FORM -->
-      <div class="form-group">
-        <label for="topic">Topic/Note</label>
-        <input id="topic" type="text" placeholder="e.g., Photosynthesis, Newton's Laws, Algebra" required>
-      </div>
+      <!-- RIGHT: Preview / Quick Options -->
+      <aside>
+        <div style="background:#fff;padding:18px;border-radius:8px;border:1px solid #eef2ff;margin-bottom:12px">
+          <div class="meta-row"><span class="chip">Live</span><div class="small-muted">AI model used: <strong>server-configured</strong></div></div>
+          <p class="small-muted">Generated questions will be saved directly to the question bank for this course & class. You won't be prompted for IDs — they are embedded from the page context.</p>
+        </div>
 
-      <div class="form-group">
-        <label for="difficulty">Difficulty Level</label>
-        <select id="difficulty">
-          <option value="easy">Easy</option>
-          <option value="medium">Medium</option>
-          <option value="hard">Hard</option>
-        </select>
-      </div>
-
-      <div class="form-group">
-        <label for="count">Number of Questions</label>
-        <select id="count">
-          <option value="5">5 Questions</option>
-          <option value="10">10 Questions</option>
-          <option value="20">20 Questions</option>
-        </select>
-      </div>
-
-      <button class="btn btn-generate" onclick="generateAI()">
-        <i class="fas fa-robot"></i> Generate Questions
-      </button>
-
-      <!-- RESULTS AREA -->
-      <div id="result" class="result-container"></div>
-
-      <!-- SAVE BUTTON (Hidden until generation) -->
-      <button id="saveBtn" class="btn btn-save" style="display:none;" onclick="saveToBank()">
-        <i class="fas fa-save"></i> Save All to Question Bank
-      </button>
+        <div style="background:#fff;padding:16px;border-radius:8px;border:1px solid #eef2ff">
+          <h5 style="margin:0 0 8px">Tips</h5>
+          <ul style="margin:0 0 0 18px;padding:0;color:#6b7280">
+            <li>Keep prompts short & focused (topic + level).</li>
+            <li>Use count 5 or 10 for better relevance.</li>
+            <li>Review before saving — you can edit questions afterward.</li>
+          </ul>
+        </div>
+      </aside>
 
     </div>
   </div>
 
+
+  <!-- Toast area -->
+  <div class="toast-wrap" id="toastWrap"></div>
+
 <script>
-let generatedQuestions = [];
+  // client-side state
+  let generatedQuestions = [];
+  const courseId = '<%= course_id %>';
+  const classId = '<%= class_id %>';
 
-// ---------------------------------------
-// GENERATE QUESTIONS USING AI
-// ---------------------------------------
-async function generateAI() {
-  const topic = document.getElementById("topic").value.trim();
-  const count = document.getElementById("count").value;
-  const difficulty = document.getElementById("difficulty").value;
-
-  if (!topic) {
-    alert("Please enter a topic.");
-    return;
+  function showToast(msg, success=true, timeout=3500) {
+    const el = document.createElement('div');
+    el.className = 'toast p-3 mb-2';
+    el.style.background = success ? '#dcfce7' : '#fee2e2';
+    el.style.border = success ? '1px solid #86efac' : '1px solid #fca5a5';
+    el.innerHTML = `<strong style="display:block;margin-bottom:6px">${success? 'Success':'Error'}</strong><div>${msg}</div>`;
+    document.getElementById('toastWrap').appendChild(el);
+    setTimeout(()=> el.remove(), timeout);
   }
 
-  document.getElementById("result").innerHTML = `
-    <div class="loading">
-      <b>Generating Questions</b>
-      <p>Please wait while AI creates ${count} ${difficulty} questions about "${topic}"...</p>
-      <i class="fas fa-spinner fa-spin" style="font-size: 2rem; color: var(--primary); margin-top: 10px;"></i>
-    </div>
-  `;
+  function clearResults(){
+    generatedQuestions = [];
+    document.getElementById('result').innerHTML = '<div class="small-muted">No generated questions yet — click Generate to start.</div>';
+    document.getElementById('saveBtn').style.display = 'none';
+    document.getElementById('downloadBtn').style.display = 'none';
+  }
 
-  try {
-    const res = await fetch("/teacher/question-bank/ai-generate", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ topic, count, difficulty })
-    });
+  async function generateAI(){
+    const topic = document.getElementById('topic').value.trim();
+    const count = Number(document.getElementById('count').value) || 5;
+    const difficulty = document.getElementById('difficulty').value;
 
-    const data = await res.json();
+    if(!topic){ alert('Please enter a topic/brief.'); return; }
 
-    if (!data.success) {
-      document.getElementById("result").innerHTML = `
-        <div class="error">
-          <i class="fas fa-exclamation-circle"></i>
-          <p>AI error. Please try again.</p>
-        </div>
-      `;
-      return;
+    // ui
+    const resultEl = document.getElementById('result');
+    resultEl.innerHTML = `<div style="text-align:center;padding:26px;color:#6b7280"><i class="fas fa-spinner fa-spin" style="font-size:26px;color:var(--primary)"></i><div style="margin-top:8px">Generating ${count} ${difficulty} questions...</div></div>`;
+    document.getElementById('genBtn').disabled = true;
+
+    try{
+      const resp = await fetch('/teacher/question-bank/ai-generate', {
+        method: 'POST', headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ topic, count, difficulty })
+      });
+
+      const data = await resp.json();
+      if(!data || !data.success || !Array.isArray(data.questions)){
+        throw new Error((data && data.error) || 'Unexpected AI response');
+      }
+
+      generatedQuestions = data.questions.map((q, i)=>{
+        // normalize keys: accept A/B or optionA names
+        return {
+          question: q.question || q.Q || q.prompt || '',
+          optionA: q.optionA || q.option1 || q.A || '',
+          optionB: q.optionB || q.option2 || q.B || '',
+          optionC: q.optionC || q.option3 || q.C || '',
+          optionD: q.optionD || q.option4 || q.D || '',
+          correct_option: (typeof q.correct_option === 'string') ? q.correct_option.trim() : q.correct_option
+        };
+      });
+
+      renderGenerated();
+      showToast('AI generated questions ready — review then save.', true);
+
+    }catch(err){
+      console.error('AI generate error', err);
+      resultEl.innerHTML = `<div style="padding:18px" class="text-danger">AI error: ${err.message || err}</div>`;
+      showToast('AI generation failed. See console for details.', false, 6000);
+    }finally{
+      document.getElementById('genBtn').disabled = false;
     }
+  }
 
-    generatedQuestions = data.questions;
-
-    let output = '<div class="result-title">Generated Questions</div>';
-    generatedQuestions.forEach((q, i) => {
-      output += `
-        <div class="q-box">
-          <b>${i+1}. ${q.question}</b>
-          <div>A: ${q.optionA}</div>
-          <div>B: ${q.optionB}</div>
-          <div>C: ${q.optionC}</div>
-          <div>D: ${q.optionD}</div>
-          <div class="correct">Correct Answer: ${q.correct_option}</div>
+  function renderGenerated(){
+    const out = [];
+    generatedQuestions.forEach((q, idx)=>{
+      out.push(`
+        <div class="q-card">
+          <b>${idx+1}. ${escapeHtml(q.question)}</b>
+          <div><strong>A:</strong> ${escapeHtml(q.optionA)}</div>
+          <div><strong>B:</strong> ${escapeHtml(q.optionB)}</div>
+          <div><strong>C:</strong> ${escapeHtml(q.optionC || '—')}</div>
+          <div><strong>D:</strong> ${escapeHtml(q.optionD || '—')}</div>
+          <div style="margin-top:8px;color:#16a34a"><strong>Answer:</strong> ${escapeHtml(String(q.correct_option || '?'))}</div>
         </div>
-      `;
+      `);
     });
 
-    document.getElementById("result").innerHTML = output;
-    document.getElementById("saveBtn").style.display = "inline-block";
-
-  } catch (err) {
-    console.log(err);
-    document.getElementById("result").innerHTML = `
-      <div class="error">
-        <i class="fas fa-exclamation-circle"></i>
-        <p>Failed to generate questions. Please check your connection and try again.</p>
-      </div>
-    `;
+    document.getElementById('result').innerHTML = out.join('');
+    document.getElementById('saveBtn').style.display = generatedQuestions.length ? 'inline-block' : 'none';
+    document.getElementById('downloadBtn').style.display = generatedQuestions.length ? 'inline-block' : 'none';
   }
-}
 
-// ---------------------------------------
-// SAVE QUESTIONS INTO DATABASE
-// ---------------------------------------
-async function saveToBank() {
-  if (generatedQuestions.length === 0) return;
+  function escapeHtml(s){ if(!s) return ''; return String(s).replace(/[&<>\"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"}[c]; }); }
 
-  const course_id = prompt("Enter Course ID:");
-  if (!course_id) return;
-
-  const class_id = prompt("Enter Class ID:");
-  if (!class_id) return;
-
-  const res = await fetch("/teacher/question-bank/ai-generate/save", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      course_id,
-      class_id,
-      questions: JSON.stringify(generatedQuestions)
-    })
-  });
-
-  const data = await res.json();
-
-  if (data.success) {
-    alert("Saved " + data.added + " questions to the bank!");
-    window.location.href = "/teacher/question-bank";
-  } else {
-    alert("Error saving questions.");
+  function downloadJSON(){
+    const data = JSON.stringify(generatedQuestions, null, 2);
+    const blob = new Blob([data], {type:'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url; a.download = `ai_questions_course_${courseId}_class_${classId}.json`; a.click(); URL.revokeObjectURL(url);
   }
-}
+
+  async function saveToBank(){
+    if(!generatedQuestions.length){ alert('No generated questions to save.'); return; }
+
+    // disable while saving
+    const saveBtn = document.getElementById('saveBtn'); saveBtn.disabled = true; saveBtn.innerText = 'Saving...';
+
+    try{
+      const payload = { questions: JSON.stringify(generatedQuestions) };
+      const res = await fetch(`/teacher/question-bank/${courseId}/${classId}/ai-generate/save`, {
+        method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)
+      });
+
+      const data = await res.json();
+      if(data && data.success){
+        showToast(`Saved ${data.added || generatedQuestions.length} questions to bank.`);
+        // redirect to questions list after short delay
+        setTimeout(()=> window.location.href = `/teacher/question-bank/${courseId}/${classId}/questions?import=success`, 900);
+      } else {
+        throw new Error(data && (data.error || data.message) || 'Save failed');
+      }
+
+    }catch(err){
+      console.error('Save error', err);
+      showToast('Save failed: '+(err.message||err), false, 7000);
+      alert('Save failed: '+(err.message||err));
+    }finally{
+      saveBtn.disabled = false; saveBtn.innerHTML = '<i class="fas fa-save"></i> Save all to question bank';
+    }
+  }
+
 </script>
 
 </body>

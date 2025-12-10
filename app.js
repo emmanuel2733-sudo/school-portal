@@ -5966,63 +5966,84 @@ app.get("/teacher/question-bank", (req, res) => {
 
 // VIEW QUESTIONS BY COURSE + CLASS
 app.get("/teacher/question-bank/:course_id/:class_id/questions", (req, res) => {
-    if (!req.session.userId || req.session.role !== "teacher") {
+    if (!req.session.userId || req.session.role !== "teacher")
         return res.redirect("/login");
-    }
 
     const { course_id, class_id } = req.params;
 
-    // 1. Load all questions for that course/class
-    const qSql = `
-        SELECT * FROM question_bank 
+    // ----- PAGINATION -----
+    const page = parseInt(req.query.page) || 1;
+    const limit = 15; // Questions per page
+    const offset = (page - 1) * limit;
+
+    // ----- Get TOTAL QUESTION COUNT -----
+    const countSql = `
+        SELECT COUNT(*) AS total 
+        FROM question_bank 
         WHERE course_id = ? AND class_id = ?
-        ORDER BY id DESC
     `;
 
-    db.all(qSql, [course_id, class_id], (err, questions) => {
+    db.get(countSql, [course_id, class_id], (err, countRow) => {
         if (err) {
-            console.log("QUESTION ERROR:", err);
-            return res.send("Error loading questions");
+            console.log("COUNT ERROR:", err);
+            return res.send("Error loading count");
         }
 
-        // 2. Load CBT exams for that course/class
-        const examSql = `
-            SELECT e.id, e.title, e.course_id, e.class_id,
-                   c.name AS class_name
-            FROM cbt_exams e
-            JOIN classes c ON c.id = e.class_id
-            WHERE e.course_id = ? AND e.class_id = ?
+        const totalQuestions = countRow.total;
+        const totalPages = Math.ceil(totalQuestions / limit);
+
+        // ----- Load paginated questions -----
+        const qSql = `
+            SELECT * FROM question_bank 
+            WHERE course_id = ? AND class_id = ?
+            ORDER BY id DESC
+            LIMIT ? OFFSET ?
         `;
 
-        db.all(examSql, [course_id, class_id], (err2, exams) => {
+        db.all(qSql, [course_id, class_id, limit, offset], (err2, questions) => {
             if (err2) {
-                console.log("EXAM ERROR:", err2);
-                return res.send("Error loading exams");
+                console.log("QUESTION ERROR:", err2);
+                return res.send("Error loading questions");
             }
 
-            // 3. Load course name
-            db.get(`SELECT name FROM courses WHERE id = ?`, [course_id], (err3, courseRow) => {
-                const course_name = courseRow ? courseRow.name : "";
+            // Load exams
+            const examSql = `
+                SELECT e.id, e.title, e.course_id, e.class_id,
+                       c.name AS class_name
+                FROM cbt_exams e
+                JOIN classes c ON c.id = e.class_id
+                WHERE e.course_id = ? AND e.class_id = ?
+            `;
 
-                // 4. Load class name
-                db.get(`SELECT name FROM classes WHERE id = ?`, [class_id], (err4, classRow) => {
-                    const class_name = classRow ? classRow.name : "";
+            db.all(examSql, [course_id, class_id], (err3, exams) => {
+                if (err3) return res.send("Error loading exams");
 
-                    // 5. Render page with success flag
-                    res.render("teacher_question_list", {
-                        questions,
-                        exams,
-                        course_id,
-                        class_id,
-                        course_name,
-                        class_name,
-                        import_success: req.query.import === "success"
+                db.get(`SELECT name FROM courses WHERE id = ?`, [course_id], (err4, cRow) => {
+                    const course_name = cRow ? cRow.name : "";
+
+                    db.get(`SELECT name FROM classes WHERE id = ?`, [class_id], (err5, clRow) => {
+                        const class_name = clRow ? clRow.name : "";
+
+                        res.render("teacher_question_list", {
+                            questions,
+                            exams,
+                            course_id,
+                            class_id,
+                            course_name,
+                            class_name,
+                            import_success: req.query.import === "success",
+                            // Pagination values
+                            page,
+                            totalPages,
+                            totalQuestions
+                        });
                     });
                 });
             });
         });
     });
 });
+
 
 
 app.post("/teacher/cbt/import-question", (req, res) => {
@@ -6195,8 +6216,6 @@ app.get("/teacher/question-bank/:course_id/:class_id/ai", (req, res) => {
     });
 });
 
-
-
 // 2️⃣ GENERATE QUESTIONS USING AI
 app.post('/teacher/question-bank/ai-generate', async (req, res) => {
     const { topic, difficulty, count } = req.body;
@@ -6243,7 +6262,6 @@ Format:
         res.status(500).json({ error: "AI generation failed", details: err.message });
     }
 });
-
 
 // 3️⃣ SAVE GENERATED QUESTIONS TO DATABASE
 app.post('/teacher/question-bank/:course_id/:class_id/ai-generate/save', (req, res) => {
@@ -6383,80 +6401,80 @@ app.post("/teacher/question-bank/:course_id/:class_id/delete", (req, res) => {
 });
 
 
-// GET - paginated question list
-app.get("/teacher/question-bank/:course_id/:class_id/questions", (req, res) => {
-  if (!req.session.userId || req.session.role !== "teacher") return res.redirect("/login");
+// // GET - paginated question list
+// app.get("/teacher/question-bank/:course_id/:class_id/questions", (req, res) => {
+//   if (!req.session.userId || req.session.role !== "teacher") return res.redirect("/login");
 
-  const course_id = Number(req.params.course_id);
-  const class_id  = Number(req.params.class_id);
+//   const course_id = Number(req.params.course_id);
+//   const class_id  = Number(req.params.class_id);
 
-  const pageSize = 10; // questions per page (you can change)
-  const currentPage = Math.max(1, Number(req.query.page) || 1);
-  const offset = (currentPage - 1) * pageSize;
+//   const pageSize = 10; // questions per page (you can change)
+//   const currentPage = Math.max(1, Number(req.query.page) || 1);
+//   const offset = (currentPage - 1) * pageSize;
 
-  // 1) total count
-  db.get(
-    `SELECT COUNT(*) AS cnt FROM question_bank WHERE course_id = ? AND class_id = ?`,
-    [course_id, class_id],
-    (err, row) => {
-      if (err) {
-        console.error("COUNT ERROR:", err);
-        return res.send("Error loading questions");
-      }
-      const total = row ? row.cnt : 0;
-      const totalPages = Math.max(1, Math.ceil(total / pageSize));
+//   // 1) total count
+//   db.get(
+//     `SELECT COUNT(*) AS cnt FROM question_bank WHERE course_id = ? AND class_id = ?`,
+//     [course_id, class_id],
+//     (err, row) => {
+//       if (err) {
+//         console.error("COUNT ERROR:", err);
+//         return res.send("Error loading questions");
+//       }
+//       const total = row ? row.cnt : 0;
+//       const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
-      // 2) fetch page
-      db.all(
-        `SELECT * FROM question_bank
-         WHERE course_id = ? AND class_id = ?
-         ORDER BY id DESC
-         LIMIT ? OFFSET ?`,
-        [course_id, class_id, pageSize, offset],
-        (err2, questions) => {
-          if (err2) {
-            console.error("QUESTIONS ERROR:", err2);
-            return res.send("Error loading questions");
-          }
+//       // 2) fetch page
+//       db.all(
+//         `SELECT * FROM question_bank
+//          WHERE course_id = ? AND class_id = ?
+//          ORDER BY id DESC
+//          LIMIT ? OFFSET ?`,
+//         [course_id, class_id, pageSize, offset],
+//         (err2, questions) => {
+//           if (err2) {
+//             console.error("QUESTIONS ERROR:", err2);
+//             return res.send("Error loading questions");
+//           }
 
-          // 3) fetch exams for the import dropdown
-          db.all(
-            `SELECT e.id, e.title, c.name AS class_name
-             FROM cbt_exams e
-             LEFT JOIN classes c ON c.id = e.class_id
-             WHERE e.course_id = ? AND e.class_id = ?`,
-            [course_id, class_id],
-            (err3, exams) => {
-              if (err3) {
-                console.error("EXAM ERROR:", err3);
-                return res.send("Error loading exams");
-              }
+//           // 3) fetch exams for the import dropdown
+//           db.all(
+//             `SELECT e.id, e.title, c.name AS class_name
+//              FROM cbt_exams e
+//              LEFT JOIN classes c ON c.id = e.class_id
+//              WHERE e.course_id = ? AND e.class_id = ?`,
+//             [course_id, class_id],
+//             (err3, exams) => {
+//               if (err3) {
+//                 console.error("EXAM ERROR:", err3);
+//                 return res.send("Error loading exams");
+//               }
 
-              // Pass flash-like query params: import_success, deleted_count (if present)
-              const import_success = req.query.import === "success";
-              const deleted_count = Number(req.query.deleted || 0);
+//               // Pass flash-like query params: import_success, deleted_count (if present)
+//               const import_success = req.query.import === "success";
+//               const deleted_count = Number(req.query.deleted || 0);
 
-              res.render("teacher_question_list", {
-                questions,
-                exams,
-                course_id,
-                class_id,
-                course_name: req.query.courseName || '', // optional friendly name if you pass it
-                class_name: req.query.className || '',
-                currentPage,
-                totalPages,
-                pageSize,
-                total,
-                import_success,
-                deleted_count
-              });
-            }
-          );
-        }
-      );
-    }
-  );
-});
+//               res.render("teacher_question_list", {
+//                 questions,
+//                 exams,
+//                 course_id,
+//                 class_id,
+//                 course_name: req.query.courseName || '', // optional friendly name if you pass it
+//                 class_name: req.query.className || '',
+//                 currentPage,
+//                 totalPages,
+//                 pageSize,
+//                 total,
+//                 import_success,
+//                 deleted_count
+//               });
+//             }
+//           );
+//         }
+//       );
+//     }
+//   );
+// });
 
 // POST - bulk delete selected questions
 app.post("/teacher/question-bank/bulk-delete", (req, res) => {

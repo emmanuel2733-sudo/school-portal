@@ -34,15 +34,23 @@
       padding: 0 20px;
     }
 
-    .btn-back {
-      background: var(--primary);
-      color: white;
-      padding: 10px 20px;
-      border-radius: 8px;
-      font-weight: 600;
-      text-decoration: none;
-    }
-    .btn-back:hover { background: #4f46e5; }
+   .back-nav-btn { 
+  background: var(--primary); 
+  color: white; 
+  width: 50px; 
+  height: 50px;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 1.4rem;
+  text-decoration: none;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.15);
+}
+.back-nav-btn:hover { 
+  background: #4f46e5; 
+  transform: scale(1.1); 
+}
 
     .btn-bulk, .btn-ai {
       background: var(--success);
@@ -106,6 +114,7 @@
       display: flex;
       flex-direction: column;
       gap: 15px;
+      position: relative;
     }
 
     .table-row-card {
@@ -144,8 +153,8 @@
       border: 1px solid #e2e8f0;
     }
 
-    /* ACTIONS DROPDOWN */
-    .actions-dropdown {
+    /* ACTIONS DROPDOWN FIX — COMPLETELY OUTSIDE THE CARD */
+    .action-cell-wrapper {
       position: relative;
       width: 100%;
     }
@@ -160,19 +169,62 @@
       cursor: pointer;
       font-weight: 600;
       box-shadow: 0 4px 12px rgba(99,102,241,0.2);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: all 0.2s;
+    }
+    
+    .action-btn:hover {
+      background: #4f46e5;
+    }
+
+    /* DROPDOWN MENU - POSITIONED ABSOLUTELY OUTSIDE THE GRID */
+    .dropdown-menu-container {
+      position: fixed; /* Use fixed to break out of all containers */
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 10000;
+      display: none;
+      pointer-events: none;
     }
 
     .dropdown-menu-box {
-      display: none;
       position: absolute;
-      right: 0;
-      top: 110%;
       background: white;
       border: 1px solid #e2e8f0;
-      border-radius: 8px;
-      min-width: 200px;
-      box-shadow: 0 15px 40px rgba(0,0,0,0.15);
-      z-index: 20;
+      border-radius: 10px;
+      min-width: 220px;
+      box-shadow: 0 25px 50px rgba(0,0,0,0.25);
+      z-index: 10001;
+      pointer-events: auto;
+      display: none;
+      padding: 15px;
+    }
+
+    .dropdown-menu-box.active {
+      display: block;
+      animation: fadeIn 0.2s ease-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Items */
+    .dropdown-menu-box form {
+      margin-bottom: 15px;
+    }
+
+    .dropdown-menu-box .form-select {
+      width: 100%;
+      margin-bottom: 10px;
+      border-radius: 6px;
+      border: 1px solid #d1d5db;
+      padding: 8px 12px;
     }
 
     .dropdown-menu-box a,
@@ -180,12 +232,15 @@
       display: block;
       padding: 10px 15px;
       color: #334155;
-      text-decoration: none;
       font-weight: 600;
+      text-decoration: none;
+      background: none;
+      border: none;
       width: 100%;
       text-align: left;
-      border: none;
-      background: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s;
     }
 
     .dropdown-menu-box a:hover,
@@ -194,17 +249,52 @@
       color: var(--primary);
     }
 
-    .delete-item { color: var(--danger); }
-    .delete-item:hover { background: #ffe4e4 !important; color: #b91c1c !important; }
+    .delete-item { 
+      color: var(--danger); 
+    }
+    
+    .delete-item:hover { 
+      background: #ffe4e4 !important; 
+      color: #b91c1c !important; 
+    }
 
-    .actions-dropdown:hover .dropdown-menu-box {
+    /* Overlay background when dropdown is open */
+    .dropdown-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.1);
+      z-index: 9999;
+      display: none;
+    }
+
+    .dropdown-overlay.active {
       display: block;
+    }
+
+    /* PAGINATION */
+    .pagination {
+      margin-top: 30px;
+    }
+    
+    .page-item.active .page-link {
+      background-color: var(--primary);
+      border-color: var(--primary);
+    }
+    
+    .page-link {
+      color: var(--primary);
+    }
+    
+    .page-link:hover {
+      color: #4f46e5;
     }
 
   </style>
 </head>
 <body>
-
 
 <!-- SUCCESS MESSAGE -->
 <% if (import_success) { %>
@@ -216,21 +306,22 @@
 <!-- TOP BUTTONS -->
 <div class="header-actions">
 
-  <a href="/teacher/question-bank" class="btn-back">
-    <i class="fas fa-arrow-left"></i> Back
+  <a href="/teacher/question-bank" class="back-nav-btn">
+         <i class="fas fa-arrow-left"></i>
   </a>
 
   <div>
     <% if (questions.length > 0) { %>
-      <a href="/teacher/question-bank/ai?course=<%= course_id %>&class=<%= class_id %>" class="btn-ai">
-        <i class="fa-solid fa-robot"></i> Generate With AI
+      <a href="/teacher/question-bank/<%= course_id %>/<%= class_id %>/ai"
+         class="btn-bulk">
+         🤖 Generate with AI
       </a>
     <% } %>
 
-    <a href="/teacher/cbt/import/bulk?course=<%= course_id %>&class=<%= class_id %>"
+    <!-- <a href="/teacher/cbt/import/bulk?course=<%= course_id %>&class=<%= class_id %>"
        class="btn-bulk">
       <i class="fa-solid fa-layer-group"></i> Bulk Add to CBT
-    </a>
+    </a> -->
   </div>
 
 </div>
@@ -249,6 +340,16 @@
   <div>Correct</div>
   <div>Image</div>
   <div>Actions</div>
+</div>
+
+<!-- DROPDOWN OVERLAY (for closing on click outside) -->
+<div class="dropdown-overlay" id="dropdownOverlay"></div>
+
+<!-- DROPDOWN CONTAINER (positioned globally) -->
+<div class="dropdown-menu-container" id="globalDropdownContainer">
+  <div class="dropdown-menu-box" id="globalDropdownMenu">
+    <!-- Dropdown content will be injected here -->
+  </div>
 </div>
 
 <!-- TABLE BODY -->
@@ -274,7 +375,9 @@
     <!-- Correct -->
     <div class="table-cell">
       <% const L = {1:"A",2:"B",3:"C",4:"D"}; %>
-      <span class="correct-badge"><%= L[q.correct_option] %></span>
+      <span class="correct-badge">
+        <%= L[q.correct_option] || q.correct_option || "?" %>
+      </span>
     </div>
 
     <!-- Image -->
@@ -286,41 +389,142 @@
       <% } %>
     </div>
 
-    <!-- ACTIONS DROPDOWN -->
-    <div class="table-cell actions-dropdown">
-
-      <button class="action-btn">
+    <!-- ACTIONS BUTTON (no dropdown here, just the button) -->
+    <div class="table-cell action-cell-wrapper">
+      <button class="action-btn" 
+              data-question-id="<%= q.id %>" 
+              data-question-index="<%= i %>">
         Actions <i class="fas fa-chevron-down"></i>
       </button>
-
-      <div class="dropdown-menu-box">
-
-        <!-- Add to Exam -->
-        <form action="/teacher/cbt/import-question" method="POST" style="margin:0;">
-          <select name="examId" required class="form-select mb-2">
-            <option value="">Select Exam</option>
-            <% exams.forEach(ex => { %>
-              <option value="<%= ex.id %>"><%= ex.title %> — <%= ex.class_name %></option>
-            <% }) %>
-          </select>
-          <input type="hidden" name="qid" value="<%= q.id %>">
-          <button class="dropdown-item">Add → Exam</button>
-        </form>
-
-        <a href="/teacher/question-bank/<%= q.id %>/edit">✏️ Edit</a>
-
-        <form action="/teacher/question-bank/<%= q.id %>/delete" method="POST">
-          <button class="delete-item" onclick="return confirm('Delete this question?')">❌ Delete</button>
-        </form>
-
-      </div>
-
     </div>
 
   </div>
   <% }) %>
 
 </div>
+
+<!-- PAGINATION -->
+<div class="d-flex justify-content-center mt-4 mb-5">
+  <nav>
+    <ul class="pagination">
+      <!-- Previous button -->
+      <li class="page-item <%= page === 1 ? 'disabled' : '' %>">
+        <a class="page-link" href="?page=<%= page - 1 %>">&laquo; Prev</a>
+      </li>
+
+      <!-- Page numbers -->
+      <% for (let p = 1; p <= totalPages; p++) { %>
+        <li class="page-item <%= p === page ? 'active' : '' %>">
+          <a class="page-link" href="?page=<%= p %>"><%= p %></a>
+        </li>
+      <% } %>
+
+      <!-- Next button -->
+      <li class="page-item <%= page === totalPages ? 'disabled' : '' %>">
+        <a class="page-link" href="?page=<%= page + 1 %>">Next &raquo;</a>
+      </li>
+    </ul>
+  </nav>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const dropdownContainer = document.getElementById('globalDropdownContainer');
+  const dropdownMenu = document.getElementById('globalDropdownMenu');
+  const dropdownOverlay = document.getElementById('dropdownOverlay');
+  let currentQuestionId = null;
+  
+  // Function to close dropdown
+  function closeDropdown() {
+    dropdownContainer.style.display = 'none';
+    dropdownMenu.classList.remove('active');
+    dropdownOverlay.classList.remove('active');
+    currentQuestionId = null;
+  }
+  
+  // Function to position and show dropdown
+  function showDropdown(button, questionId, questionIndex) {
+    currentQuestionId = questionId;
+    
+    // Get button position
+    const rect = button.getBoundingClientRect();
+    
+    // Position dropdown near the button
+    dropdownMenu.style.left = Math.min(rect.right - 220, window.innerWidth - 250) + 'px';
+    dropdownMenu.style.top = (rect.bottom + 10) + 'px';
+    
+    // Create dropdown content
+    dropdownMenu.innerHTML = `
+      <form action="/teacher/cbt/import-question" method="POST">
+        <select name="examId" required class="form-select mb-2">
+          <option value="">Select Exam</option>
+          <% exams.forEach(ex => { %>
+            <option value="<%= ex.id %>"><%= ex.title %> — <%= ex.class_name %></option>
+          <% }) %>
+        </select>
+        <input type="hidden" name="question_id" value="${questionId}">
+        <input type="hidden" name="course_id" value="<%= course_id %>">
+        <input type="hidden" name="class_id" value="<%= class_id %>">
+        <button type="submit" class="action-item-btn" style="width:100%; padding:10px; background:#f1f5f9; border:none; border-radius:6px; cursor:pointer; font-weight:600;">
+          <i class="fas fa-plus-circle"></i> Add to Exam
+        </button>
+      </form>
+      
+      <a href="/teacher/question-bank/${questionId}/edit" class="action-item" style="display:block; padding:10px; text-decoration:none; color:#334155; border-radius:6px; margin-bottom:5px;">
+        <i class="fas fa-edit"></i> Edit Question
+      </a>
+      
+      <form action="/teacher/question-bank/${questionId}/delete" method="POST">
+        <button type="submit" class="delete-item" onclick="return confirm('Delete this question?')" style="width:100%; padding:10px; background:none; border:none; color:#e74a3b; text-align:left; border-radius:6px; cursor:pointer; font-weight:600;">
+          <i class="fas fa-trash-alt"></i> Delete Question
+        </button>
+      </form>
+    `;
+    
+    // Show dropdown
+    dropdownContainer.style.display = 'block';
+    setTimeout(() => {
+      dropdownMenu.classList.add('active');
+      dropdownOverlay.classList.add('active');
+    }, 10);
+  }
+  
+  // Add click event to all action buttons
+  document.querySelectorAll('.action-btn').forEach(button => {
+    button.addEventListener('click', function(e) {
+      e.stopPropagation();
+      e.preventDefault();
+      
+      const questionId = this.getAttribute('data-question-id');
+      const questionIndex = this.getAttribute('data-question-index');
+      
+      // Close if clicking the same button
+      if (currentQuestionId === questionId && dropdownContainer.style.display === 'block') {
+        closeDropdown();
+      } else {
+        showDropdown(this, questionId, questionIndex);
+      }
+    });
+  });
+  
+  // Close dropdown when clicking overlay
+  dropdownOverlay.addEventListener('click', closeDropdown);
+  
+  // Close dropdown when clicking escape
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+      closeDropdown();
+    }
+  });
+  
+  // Close dropdown when clicking anywhere else
+  document.addEventListener('click', function(e) {
+    if (!e.target.closest('.action-btn') && !e.target.closest('.dropdown-menu-box')) {
+      closeDropdown();
+    }
+  });
+});
+</script>
 
 </body>
 </html>
