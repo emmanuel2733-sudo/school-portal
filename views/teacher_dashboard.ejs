@@ -3,286 +3,818 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Teacher Dashboard</title>
+  <title>Teacher Dashboard - School Portal</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
     :root {
-      --primary: #5a67d8;
-      --success: #48bb78;
-      --danger: #e74a3b;
-      --dark: #2d3748;
-      --gray: #718096;
+      --primary-pink: #ec4899;
+      --primary-pink-dark: #db2777;
+      --primary-pink-light: #fce7f3;
+      --primary-pink-lighter: #fdf2f8;
+      --accent-purple: #8b5cf6;
+      --accent-blue: #6366f1;
+      --accent-teal: #14b8a6;
+      --accent-amber: #f59e0b;
+      --accent-emerald: #10b981;
+      --text-dark: #1f2937;
+      --text-muted: #6b7280;
+      --border-light: #e5e7eb;
+      --bg-white: #ffffff;
+      --bg-gray: #f9fafb;
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
+      --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.1);
+      --shadow-lg: 0 10px 25px -5px rgba(0,0,0,0.1);
+      --shadow-xl: 0 20px 40px -10px rgba(236, 72, 153, 0.15);
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 16px;
+      --radius-xl: 24px;
+      --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    * { 
+      margin: 0; 
+      padding: 0; 
+      box-sizing: border-box; 
+    }
+    
     body {
-      background: #ffffff;
+      background: linear-gradient(135deg, var(--bg-gray) 0%, var(--primary-pink-lighter) 100%);
       min-height: 100vh;
-      font-family: 'Segoe UI', sans-serif;
+      font-family: 'Inter', sans-serif;
+      color: var(--text-dark);
+      line-height: 1.6;
     }
 
-    /* NAVBAR */
+    /* NAVBAR REDESIGN */
     .navbar {
-      background: white !important;
-      padding: 1.2rem 0;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-      border-bottom: 1px solid #e2e8f0;
+      background: linear-gradient(135deg, var(--bg-white) 0%, rgba(255, 255, 255, 0.98) 100%) !important;
+      backdrop-filter: blur(10px);
+      padding: 1rem 0;
+      box-shadow: var(--shadow-md);
+      border-bottom: none;
       position: sticky;
       top: 0;
       z-index: 1000;
     }
-    .navbar-brand { color: #1a202c !important; font-weight: 800; font-size: 1.8rem; }
-    .power-btn {
-      width: 50px; height: 50px; background: #e74a3b; color: white; border-radius: 50%;
-      display: flex; align-items: center; justify-content: center; font-size: 1.4rem;
-      transition: all 0.3s; box-shadow: 0 5px 15px rgba(231,74,59,0.4);
+    
+    .navbar::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--primary-pink) 0%, var(--accent-purple) 100%);
     }
-    .power-btn:hover { background: #c82333; transform: scale(1.1); }
+    
+    .navbar-brand {
+      color: var(--text-dark) !important;
+      font-weight: 800;
+      font-size: 1.8rem;
+      background: linear-gradient(135deg, var(--primary-pink) 0%, var(--accent-purple) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      padding-left: 10px;
+    }
+    
     .class-teacher-badge {
-      background: linear-gradient(135deg, #ff6b9d, #ff8ab3); color: white;
-      padding: 10px 24px; border-radius: 50px; font-weight: 700; font-size: 1rem;
-      box-shadow: 0 5px 15px rgba(255,107,157,0.4);
+      background: linear-gradient(135deg, var(--primary-pink) 0%, var(--accent-purple) 100%);
+      color: white;
+      padding: 10px 24px;
+      border-radius: 50px;
+      font-weight: 700;
+      font-size: 0.95rem;
+      box-shadow: var(--shadow-md);
+      border: none;
+      transition: var(--transition);
+    }
+    
+    .class-teacher-badge:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-lg);
+    }
+    
+    .power-btn {
+      width: 50px;
+      height: 50px;
+      background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+      color: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      transition: var(--transition);
+      box-shadow: var(--shadow-md);
+      border: none;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .power-btn::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+      opacity: 0;
+      transition: var(--transition);
+    }
+    
+    .power-btn:hover {
+      transform: scale(1.1) rotate(90deg);
+      box-shadow: 0 10px 25px rgba(239, 68, 68, 0.3);
+    }
+    
+    .power-btn:hover::before {
+      opacity: 1;
+    }
+    
+    .power-btn i {
+      position: relative;
+      z-index: 1;
     }
 
-    /* MAIN CONTENT FIRST,ON MOBILE */
-    .main-content {
-      flex: 1;
-      padding: 30px 20px;
-      background: #f8fafc;
-      order: 1; /* This forces it to appear BEFORE sidebar on mobile */
-    }
-
-    .welcome-card {
-      background: white; padding: 40px; border: 1px solid #e2e8f0;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.08); margin-bottom: 30px;
-      border-radius: 16px;
-    }
-    .profile-photo {
-      width: 180px; height: 180px; object-fit: cover; border: 8px solid #fff;
-      box-shadow: 0 15px 35px rgba(0,0,0,0.25); border-radius: 50%;
-      cursor: pointer; transition: transform 0.3s;
-    }
-    .profile-photo:hover { transform: scale(1.05); }
-
-    .role-badge {
-      background: var(--success); color: white; padding: 10px 30px;
-      font-weight: 700; font-size: 1.1rem; display: inline-block; border-radius: 50px;
-    }
-
-    .card-block {
-      background: white; padding: 35px; border: 1px solid #e2e8f0;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.08); border-radius: 16px;
-    }
-    .detail-row {
-      padding: 14px 0; border-bottom: 1px dashed #e2e8f0; font-size: 1.1rem;
-    }
-    .detail-label {
-      font-weight: 600; color: #4a5568; width: 180px; display: inline-block;
-    }
-    .course-item {
-      background: #f8fafc; padding: 20px; border: 1px solid #e2e8f0; margin-bottom: 15px; border-radius: 12px;
-    }
-
-    /* SIDEBAR - APPEARS AFTER MAIN CONTENT ON MOBILE */
-    .sidebar {
-      width: 310px; background: #fcfcfd; padding: 35px 25px; border-right: 1px solid #e2e8f0;
-      order: 2; /* Comes after main content on small screens */
-    }
-    .quick-actions-title {
-      color: #1a202c; font-size: 1.6rem; font-weight: 700; text-align: center;
-      margin-bottom: 40px; padding-bottom: 15px; border-bottom: 3px solid #4a5568;
-    }
-    .action-btn {
-      display: flex; align-items: center; width: 100%; padding: 18px 22px; margin-bottom: 16px;
-      background: linear-gradient(135deg, #667eea, #764ba2); color: white; font-weight: 600;
-     ,font-size: 1.1rem; text-decoration: none; transition: all 0.3s ease; border: none; border-radius: 12px;
-    }
-    .action-btn:nth-child(3) { background: linear-gradient(135deg, #f093fb, #f5576c); }
-    .action-btn:nth-child(4) { background: linear-gradient(135deg, #4facfe, #00f2fe); }
-    .action-btn:nth-child(5) { background: linear-gradient(135deg, #43e97b, #38f9d7); }
-    .action-btn:nth-child(6) { background: linear-gradient(135deg, #fa709a, #fee140); }
-    .action-btn:nth-child(7) { background: linear-gradient(135deg, #ff9a9e, #fad0c4); }
-    .action-btn:nth-child(8) { background: linear-gradient(135deg, #a8edea, #fed6e3); color:#444; }
-    .action-btn i { font-size: 1.5rem; margin-right: 16px; width: 35px; text-align: center; }
-    .action-btn:hover { transform: translateX(12px); box-shadow: 0 8px 25px rgba(0,0,0,0.3); }
-    .action-btn:disabled { background: #a0aec0; cursor: not-allowed; opacity: 0.7; }
-
-    /* FLEX LAYOUT - Desktop: sidebar left, Mobile: content first */
+    /* MAIN LAYOUT */
     .main-layout {
       display: flex;
-      min-height: calc(100vh - 84px);
+      min-height: calc(100vh - 80px);
       flex-wrap: wrap;
     }
 
-    /* Desktop: sidebar on left */
-    @media (min-width: 993px) {
-      .main-layout { flex-wrap: nowrap; }
-      .sidebar { order: 0; width: 310px; border-right: 1px solid #e2e8f0; border-bottom: none; }
-      .main-content { order: 1; }
+    /* SIDEBAR REDESIGN */
+    .sidebar {
+      width: 320px;
+      background: linear-gradient(180deg, var(--bg-white) 0%, #fcfcfc 100%);
+      padding: 35px 25px;
+      border-right: 1px solid var(--border-light);
+      order: 2;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .sidebar::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, var(--primary-pink) 0%, var(--accent-purple) 100%);
+    }
+    
+    .quick-actions-title {
+      color: var(--text-dark);
+      font-size: 1.6rem;
+      font-weight: 800;
+      text-align: center;
+      margin-bottom: 40px;
+      padding-bottom: 15px;
+      position: relative;
+    }
+    
+    .quick-actions-title::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 60px;
+      height: 4px;
+      background: linear-gradient(90deg, var(--primary-pink) 0%, var(--accent-purple) 100%);
+      border-radius: 2px;
+    }
+    
+    .action-btn {
+      display: flex;
+      align-items: center;
+      width: 100%;
+      padding: 18px 22px;
+      margin-bottom: 16px;
+      background: var(--bg-white);
+      color: var(--text-dark);
+      font-weight: 600;
+      font-size: 1rem;
+      text-decoration: none;
+      transition: var(--transition);
+      border: 2px solid var(--border-light);
+      border-radius: var(--radius-md);
+      position: relative;
+      overflow: hidden;
+      z-index: 1;
+    }
+    
+    .action-btn::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 4px;
+      height: 100%;
+      background: var(--primary-pink);
+      transition: var(--transition);
+      z-index: -1;
+    }
+    
+    .action-btn:hover {
+      transform: translateX(8px);
+      border-color: var(--primary-pink-light);
+      box-shadow: var(--shadow-lg);
+      color: var(--primary-pink);
+    }
+    
+    .action-btn:hover::before {
+      width: 100%;
+      opacity: 0.1;
+    }
+    
+    .action-btn i {
+      font-size: 1.3rem;
+      margin-right: 16px;
+      width: 24px;
+      text-align: center;
+      color: var(--primary-pink);
+      transition: var(--transition);
+    }
+    
+    .action-btn:hover i {
+      transform: scale(1.2);
+    }
+    
+    .action-btn:disabled {
+      background: var(--bg-gray);
+      color: var(--text-muted);
+      cursor: not-allowed;
+      border-color: var(--border-light);
+    }
+    
+    .action-btn:disabled::before {
+      display: none;
+    }
+    
+    .action-btn:disabled i {
+      color: var(--text-muted);
     }
 
-    /* Mobile adjustments */
-    @media (max-width: 768px) {
-      .profile-photo { width: 150px; height: 150px; }
-      .welcome-card { padding: 30px 20px; }
-      .card-block { padding: 25px 20px; }
+    /* MAIN CONTENT */
+    .main-content {
+      flex: 1;
+      padding: 40px 30px;
+      background: transparent;
+      order: 1;
     }
+    
+    .welcome-card {
+      background: linear-gradient(135deg, var(--bg-white) 0%, rgba(255, 255, 255, 0.95) 100%);
+      padding: 50px;
+      border: 1px solid rgba(255, 255, 255, 0.8);
+      box-shadow: var(--shadow-xl);
+      margin-bottom: 40px;
+      border-radius: var(--radius-lg);
+      backdrop-filter: blur(10px);
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .welcome-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, var(--primary-pink) 0%, var(--accent-purple) 100%);
+    }
+    
+    .welcome-card h2 {
+      font-size: 2.8rem;
+      font-weight: 800;
+      color: var(--text-dark);
+      margin-bottom: 30px;
+      line-height: 1.2;
+    }
+    
+    /* PROFILE PHOTO STYLING */
+    .profile-photo-container {
+      position: relative;
+      display: inline-block;
+    }
+    
+    .profile-photo {
+      width: 180px;
+      height: 180px;
+      object-fit: cover;
+      border: 6px solid var(--bg-white);
+      box-shadow: var(--shadow-xl);
+      border-radius: 50%;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+    
+    .profile-photo:hover {
+      transform: scale(1.05);
+      border-color: var(--primary-pink-light);
+    }
+    
+    .upload-overlay {
+      position: absolute;
+      bottom: 10px;
+      right: 10px;
+      background: linear-gradient(135deg, var(--primary-pink) 0%, var(--accent-purple) 100%);
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 1.2rem;
+      cursor: pointer;
+      box-shadow: var(--shadow-lg);
+      transition: var(--transition);
+      border: 3px solid var(--bg-white);
+    }
+    
+    .upload-overlay:hover {
+      transform: scale(1.1) rotate(15deg);
+    }
+    
+    .role-badge {
+      background: linear-gradient(135deg, var(--accent-emerald) 0%, #059669 100%);
+      color: white;
+      padding: 12px 35px;
+      font-weight: 700;
+      font-size: 1.1rem;
+      display: inline-block;
+      border-radius: 50px;
+      box-shadow: var(--shadow-md);
+      margin-top: 20px;
+      border: none;
+    }
+
+    /* INFO CARDS */
+    .info-card {
+      background: var(--bg-white);
+      padding: 35px;
+      border: 1px solid var(--border-light);
+      box-shadow: var(--shadow-md);
+      border-radius: var(--radius-lg);
+      height: 100%;
+      transition: var(--transition);
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .info-card:hover {
+      transform: translateY(-5px);
+      box-shadow: var(--shadow-xl);
+      border-color: var(--primary-pink-light);
+    }
+    
+    .info-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 4px;
+      height: 100%;
+      background: linear-gradient(180deg, var(--primary-pink) 0%, var(--accent-purple) 100%);
+    }
+    
+    .card-header {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text-dark);
+      margin-bottom: 25px;
+      padding-bottom: 15px;
+      border-bottom: 2px solid var(--primary-pink-light);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    
+    .card-header i {
+      color: var(--primary-pink);
+    }
+    
+    .detail-row {
+      padding: 14px 0;
+      border-bottom: 1px dashed var(--border-light);
+      font-size: 1rem;
+      display: flex;
+      align-items: center;
+      transition: var(--transition);
+    }
+    
+    .detail-row:hover {
+      background: var(--primary-pink-lighter);
+      padding-left: 10px;
+      border-radius: var(--radius-sm);
+    }
+    
+    .detail-label {
+      font-weight: 600;
+      color: var(--text-dark);
+      width: 160px;
+      min-width: 160px;
+      display: inline-block;
+    }
+    
+    .detail-value {
+      color: var(--text-dark);
+      flex: 1;
+    }
+    
+    .course-item {
+      background: var(--bg-gray);
+      padding: 20px;
+      border: 1px solid var(--border-light);
+      margin-bottom: 15px;
+      border-radius: var(--radius-md);
+      transition: var(--transition);
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .course-item::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 4px;
+      background: var(--primary-pink);
+      transition: var(--transition);
+    }
+    
+    .course-item:hover {
+      transform: translateX(5px);
+      background: var(--primary-pink-lighter);
+      border-color: var(--primary-pink-light);
+    }
+    
+    .course-item:hover::before {
+      background: var(--accent-purple);
+      width: 6px;
+    }
+    
+    .course-item h5 {
+      margin: 0;
+      font-weight: 700;
+      color: var(--text-dark);
+    }
+    
+    .course-item p {
+      margin: 8px 0 0;
+      color: var(--text-muted);
+      font-size: 0.95rem;
+    }
+    
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--text-muted);
+    }
+    
+    .empty-state i {
+      font-size: 3rem;
+      margin-bottom: 20px;
+      opacity: 0.5;
+    }
+
+    /* RESPONSIVE DESIGN */
+    @media (min-width: 992px) {
+      .main-layout { flex-wrap: nowrap; }
+      .sidebar { order: 0; width: 320px; }
+      .main-content { order: 1; }
+    }
+    
+    @media (max-width: 768px) {
+      .welcome-card {
+        padding: 30px 20px;
+      }
+      
+      .welcome-card h2 {
+        font-size: 2.2rem;
+      }
+      
+      .profile-photo {
+        width: 140px;
+        height: 140px;
+      }
+      
+      .info-card {
+        padding: 25px 20px;
+      }
+      
+      .sidebar {
+        width: 100%;
+        border-right: none;
+        border-top: 1px solid var(--border-light);
+      }
+      
+      .action-btn:hover {
+        transform: translateX(0);
+      }
+      
+      .detail-label {
+        width: 130px;
+        min-width: 130px;
+      }
+    }
+    
+    @media (max-width: 576px) {
+      .main-content {
+        padding: 25px 20px;
+      }
+      
+      .welcome-card h2 {
+        font-size: 1.8rem;
+      }
+      
+      .detail-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 5px;
+      }
+      
+      .detail-label {
+        width: 100%;
+      }
+    }
+
+    /* ANIMATIONS */
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    .welcome-card, .info-card, .action-btn {
+      animation: fadeInUp 0.5s ease-out forwards;
+    }
+    
+    .action-btn:nth-child(1) { animation-delay: 0.1s; }
+    .action-btn:nth-child(2) { animation-delay: 0.2s; }
+    .action-btn:nth-child(3) { animation-delay: 0.3s; }
+    .action-btn:nth-child(4) { animation-delay: 0.4s; }
+    .action-btn:nth-child(5) { animation-delay: 0.5s; }
+    .action-btn:nth-child(6) { animation-delay: 0.6s; }
+    .action-btn:nth-child(7) { animation-delay: 0.7s; }
+    .action-btn:nth-child(8) { animation-delay: 0.8s; }
+    .action-btn:nth-child(9) { animation-delay: 0.9s; }
   </style>
 </head>
 <body>
 
   <!-- NAVBAR -->
-  <nav class="navbar">
+  <nav class="navbar navbar-expand-lg">
     <div class="container-fluid px-4">
-      <a class="navbar-brand" href="/dashboard">School Portal</a>
-      <div class="d-flex align-items-center gap-3">
+      <a class="navbar-brand" href="/dashboard">
+        <i class="fas fa-school me-2"></i>School Portal
+      </a>
+      <div class="d-flex align-items-center gap-4">
         <% if (classTeacherOf && classTeacherOf.trim() !== '') { %>
-          <div class="class-teacher-badge">Class Teacher — <%= classTeacherOf %></div>
+          <div class="class-teacher-badge">
+            <i class="fas fa-chalkboard-teacher me-2"></i>Class Teacher — <%= classTeacherOf %>
+          </div>
         <% } %>
-        <a href="/logout" class="power-btn"><i class="fas fa-power-off"></i></a>
+        <a href="/logout" class="power-btn" title="Logout">
+          <i class="fas fa-power-off"></i>
+        </a>
       </div>
     </div>
   </nav>
 
-  <!-- MAIN LAYOUT: CONTENT FIRST ON MOBILE -->
+  <!-- MAIN LAYOUT -->
   <div class="main-layout">
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+      <h3 class="quick-actions-title">
+        <i class="fas fa-bolt me-2"></i>Quick Actions
+      </h3>
+      <a href="/teacher/courses" class="action-btn">
+        <i class="fas fa-clipboard-check"></i> Results Management
+      </a>
+      <a href="/teacher/profile" class="action-btn">
+        <i class="fas fa-user-cog"></i> My Profile
+      </a>
+      <% if (classTeacherOf && classTeacherOf.trim() !== '') { %>
+        <a href="/teacher/attendance" class="action-btn">
+          <i class="fas fa-calendar-check"></i> Attendance Sheet
+        </a>
+      <% } else { %>
+        <button class="action-btn" disabled>
+          <i class="fas fa-calendar-check"></i> Attendance Sheet
+        </button>
+      <% } %>
+      <a href="/teacher/topics" class="action-btn">
+        <i class="fas fa-book-open"></i> Manage Topics
+      </a>
+      <a href="/teacher/e-library" class="action-btn">
+        <i class="fas fa-book-reader"></i> E-Library
+      </a>
+      <a href="/teacher/class-activities" class="action-btn">
+        <i class="fas fa-gamepad"></i> Class Activities
+      </a>
+      <a href="/teacher/cbt" class="action-btn">
+        <i class="fas fa-laptop-code"></i> CBT Exams
+      </a>
+      <a href="/teacher/virtual-class" class="action-btn">
+        <i class="fas fa-video"></i> Virtual Class
+      </a>
+      <a href="/teacher/question-bank" class="action-btn">
+        <i class="fas fa-database"></i> Question Bank
+      </a>
+    </div>
 
-    <!-- MAIN CONTENT - APPEARS FIRST ON MOBILE -->
+    <!-- MAIN CONTENT -->
     <div class="main-content">
-
-      <!-- WELCOME CARD WITH PHOTO UPLOAD -->
-      <div class="welcome-card text-center text-md-start">
-        <h2 class="mb-4" style="font-size:2.8rem;font-weight:800;color:#1a202c;">Welcome Back!</h2>
+      <!-- WELCOME CARD -->
+      <div class="welcome-card">
+        <h2>Welcome Back, <%= user.name || user.username %>! 👋</h2>
         
-        <div class="d-flex flex-column flex-md-row align-items-center gap-5">
-        <!-- PHOTO + CAMERA ICON (click anywhere on photo or icon to upload) -->
-<div class="position-relative d-inline-block">
-  <img 
-    src="<%= user.photo && user.photo !== 'default-photo.jpg' ? '/uploads/' + user.photo : '/images/default-photo.jpg' %>" 
-    alt="Profile" 
-    class="profile-photo"
-    onerror="this.src='/images/default-photo.jpg'"
-    id="dashboardPhoto"
-    style="cursor:pointer;"
-  >
+        <div class="d-flex flex-column flex-lg-row align-items-center gap-5">
+          <!-- PROFILE PHOTO WITH UPLOAD -->
+          <div class="profile-photo-container">
+            <img 
+              src="<%= user.photo && user.photo !== 'default-photo.jpg' ? '/uploads/' + user.photo : '/images/default-photo.jpg' %>" 
+              alt="Profile Photo" 
+              class="profile-photo"
+              onerror="this.src='/images/default-photo.jpg'"
+              id="dashboardPhoto"
+            >
+            <label for="photoUpload" class="upload-overlay">
+              <i class="fas fa-camera"></i>
+            </label>
+          </div>
 
-  <!-- Camera icon in bottom-right corner -->
-  <label for="photoUpload" class="position-absolute bottom-0 end-0 mb-3 me-3 btn btn-primary rounded-circle p-3 shadow-lg" style="cursor:pointer;">
-    <i class="fas fa-camera fa-lg"></i>
-  </label>
-</div>
-
-<!-- REAL FORM – visible to browser (but we hide it visually with opacity/position) -->
-<form id="uploadForm" action="/teacher/upload-photo" method="POST" enctype="multipart/form-data" class="position-absolute" style="opacity:0; width:0; height:0;">
-  <input type="file" name="photo" id="photoUpload" accept="image/jpeg,image/jpg,image/png" required>
-</form>
-
-          <div>
-            <h3 style="font-size:2.4rem;margin:0;color:#1a202c;"><%= user.name || user.username %></h3>
-            <div class="role-badge mt-3">TEACHER</div>
+          <div class="text-center text-lg-start">
+            <h3 class="mb-3" style="font-size: 2.2rem; font-weight: 700; color: var(--text-dark);">
+              <%= user.name || user.username %>
+            </h3>
+            <div class="role-badge">
+              <i class="fas fa-chalkboard-teacher me-2"></i>CERTIFIED TEACHER
+            </div>
+            <p class="mt-4 text-muted" style="max-width: 400px;">
+              <i class="fas fa-quote-left me-2"></i>
+              Manage your classes, track student progress, and access teaching resources all in one place.
+            </p>
           </div>
         </div>
 
-        <!-- Hidden Upload Form -->
-        <form action="/teacher/upload-photo" method="POST" enctype="multipart/form-data" class="d-none">
+        <!-- HIDDEN UPLOAD FORM -->
+        <form id="uploadForm" action="/teacher/upload-photo" method="POST" enctype="multipart/form-data" class="d-none">
           <input type="file" name="photo" id="photoUpload" accept="image/jpeg,image/jpg,image/png" required>
         </form>
       </div>
 
-      <!-- PERSONAL INFO + COURSES -->
+      <!-- PERSONAL INFO & COURSES -->
       <div class="row g-4">
+        <!-- PERSONAL INFORMATION -->
         <div class="col-lg-6">
-          <div class="card-block">
-            <h4 class="mb-4" style="font-size:1.6rem;font-weight:700;color:#1a202c;border-bottom:3px solid #e2e8f0;padding-bottom:12px;">
+          <div class="info-card">
+            <div class="card-header">
+              <i class="fas fa-user-circle"></i>
               Personal Information
-            </h4>
-            <div class="detail-row"><span class="detail-label">Full Name:</span> <%= user.name || 'Not set' %></div>
-            <div class="detail-row"><span class="detail-label">Username:</span> @<%= user.username %></div>
-            <div class="detail-row"><span class="detail-label">Gender:</span> <%= user.sex || 'Not set' %></div>
-            <div class="detail-row">
-              <span class="detail-label">Date of Birth:</span> 
-              <% if (user.dob) { %>
-                <%= new Date(user.dob).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) %>
-                <% 
-                  const birth = new Date(user.dob);
-                  const today = new Date();
-                  let age = today.getFullYear() - birth.getFullYear();
-                  const m = today.getMonth() - birth.getMonth();
-                  if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
-                %>
-                <span class="text-muted">(Age: <%= age %>)</span>
-              <% } else { %> Not set <% } %>
             </div>
-            <div class="detail-row"><span class="detail-label">Address:</span> <%= user.address || 'Not set' %></div>
+            <div class="detail-row">
+              <span class="detail-label">Full Name:</span>
+              <span class="detail-value"><%= user.name || 'Not set' %></span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Username:</span>
+              <span class="detail-value">@<%= user.username %></span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Gender:</span>
+              <span class="detail-value"><%= user.sex || 'Not set' %></span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Date of Birth:</span>
+              <span class="detail-value">
+                <% if (user.dob) { %>
+                  <%= new Date(user.dob).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) %>
+                  <% 
+                    const birth = new Date(user.dob);
+                    const today = new Date();
+                    let age = today.getFullYear() - birth.getFullYear();
+                    const m = today.getMonth() - birth.getMonth();
+                    if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
+                  %>
+                  <span class="text-muted ms-2">(Age: <%= age %>)</span>
+                <% } else { %> Not set <% } %>
+              </span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Address:</span>
+              <span class="detail-value"><%= user.address || 'Not set' %></span>
+            </div>
           </div>
         </div>
 
+        <!-- ASSIGNED COURSES -->
         <div class="col-lg-6">
-          <div class="card-block">
-            <h4 class="mb-4" style="font-size:1.6rem;font-weight:700;color:#1a202c;border-bottom:3px solid #e2e8f0;padding-bottom:12px;">
+          <div class="info-card">
+            <div class="card-header">
+              <i class="fas fa-book-open"></i>
               Assigned Courses
-            </h4>
+            </div>
             <% 
               const courseList = Array.isArray(courses) ? courses : [];
             %>
             <% if (courseList.length > 0) { %>
               <% courseList.forEach(course => { %>
                 <div class="course-item">
-                  <h5 style="margin:0;font-weight:600;"><%= course.course_name || 'Untitled' %></h5>
-                  <p style="margin:8px 0 0;color:#718096;">Class: <strong><%= course.class_name || 'N/A' %></strong></p>
+                  <h5><i class="fas fa-book me-2" style="color: var(--primary-pink);"></i><%= course.course_name || 'Untitled' %></h5>
+                  <p><i class="fas fa-users me-1"></i> Class: <strong><%= course.class_name || 'N/A' %></strong></p>
                 </div>
               <% }) %>
             <% } else { %>
-              <p class="text-center text-muted fs-4">No courses assigned yet.</p>
+              <div class="empty-state">
+                <i class="fas fa-book-open"></i>
+                <h5 class="mt-3 mb-2">No courses assigned yet</h5>
+                <p class="text-muted">Courses will appear here once assigned by admin</p>
+              </div>
             <% } %>
           </div>
         </div>
       </div>
     </div>
-
-    <!-- SIDEBAR - APPEARS AFTER MAIN CONTENT ON MOBILE -->
-    <div class="sidebar">
-      <h3 class="quick-actions-title">Quick Actions</h3>
-      <a href="/teacher/courses" class="action-btn"><i class="fas fa-clipboard-check"></i> Results</a>
-      <a href="/teacher/profile" class="action-btn"><i class="fas fa-user"></i> My Profile</a>
-      <% if (classTeacherOf && classTeacherOf.trim() !== '') { %>
-        <a href="/teacher/attendance" class="action-btn"><i class="fas fa-calendar-check"></i> Attendance Sheet</a>
-      <% } else { %>
-        <button class="action-btn" disabled><i class="fas fa-calendar-check"></i> Attendance Sheet</button>
-      <% } %>
-      <a href="/teacher/topics" class="action-btn"><i class="fas fa-book"></i> Manage Topics</a>
-      <a href="/teacher/e-library" class="action-btn"><i class="fas fa-book-open"></i> E-Library</a>
-      <a href="/teacher/class-activities" class="action-btn"><i class="fas fa-gamepad"></i> Class Activities</a>
-      <a href="/teacher/cbt" class="action-btn"><i class="fas fa-laptop-code"></i> CBT Exams</a>
-      <a href="/teacher/virtual-class" class="action-btn"><i class="fas fa-video"></i> Virtual Class</a>
-       <a href="/teacher/question-bank" class="action-btn"><i class="fas fa-book"></i> Question Bank</a>
-    
-
-    </div>
   </div>
 
-  <!-- Click photo or icon to upload -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script>
-const photoImg = document.getElementById('dashboardPhoto');
-  const fileInput = document.getElementById('photoUpload');
-  const form = document.getElementById('uploadForm');
+    // Photo upload functionality
+    document.addEventListener('DOMContentLoaded', function() {
+      const photoImg = document.getElementById('dashboardPhoto');
+      const fileInput = document.getElementById('photoUpload');
+      const form = document.getElementById('uploadForm');
+      const uploadOverlay = document.querySelector('.upload-overlay');
 
-  // Click on photo OR camera icon → open file picker
-  photoImg?.addEventListener('click', () => fileInput.click());
-  
-  // When user selects a file → automatically submit the form
-  fileInput?.addEventListener('change', () => {
-    if (fileInput.files.length > 0) {
-      form.submit();               // This actually uploads!
-    }
-  });
+      // Click on photo or overlay to trigger file input
+      if (photoImg) photoImg.addEventListener('click', () => fileInput.click());
+      if (uploadOverlay) uploadOverlay.addEventListener('click', () => fileInput.click());
+      
+      // Auto-submit on file selection
+      if (fileInput) {
+        fileInput.addEventListener('change', function() {
+          if (this.files.length > 0) {
+            // Show loading state
+            const originalSrc = photoImg.src;
+            photoImg.style.opacity = '0.5';
+            photoImg.style.filter = 'grayscale(1)';
+            
+            // Submit form
+            form.submit();
+            
+            // Reset after 2 seconds if still on page
+            setTimeout(() => {
+              photoImg.style.opacity = '1';
+              photoImg.style.filter = 'none';
+            }, 2000);
+          }
+        });
+      }
 
+      // Add hover effects to cards
+      const cards = document.querySelectorAll('.info-card, .course-item');
+      cards.forEach(card => {
+        card.addEventListener('mouseenter', function() {
+          this.style.zIndex = '10';
+        });
+        
+        card.addEventListener('mouseleave', function() {
+          this.style.zIndex = '1';
+        });
+      });
 
-    document.getElementById('dashboardPhoto')?.addEventListener('click', () => {
-      document.getElementById('photoUpload').click();
+      // Add click feedback to action buttons
+      const actionBtns = document.querySelectorAll('.action-btn:not([disabled])');
+      actionBtns.forEach(btn => {
+        btn.addEventListener('mousedown', function() {
+          this.style.transform = 'translateX(4px) scale(0.98)';
+        });
+        
+        btn.addEventListener('mouseup', function() {
+          this.style.transform = 'translateX(8px)';
+        });
+        
+        btn.addEventListener('mouseleave', function() {
+          this.style.transform = 'translateX(0)';
+        });
+      });
     });
   </script>
-
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
