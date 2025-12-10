@@ -5,17 +5,229 @@
   <title>Login – School Portal</title>
   <link rel="stylesheet" href="/style.css">
   <style>
-    body{font-family:Arial,sans-serif;background:#f4f6f9;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;}
-    .login-box{background:#fff;padding:30px;border-radius:8px;box-shadow:0 0 12px rgba(0,0,0,.1);width:320px;}
-    .form-group{margin-bottom:15px;}
-    label{display:block;margin-bottom:5px;font-weight:bold;}
-    input{width:100%;padding:10px;border:1px solid #ccc;border-radius:4px;}
-    button{background:#007bff;color:#fff;padding:10px 15px;border:none;border-radius:4px;cursor:pointer;width:100%;}
-    button:hover{background:#0056b3;}
-    .error{color:#dc3545;margin-top:10px;font-size:0.9em;}
+    /* ====== CORE STYLES ====== */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    body {
+      font-family: Arial, sans-serif;
+      background: linear-gradient(135deg, #FF9A9E 0%, #FAD0C4 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    /* ====== GRAFFITI BACKGROUND ====== */
+    .graffiti-bg {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 1;
+    }
+    
+    .graffiti-text {
+      position: absolute;
+      font-family: 'Comic Sans MS', cursive, sans-serif;
+      font-size: 120px;
+      color: rgba(255, 255, 255, 0.1);
+      font-weight: bold;
+      transform: rotate(-20deg);
+      white-space: nowrap;
+    }
+    
+    .gt1 { top: 15%; left: 5%; }
+    .gt2 { top: 60%; right: 5%; transform: rotate(15deg); }
+    .gt3 { top: 35%; left: 10%; font-size: 80px; }
+    
+    /* ====== LOGIN BOX ====== */
+    .login-box {
+      background: white;
+      padding: 40px;
+      border-radius: 20px;
+      box-shadow: 0 20px 40px rgba(255, 107, 107, 0.3);
+      width: 400px;
+      position: relative;
+      z-index: 2;
+      border-top: 5px solid #FF6B6B;
+      border-bottom: 5px solid #4ECDC4;
+      transform: translateY(0);
+      animation: float 3s ease-in-out infinite;
+    }
+    
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+    
+    /* ====== GRAFFITI ACCENTS ON BOX ====== */
+    .login-box::before {
+      content: "✏️";
+      position: absolute;
+      top: -25px;
+      left: -25px;
+      font-size: 40px;
+      transform: rotate(-15deg);
+      z-index: 3;
+    }
+    
+    .login-box::after {
+      content: "📚";
+      position: absolute;
+      bottom: -25px;
+      right: -25px;
+      font-size: 40px;
+      transform: rotate(15deg);
+      z-index: 3;
+    }
+    
+    /* ====== HEADER ====== */
+    h2 {
+      text-align: center;
+      color: #2E2E3A;
+      margin-bottom: 30px;
+      font-size: 28px;
+      position: relative;
+      padding-bottom: 15px;
+    }
+    
+    h2::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 80px;
+      height: 4px;
+      background: linear-gradient(90deg, #FF6B6B, #4ECDC4);
+      border-radius: 2px;
+    }
+    
+    /* ====== FORM STYLES (YOUR ORIGINAL + ENHANCED) ====== */
+    .form-group {
+      margin-bottom: 20px;
+    }
+    
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: bold;
+      color: #2E2E3A;
+      font-size: 14px;
+      text-transform: uppercase;
+    }
+    
+    input {
+      width: 100%;
+      padding: 15px;
+      border: 2px solid #E1E5EB;
+      border-radius: 10px;
+      font-size: 16px;
+      transition: all 0.3s;
+      background: #F8F9FF;
+    }
+    
+    input:focus {
+      outline: none;
+      border-color: #FF6B6B;
+      box-shadow: 0 0 0 3px rgba(255, 107, 107, 0.2);
+      background: white;
+    }
+    
+    button {
+      background: linear-gradient(135deg, #FF6B6B 0%, #FF8E8E 100%);
+      color: white;
+      padding: 16px;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      width: 100%;
+      font-size: 16px;
+      font-weight: bold;
+      margin-top: 10px;
+      transition: all 0.3s;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    button:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 10px 20px rgba(255, 107, 107, 0.3);
+    }
+    
+    button:active {
+      transform: translateY(-1px);
+    }
+    
+    /* ====== GRAFFITI SPRAY EFFECT ON HOVER ====== */
+    button::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+      transition: left 0.5s;
+    }
+    
+    button:hover::before {
+      left: 100%;
+    }
+    
+    /* ====== ERROR STYLES ====== */
+    .error {
+      background: #FFE5E5;
+      color: #FF6B6B;
+      padding: 12px 15px;
+      border-radius: 10px;
+      margin-top: 15px;
+      font-size: 14px;
+      border-left: 5px solid #FF6B6B;
+      animation: shake 0.5s;
+    }
+    
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-5px); }
+      75% { transform: translateX(5px); }
+    }
+    
+    /* ====== GRAFFITI TAG AT BOTTOM ====== */
+    .graffiti-tag {
+      text-align: center;
+      margin-top: 25px;
+      padding-top: 15px;
+      border-top: 2px dashed #E1E5EB;
+      color: #666;
+      font-size: 14px;
+    }
+    
+    .graffiti-tag::before {
+      content: "#EDULIFE";
+      display: block;
+      font-family: 'Comic Sans MS', cursive, sans-serif;
+      color: #FF6B6B;
+      font-size: 18px;
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
   </style>
 </head>
 <body>
+  <!-- GRAFFITI BACKGROUND ELEMENTS -->
+  <div class="graffiti-bg">
+    <div class="graffiti-text gt1">LEARN</div>
+    <div class="graffiti-text gt2">GROW</div>
+    <div class="graffiti-text gt3">SCHOOL</div>
+  </div>
+  
+  <!-- YOUR ORIGINAL LOGIN BOX (NO CHANGES TO EJS) -->
   <div class="login-box">
     <h2>School Portal Login</h2>
 
@@ -46,6 +258,47 @@
 
       <button type="submit">Login</button>
     </form>
+    
+    <div class="graffiti-tag">
+      Secure student portal access
+    </div>
   </div>
+
+  <script>
+    // Simple graffiti effect on button click
+    document.querySelector('button').addEventListener('click', function(e) {
+      // Only create effect if form is valid
+      const form = document.querySelector('form');
+      if (form.checkValidity()) {
+        // Add spray paint effect
+        const spray = document.createElement('div');
+        spray.innerHTML = '💥';
+        spray.style.position = 'absolute';
+        spray.style.fontSize = '30px';
+        spray.style.opacity = '0';
+        spray.style.animation = 'sprayEffect 0.5s';
+        document.body.appendChild(spray);
+        
+        // Position near button
+        const rect = this.getBoundingClientRect();
+        spray.style.top = (rect.top - 30) + 'px';
+        spray.style.left = (rect.left + rect.width/2 - 15) + 'px';
+        
+        // Remove after animation
+        setTimeout(() => spray.remove(), 500);
+      }
+    });
+    
+    // Add CSS for spray effect
+    const style = document.createElement('style');
+    style.textContent = `
+      @keyframes sprayEffect {
+        0% { transform: scale(0); opacity: 1; }
+        50% { transform: scale(1.5); opacity: 0.7; }
+        100% { transform: scale(2); opacity: 0; }
+      }
+    `;
+    document.head.appendChild(style);
+  </script>
 </body>
 </html>
