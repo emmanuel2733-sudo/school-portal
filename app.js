@@ -6094,9 +6094,6 @@ app.post("/teacher/cbt/import-question", (req, res) => {
 
 
 
-
-
-
 app.get("/teacher/cbt/import/bulk", (req, res) => {
   const { course, class: classId } = req.query;
 

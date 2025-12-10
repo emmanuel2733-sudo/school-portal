@@ -462,7 +462,8 @@ document.addEventListener('DOMContentLoaded', function() {
             <option value="<%= ex.id %>"><%= ex.title %> — <%= ex.class_name %></option>
           <% }) %>
         </select>
-        <input type="hidden" name="question_id" value="${questionId}">
+       <input type="hidden" name="qid" value="${questionId}">
+
         <input type="hidden" name="course_id" value="<%= course_id %>">
         <input type="hidden" name="class_id" value="<%= class_id %>">
         <button type="submit" class="action-item-btn" style="width:100%; padding:10px; background:#f1f5f9; border:none; border-radius:6px; cursor:pointer; font-weight:600;">

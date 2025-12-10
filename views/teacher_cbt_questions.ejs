@@ -124,8 +124,8 @@ table img {
         <tr>
             <th width="5%">S/N</th>
             <th width="50%">Question</th>
-            <th width="7%">Options</th>
-             <th width="26%">Image</th>
+            <th width="27%">Options</th>
+             <th width="6%">Correct</th>
             <th width="12%">Actions</th>
 
         </tr>
@@ -154,9 +154,10 @@ table img {
                 </td>
 
                 <!-- CORRECT -->
-               <td style="text-align:center; font-weight:bold; font-size:1.2em;">
-    <%= ["A","B","C","D"][q.correct - 1] %>
+              <td style="text-align:center; font-weight:bold; font-size:1.2em;">
+    <%= q.correct_option || "?" %>
 </td>
+
 
 
                 <td style="text-align:center;">
