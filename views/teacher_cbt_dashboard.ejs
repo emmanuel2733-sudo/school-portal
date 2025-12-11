@@ -5,175 +5,271 @@
     <link rel="stylesheet" href="/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
-    <style>
-        body { background:#f5f5f5; padding:20px; font-family:Arial; }
-        .box { background:white; padding:25px; border-radius:10px; max-width:1100px; margin:auto; }
-
-        table { width:100%; border-collapse:collapse; margin-top:20px; }
-        th, td { padding:10px; border:1px solid #ddd; }
-        th { background:#eee; }
-
-        .badge { padding:4px 8px; border-radius:4px; font-size:0.8em; }
-        .draft { background:#ffc107; }
-        .published { background:#28a745; color:white; }
-        .closed { background:#6c757d; color:white; }
-
-        .dropdown-menu {
-            display:none;
-            position:absolute;
-            background:white;
-            border:1px solid #ccc;
-            border-radius:5px;
-            padding:10px;
-            min-width:150px;
-            z-index:1000;
-        }
-
-        .dropdown-item {
-            display:block;
-            padding:6px 10px;
-            color:#333;
-            text-decoration:none;
-            border-radius:4px;
-            margin-bottom:3px;
-        }
-        .dropdown-item:hover { background:#f0f0f0; }
-
-        .btn { padding:6px 10px; text-decoration:none; border-radius:5px; font-size:0.85em; }
-        .btn-secondary { background:#6c757d; color:white; }
-            .back-nav-btn {
-        display: inline-block;
-        margin-top: 20px;
-        padding: 10px 15px;
-        background: #6c757d;
-        color: white;
-        text-decoration: none;
-        border-radius: 5px;
-        font-size: 1em;
+<style>
+    body {
+        background:#f1f5f9;
+        font-family: 'Segoe UI', sans-serif;
+        padding: 30px;
     }
 
+    .dashboard-container {
+        max-width: 1300px;
+        margin: auto;
+        position: relative;
+    }
+
+    /* TOP RIGHT BACK BUTTON */
+    .back-nav-btn {
+        position: absolute;
+        top: 0;
+        right: 0;
+        background: #6366f1;
+        color: white;
+        width: 55px;
+        height: 55px;
+        border-radius: 50%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 1.4rem;
+        text-decoration: none;
+        box-shadow: 0 5px 15px rgba(99,102,241,0.3);
+        transition: 0.25s;
+    }
     .back-nav-btn:hover {
-        background: #5a6268;
+        background:#4f46e5;
+        transform: scale(1.15);
+    }
+
+    .box {
+        background:white;
+        padding:30px;
+        border-radius:15px;
+        box-shadow:0 8px 25px rgba(0,0,0,0.08);
+        border:1px solid #e2e8f0;
+    }
+
+    h1 {
+        font-size:1.9rem;
+        margin-bottom:20px;
+        color:#1e293b;
+        font-weight:700;
+    }
+
+    table {
+        width:100%;
+        border-collapse: separate;
+        border-spacing: 0 10px;
+    }
+
+    th {
+        padding:12px;
+        background:#f1f5f9;
+        color:#475569;
+        font-size:0.9rem;
+        text-transform:uppercase;
+        border-bottom:2px solid #e2e8f0;
+    }
+
+    td {
+        padding:15px 12px;
+        background:white;
+        border:1px solid #e2e8f0;
+        border-radius:10px;
+        box-shadow:0 2px 6px rgba(0,0,0,0.04);
+        font-size:0.95rem;
+        color:#334155;
+    }
+
+    /* BADGES */
+    .badge {
+        padding:6px 12px;
+        border-radius:6px;
+        font-size:0.8rem;
+        font-weight:600;
+        color:white;
+    }
+    .draft { background:#f59e0b; }
+    .published { background:#10b981; }
+    .closed { background:#6b7280; }
+
+    /* ACTION BUTTON */
+    .btn-actions {
+        background:#6366f1;
+        color:white;
+        border:none;
+        padding:10px 16px;
+        font-size:0.85rem;
+        border-radius:8px;
+        cursor:pointer;
+        width:120px;
+        display:flex;
+        justify-content:space-between;
+        align-items:center;
+        box-shadow:0 5px 15px rgba(99,102,241,0.25);
+        transition:0.2s;
+    }
+    .btn-actions:hover {
+        background:#4f46e5;
+    }
+
+    /* DROPDOWN MENU */
+    .dropdown-menu {
+        display:none;
+        position:absolute;
+        background:white;
+        border:1px solid #e2e8f0;
+        border-radius:10px;
+        padding:10px;
+        min-width:180px;
+        z-index:1000;
+        box-shadow:0 25px 50px rgba(0,0,0,0.15);
+    }
+
+    .dropdown-item {
+        padding:10px;
+        display:block;
+        text-decoration:none;
+        color:#334155;
+        font-weight:600;
+        border-radius:6px;
+        transition:0.15s;
+    }
+    .dropdown-item:hover {
+        background:#f1f5f9;
+        color:#6366f1;
+    }
+
+    .delete-item {
+        color:#e11d48 !important;
+    }
+    .delete-item:hover {
+        background:#ffe4e6 !important;
     }
 </style>
-    </style>
 
-    <script>
-        function toggleMenu(id) {
-            const menu = document.getElementById("menu-" + id);
-            menu.style.display = (menu.style.display === "block") ? "none" : "block";
-        }
+<script>
+    function toggleMenu(id) {
+        const menu = document.getElementById("menu-" + id);
 
-        document.addEventListener("click", function(e) {
+        // Close all menus first
+        document.querySelectorAll(".dropdown-menu").forEach(m => m.style.display = "none");
+
+        // Toggle selected
+        menu.style.display = (menu.style.display === "block") ? "none" : "block";
+    }
+
+    document.addEventListener("click", function(e) {
+        if (!e.target.closest(".btn-actions") && !e.target.closest(".dropdown-menu")) {
             document.querySelectorAll(".dropdown-menu").forEach(menu => {
-                if (!menu.contains(e.target) &&
-                    !menu.previousElementSibling.contains(e.target)) {
-                    menu.style.display = "none";
-                }
+                menu.style.display = "none";
             });
-        });
-    </script>
+        }
+    });
+</script>
 </head>
 
 <body>
 
-<div class="box">
+<div class="dashboard-container">
 
-    <h1>CBT Exams Assigned to You</h1>
+    <!-- TOP RIGHT BACK BUTTON -->
+    <a href="/dashboard" class="back-nav-btn">
+        <i class="fas fa-arrow-left"></i>
+    </a>
 
-    <% if (exams.length === 0) { %>
+    <div class="box">
 
-        <p>No CBT exams for your assigned courses yet.</p>
+        <h1>CBT Exams Assigned to You</h1>
 
-    <% } else { %>
+        <% if (exams.length === 0) { %>
 
-        <table>
-            <tr>
-                <th>S/N</th>
-                <th>Exam Title</th>
-                <th>Class</th>
-                <th>Course</th>
-                <th>Status</th>
-                <th>Start</th>
-                <th>End</th>
-                <th>Actions</th>
-            </tr>
+            <p>No CBT exams for your assigned courses yet.</p>
 
-            <% exams.forEach((ex, index) => { %>
+        <% } else { %>
+
+            <table>
                 <tr>
-                    <td><%= index + 1 %></td>
-                    <td><%= ex.title %></td>
-                    <td><%= ex.class_name %></td>
-                    <td><%= ex.course_name %></td>
+                    <th>S/N</th>
+                    <th>Exam Title</th>
+                    <th>Class</th>
+                    <th>Course</th>
+                    <th>Status</th>
+                    <th>Start</th>
+                    <th>End</th>
+                    <th style="text-align:center;">Actions</th>
+                </tr>
 
-                    <td>
-                        <% if (ex.status === "draft") { %>
-                            <span class="badge draft">Draft</span>
-                        <% } else if (ex.status === "published") { %>
-                            <span class="badge published">Published</span>
-                        <% } else { %>
-                            <span class="badge closed">Closed</span>
-                        <% } %>
-                    </td>
+                <% exams.forEach((ex, index) => { %>
+                    <tr>
+                        <td><%= index + 1 %></td>
+                        <td><%= ex.title %></td>
+                        <td><%= ex.class_name %></td>
+                        <td><%= ex.course_name %></td>
 
-                    <td><%= ex.start_time || "—" %></td>
-                    <td><%= ex.end_time || "—" %></td>
+                        <td>
+                            <% if (ex.status === "draft") { %>
+                                <span class="badge draft">Draft</span>
+                            <% } else if (ex.status === "published") { %>
+                                <span class="badge published">Published</span>
+                            <% } else { %>
+                                <span class="badge closed">Closed</span>
+                            <% } %>
+                        </td>
 
-                    <td>
-                        <div style="position:relative; display:inline-block;">
+                        <td><%= ex.start_time || "—" %></td>
+                        <td><%= ex.end_time || "—" %></td>
 
-                            <button class="btn btn-secondary"
-                                onclick="toggleMenu(<%= ex.id %>)">
-                                Actions ▼
-                            </button>
+                        <td style="text-align:center;">
+                            <div style="position:relative; display:inline-block;">
 
-                            <div id="menu-<%= ex.id %>" class="dropdown-menu">
+                                <button class="btn-actions" onclick="toggleMenu(<%= ex.id %>)">
+                                    Actions <i class="fas fa-chevron-down"></i>
+                                </button>
 
-                                <a class="dropdown-item"
-                                   href="/teacher/cbt/<%= ex.id %>/preview">
-                                   Preview
-                                </a>
+                                <div id="menu-<%= ex.id %>" class="dropdown-menu">
 
-                                <a class="dropdown-item"
-                                   href="/teacher/cbt/<%= ex.id %>/questions">
-                                   Questions
-                                </a>
+                                    <a class="dropdown-item"
+                                       href="/teacher/cbt/<%= ex.id %>/preview">
+                                       👁 Preview
+                                    </a>
 
-                                <a class="dropdown-item"
-                                   href="/teacher/cbt/<%= ex.id %>/submissions">
-                                   Submissions
-                                </a>
+                                    <a class="dropdown-item"
+                                       href="/teacher/cbt/<%= ex.id %>/questions">
+                                       📝 Questions
+                                    </a>
 
-                                <!-- <a class="dropdown-item"
-                                   href="/teacher/cbt/<%= ex.id %>/edit">
-                                   Edit Exam
-                                </a> -->
+                                    <a class="dropdown-item"
+                                       href="/teacher/cbt/<%= ex.id %>/submissions">
+                                       📄 Submissions
+                                    </a>
 
-                                <a class="dropdown-item"
-                                   href="/teacher/cbt/<%= ex.id %>/print">
-                                   Print
-                                </a>
+                                    <a class="dropdown-item"
+                                       href="/teacher/cbt/<%= ex.id %>/print">
+                                       🖨 Print
+                                    </a>
 
-                                <a class="dropdown-item"
-                                   href="/teacher/cbt/<%= ex.id %>/delete-questions"
-                                   onclick="return confirm('Delete all questions?');">
-                                   Delete Questions
-                                </a>
+                                    <a class="dropdown-item delete-item"
+                                       href="/teacher/cbt/<%= ex.id %>/delete-questions"
+                                       onclick="return confirm('Delete all questions?');">
+                                       ❌ Delete All Questions
+                                    </a>
+
+                                </div>
 
                             </div>
+                        </td>
 
-                        </div>
-                    </td>
+                    </tr>
+                <% }) %>
 
-                </tr>
-            <% }) %>
+            </table>
 
-        </table>
+        <% } %>
 
-    <% } %>
+    </div>
+
 </div>
-<a href="/dashboard" class="back-nav-btn" title="Back to Dashboard">
-    <i class="fas fa-arrow-left"></i> Back
-</a>
+
 </body>
 </html>

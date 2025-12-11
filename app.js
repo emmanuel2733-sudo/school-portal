@@ -5213,61 +5213,18 @@ app.get("/teacher/cbt", (req, res) => {
 
 // TEACHER: PREVIEW EXAM
 app.get("/teacher/cbt/:examId/preview", (req, res) => {
-
-    if (!req.session.userId || req.session.role !== "teacher") {
-        return res.redirect("/login");
-    }
-
     const examId = req.params.examId;
-    const teacherId = req.session.userId;
 
-    db.get(`
-        SELECT ce.*, c.name AS course_name, cl.name AS class_name
-        FROM cbt_exams ce
-        JOIN courses c ON ce.course_id = c.id
-        JOIN classes cl ON ce.class_id = cl.id
-        JOIN teacher_assignments ta ON ta.course_id = c.id
-        WHERE ce.id = ? AND ta.teacher_id = ?
-    `, [examId, teacherId], (err, exam) => {
+    db.get(`SELECT * FROM cbt_exams WHERE id = ?`, [examId], (err, exam) => {
+        db.all(`SELECT * FROM cbt_questions WHERE exam_id = ?`, [examId], (err2, questions) => {
 
-        if (err || !exam) return res.send("Not authorized or exam not found");
+            const page = parseInt(req.query.page) || 1;
 
-        // Load questions
-        db.all(`
-            SELECT *
-            FROM cbt_questions
-            WHERE exam_id = ?
-        `, [examId], (err2, questions) => {
-
-            if (err2) return res.send("Error loading questions");
-
-            if (questions.length === 0) {
-                return res.render("teacher_cbt_preview", { exam, questions });
-            }
-
-            // Load options for each question
-            let pending = questions.length;
-
-            questions.forEach(q => {
-                db.all(`
-                    SELECT option_text, is_correct
-                    FROM cbt_options
-                    WHERE question_id = ?
-                    ORDER BY id ASC
-                `, [q.id], (err3, opts) => {
-
-                    q.options = opts.map(o => o.option_text);   // text only
-                    q.correct = opts.findIndex(o => o.is_correct == 1) + 1;
-
-                    pending--;
-                    if (pending === 0) {
-                        // All questions processed
-                        res.render("teacher_cbt_preview", {
-                            exam,
-                            questions
-                        });
-                    }
-                });
+            // Attach to render
+            res.render("teacher_cbt_preview", {
+                exam,
+                questions,
+                page
             });
         });
     });
@@ -5275,109 +5232,98 @@ app.get("/teacher/cbt/:examId/preview", (req, res) => {
 
 // TEACHER: MANAGE QUESTIONS
 app.get("/teacher/cbt/:examId/questions", (req, res) => {
-  const examId = req.params.examId;
+    const examId = req.params.examId;
 
-  // 1) load exam info
-  db.get(
-    `
-    SELECT ce.*, c.name AS course_name
-    FROM cbt_exams ce
-    JOIN courses c ON ce.course_id = c.id
-    WHERE ce.id = ?
-    `,
-    [examId],
-    (err, exam) => {
-      if (err || !exam) {
-        console.log("Exam load error:", err);
-        return res.send("Exam not found");
-      }
-
-      // 2) load questions (with image_path aliased to image)
-      db.all(
-        `
-       SELECT id, question, image_path AS image
-
-        FROM cbt_questions q
-        WHERE q.exam_id = ?
-        ORDER BY q.id ASC
-        `,
+    // 1. Load exam
+    db.get(
+        `SELECT ce.*, c.name AS course_name
+         FROM cbt_exams ce
+         JOIN courses c ON ce.course_id = c.id
+         WHERE ce.id = ?`,
         [examId],
-        (err2, questions) => {
-          if (err2) {
-            console.log("Question load error:", err2);
-            return res.send("Error loading questions");
-          }
+        (err, exam) => {
+            if (err || !exam) return res.send("Exam not found");
 
-          if (!questions || questions.length === 0) {
-            return res.render("teacher_cbt_questions", {
-              exam,
-              examId,
-              questions: []
-            });
-          }
+            // 2. Load questions INCLUDING options from cbt_questions
+            db.all(
+                `SELECT *
+                 FROM cbt_questions
+                 WHERE exam_id = ?
+                 ORDER BY id ASC`,
+                [examId],
+                (err2, qRows) => {
+                    if (err2) return res.send("Error loading questions");
 
-          // 3) load all options for those questions
-          const qIds = questions.map((q) => q.id);
-          const placeholders = qIds.map(() => "?").join(",");
+                    if (!qRows.length) {
+                        return res.render("teacher_cbt_questions", {
+                            exam,
+                            examId,
+                            questions: []
+                        });
+                    }
 
-          db.all(
-            `
-            SELECT question_id, option_text, is_correct
-            FROM cbt_options
-            WHERE question_id IN (${placeholders})
-            ORDER BY question_id, id ASC
-            `,
-            qIds,
-            (err3, optionsRows) => {
-              if (err3) {
-                console.log("Options load error:", err3);
-                return res.send("Error loading options");
-              }
+                    const qIds = qRows.map(q => q.id);
+                    const placeholders = qIds.map(() => "?").join(",");
 
-              // 4) attach options to each question in order
-              const optionsByQ = {};
-              optionsRows.forEach((r) => {
-                if (!optionsByQ[r.question_id]) optionsByQ[r.question_id] = [];
-                optionsByQ[r.question_id].push({
-                  text: r.option_text,
-                  is_correct: r.is_correct ? 1 : 0
-                });
-              });
+                    // 3. Load options from cbt_options (for imported questions)
+                    db.all(
+                        `SELECT question_id, option_text, is_correct
+                         FROM cbt_options
+                         WHERE question_id IN (${placeholders})
+                         ORDER BY question_id, id ASC`,
+                        qIds,
+                        (err3, optRows) => {
+                            if (err3) return res.send("Error loading options");
 
-              const questionsWithOptions = questions.map((q) => {
-                const opts = optionsByQ[q.id] || [];
-                // map to plain array of texts for template, keep order
-                const optTexts = opts.map((o) => o.text);
-                // find index of correct option (0-based)
-                const correctIndex = opts.findIndex((o) => o.is_correct);
-                return {
-                  id: q.id,
-                  question: q.question,
-                  image: q.image, // matches template that uses q.image
-                  options: [
-                    optTexts[0] || "",
-                    optTexts[1] || "",
-                    optTexts[2] || "",
-                    optTexts[3] || ""
-                  ],
-                  // correct as 1..4 or null if not found
-                  correct: correctIndex >= 0 ? correctIndex + 1 : null
-                };
-              });
+                            const optionsByQ = {};
+                            optRows.forEach(o => {
+                                if (!optionsByQ[o.question_id]) optionsByQ[o.question_id] = [];
+                                optionsByQ[o.question_id].push(o);
+                            });
 
-              // 5) render
-              res.render("teacher_cbt_questions", {
-                exam,
-                examId,
-                questions: questionsWithOptions
-              });
-            }
-          );
+                            // 4. Merge data
+                            const questions = qRows.map(q => {
+                                let options = [];
+                                let correct = null;
+
+                                if (optionsByQ[q.id]) {
+                                    // Imported question → use cbt_options table
+                                    options = optionsByQ[q.id].map(o => o.option_text);
+                                    const idx = optionsByQ[q.id].findIndex(o => o.is_correct == 1);
+                                    correct = idx >= 0 ? idx + 1 : null;
+                                } else {
+                                    // Direct CBT question → use cbt_questions columns
+                                    options = [
+                                        q.option1,
+                                        q.option2,
+                                        q.option3,
+                                        q.option4
+                                    ];
+                                    correct = q.correct_option || null;
+                                }
+
+                                return {
+                                    id: q.id,
+                                    question: q.question,
+                                    image: q.image_path,
+                                    options,
+                                    correct
+                                };
+                            });
+
+                            res.render("teacher_cbt_questions", {
+                                exam,
+                                examId,
+                                questions
+                            });
+                        }
+                    );
+                }
+            );
         }
-      );
-    }
-  );
+    );
 });
+
 
 
 // TEACHER: VIEW SUBMISSIONS
@@ -5489,103 +5435,85 @@ app.post(
 );
 
 // TEACHER: EDIT QUESTION FORM
+// GET — show edit form (fills the variables the EJS expects)
 app.get("/teacher/cbt/:examId/questions/:questionId/edit", (req, res) => {
+  if (!req.session.userId || req.session.role !== "teacher") {
+    return res.redirect("/login");
+  }
 
+  const examId = req.params.examId;
+  const questionId = req.params.questionId;
+
+  db.get(`SELECT * FROM cbt_questions WHERE id = ?`, [questionId], (err, qRow) => {
+    if (err) {
+      console.error("LOAD QUESTION ERROR:", err);
+      return res.send("Error loading question");
+    }
+    if (!qRow) return res.send("Question not found");
+
+    // Provide variables the template uses:
+    res.render("teacher_edit_question", {
+      examId,
+      q: qRow,                  // keeps your template's q.* usage working
+      // convenience single-value variables (some templates expect these too)
+      option1: qRow.option1 || "",
+      option2: qRow.option2 || "",
+      option3: qRow.option3 || "",
+      option4: qRow.option4 || "",
+      correct: qRow.correct_option ? Number(qRow.correct_option) : null
+    });
+  });
+});
+
+// POST — save edited CBT question
+app.post(
+  "/teacher/cbt/:examId/questions/:questionId/edit",
+  uploadQuestionImage.single("question_image"),
+  (req, res) => {
     if (!req.session.userId || req.session.role !== "teacher") {
-        return res.redirect("/login");
+      return res.redirect("/login");
     }
 
     const examId = req.params.examId;
     const questionId = req.params.questionId;
 
-    // Load question + options
-    db.get(`
-        SELECT * FROM cbt_questions WHERE id = ?
-    `, [questionId], (err, question) => {
+    // Read incoming fields (match names used by your form)
+    // Some templates send `correct` while others send `correct_option` — handle both:
+    const questionText = req.body.question || "";
+    const option1 = req.body.option1 || "";
+    const option2 = req.body.option2 || "";
+    const option3 = req.body.option3 || "";
+    const option4 = req.body.option4 || "";
+    const correctForm = req.body.correct !== undefined ? req.body.correct : req.body.correct_option;
+    const correct_option = correctForm ? Number(correctForm) : null;
 
-        if (err || !question) {
-            console.log(err);
-            return res.send("Question not found");
-        }
+    const newImage = req.file ? req.file.filename : null;
 
-        db.all(`
-            SELECT * FROM cbt_options WHERE question_id = ?
-        `, [questionId], (err2, options) => {
+    // Build SQL and params
+    let sql = `
+      UPDATE cbt_questions
+      SET question = ?, option1 = ?, option2 = ?, option3 = ?, option4 = ?, correct_option = ?
+      ${newImage ? ", image_path = ?" : ""}
+      WHERE id = ?
+    `;
 
-            if (err2) {
-                console.log(err2);
-                return res.send("Error loading options");
-            }
+    const params = newImage
+      ? [questionText, option1, option2, option3, option4, correct_option, newImage, questionId]
+      : [questionText, option1, option2, option3, option4, correct_option, questionId];
 
-            res.render("teacher_edit_question", {
-                examId,
-                question,
-                options
-            });
-        });
+    db.run(sql, params, function (err) {
+      if (err) {
+        console.error("UPDATE CBT QUESTION ERROR:", err);
+        return res.send("Error updating question");
+      }
+
+      // All good — go back to CBT question list for this exam
+      return res.redirect(`/teacher/cbt/${examId}/questions`);
     });
-});
-
-// TEACHER: SAVE EDITED QUESTION
-app.post(
-    "/teacher/cbt/:examId/questions/:questionId/edit",
-    uploadQuestionImage.single("question_image"),   // ✅ CORRECT
-    (req, res) => {
-
-        const examId = req.params.examId;
-        const questionId = req.params.questionId;
-
-        const { question, option1, option2, option3, option4, correct } = req.body;
-
-        const newImage = req.file ? req.file.filename : null;
-
-        let sql = `
-            UPDATE cbt_questions
-            SET question = ?
-            ${newImage ? ", image_path = ?" : ""}
-            WHERE id = ?
-        `;
-
-        let params = newImage
-            ? [question, newImage, questionId]
-            : [question, questionId];
-
-        db.run(sql, params, (err) => {
-            if (err) {
-                console.log("UPDATE QUESTION ERROR:", err);
-                return res.send("Error updating question");
-            }
-
-            const options = [option1, option2, option3, option4];
-
-            db.all(
-                `SELECT id FROM cbt_options WHERE question_id = ?`,
-                [questionId],
-                (err2, rows) => {
-
-                    if (err2) return res.send("Error updating options");
-                    if (rows.length !== 4)
-                        return res.send("Option mismatch error");
-
-                    const stmt = db.prepare(`
-                        UPDATE cbt_options
-                        SET option_text = ?, is_correct = ?
-                        WHERE id = ?
-                    `);
-
-                    options.forEach((text, index) => {
-                        const optId = rows[index].id;
-                        stmt.run(text, correct == index + 1 ? 1 : 0, optId);
-                    });
-
-                    stmt.finalize(() => {
-                        res.redirect(`/teacher/cbt/${examId}/questions`);
-                    });
-                }
-            );
-        });
-    }
+  }
 );
+
+
 
 // TEACHER DELETE QUESTION
 app.get("/teacher/cbt/questions/:questionId/delete", (req, res) => {
@@ -6050,102 +5978,140 @@ app.post("/teacher/cbt/import-question", (req, res) => {
     const examId = req.body.examId;
     const questionId = req.body.qid;
 
-    console.log("IMPORT REQUEST → exam:", examId, "question:", questionId);
+    db.get(
+        `SELECT * FROM question_bank WHERE id = ?`,
+        [questionId],
+        (err, q) => {
+            if (err || !q) return res.redirect("back");
 
-    db.get(`SELECT * FROM question_bank WHERE id = ?`, [questionId], (err, q) => {
-        if (err) {
-            console.log("❌ SELECT ERROR:", err);
-            return res.redirect("back");
-        }
+            // NORMALIZE CORRECT OPTION
+            let correct = q.correct_option;
 
-        if (!q) {
-            return res.redirect("back");
-        }
-
-        db.run(
-            `INSERT INTO cbt_questions 
-             (exam_id, question, image, image_path, option1, option2, option3, option4, correct_option)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-            [
-                examId,
-                q.question,
-                q.image || null,
-                q.image_path || null,
-                q.option1,
-                q.option2,
-                q.option3,
-                q.option4,
-                q.correct_option
-            ],
-            function (err2) {
-                if (err2) {
-                    console.log("❌ INSERT ERROR:", err2);
-                    return res.redirect("back");
-                }
-
-                // SUCCESS → redirect back to question list
-                return res.redirect(
-                    `/teacher/question-bank/${q.course_id}/${q.class_id}/questions?import=success`
-                );
+            // Convert letter to number
+            if (typeof correct === "string") {
+                correct = correct.trim().toUpperCase();
+                if (correct === "A") correct = 1;
+                else if (correct === "B") correct = 2;
+                else if (correct === "C") correct = 3;
+                else if (correct === "D") correct = 4;
             }
-        );
-    });
+
+            // Ensure integer
+            correct = parseInt(correct) || null;
+
+            db.run(
+                `INSERT INTO cbt_questions
+                 (exam_id, question, image, image_path, option1, option2, option3, option4, correct_option)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                [
+                    examId,
+                    q.question,
+                    q.image || null,
+                    q.image_path || null,
+                    q.option1,
+                    q.option2,
+                    q.option3,
+                    q.option4,
+                    correct
+                ],
+                function (err2) {
+                    if (err2) return res.redirect("back");
+
+                    return res.redirect(
+                        `/teacher/question-bank/${q.course_id}/${q.class_id}/questions?import=success`
+                    );
+                }
+            );
+        }
+    );
 });
+
+
 
 
 
 app.get("/teacher/cbt/import/bulk", (req, res) => {
   const { course, class: classId } = req.query;
 
-  const teacherId = req.session.userId;
+  db.all(`
+      SELECT * FROM question_bank
+      WHERE course_id = ? AND class_id = ?
+      ORDER BY id DESC
+  `, [course, classId], (err, questions) => {
 
-  const examSql = `
-    SELECT cbt_exams.*, classes.name AS class_name
-    FROM cbt_exams
-    JOIN classes ON classes.id = cbt_exams.class_id
-    WHERE cbt_exams.teacher_id = ?
-    AND cbt_exams.course_id = ?
-    AND cbt_exams.class_id = ?
-  `;
+    db.all(`SELECT * FROM cbt_exams ORDER BY id DESC`, (err2, exams) => {
 
-  const qSql = `
-    SELECT * FROM question_bank
-    WHERE course_id=? AND class_id=?
-    ORDER BY id ASC
-  `;
-
-  db.all(qSql, [course, classId], (err, questions) => {
-    if (err) return res.send("Cannot load questions");
-
-    db.all(examSql, [teacherId, course, classId], (err2, exams) => {
-      if (err2) return res.send("Cannot load exams");
-
-      res.render("teacher_bulk_import", {
+      res.render("teacher_cbt_bulk_import", {
         questions,
         exams,
         course_id: course,
         class_id: classId
       });
+
     });
   });
 });
 
+
 app.post("/teacher/cbt/import/bulk", (req, res) => {
-  const { exam_id, questions } = req.body;
+    let { exam_id, questions } = req.body;
 
-  const ids = JSON.parse(questions); // array of question IDs
+    // Parse incoming questions
+    let ids = [];
+    try {
+        ids = JSON.parse(questions);
+    } catch (e) {
+        return res.json({ success: false, message: "Invalid question list" });
+    }
 
-  const stmt = db.prepare(`
-    INSERT INTO cbt_exam_questions (exam_id, question_id)
-    VALUES (?, ?)
-  `);
+    if (!ids || !Array.isArray(ids) || ids.length === 0) {
+        return res.json({ success: false, message: "No questions selected" });
+    }
 
-  ids.forEach(id => stmt.run(exam_id, id));
+    let added = 0;
 
-  stmt.finalize(() => {
-    res.json({ success: true, added: ids.length });
-  });
+    ids.forEach(questionId => {
+        db.get(`SELECT * FROM question_bank WHERE id = ?`, [questionId], (err, q) => {
+            if (err || !q) return;
+
+            let correct = q.correct_option;
+
+            if (typeof correct === "string") {
+                correct = correct.trim().toUpperCase();
+                if (correct === "A") correct = 1;
+                else if (correct === "B") correct = 2;
+                else if (correct === "C") correct = 3;
+                else if (correct === "D") correct = 4;
+            }
+
+            correct = parseInt(correct) || null;
+
+            db.run(
+                `INSERT INTO cbt_questions
+                 (exam_id, question, image, image_path,
+                  option1, option2, option3, option4, correct_option)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                [
+                    exam_id,
+                    q.question,
+                    q.image || null,
+                    q.image_path || null,
+                    q.option1,
+                    q.option2,
+                    q.option3,
+                    q.option4,
+                    correct
+                ],
+                () => {}
+            );
+
+            added++;
+        });
+    });
+
+    res.json({ success: true, added });
 });
+
 
 
 
@@ -6647,7 +6613,7 @@ app.post("/teacher/question-bank/bulk-delete", (req, res) => {
 
 
 
-
+//KEV72MyT
 
 
 

@@ -115,9 +115,9 @@ table img {
 
     <h1>Questions – <%= exam.course_name %></h1>
 
-    <a href="/teacher/cbt/<%= examId %>/questions/add" class="btn btn-primary">
+    <!-- <a href="/teacher/cbt/<%= examId %>/questions/add" class="btn btn-primary">
         + Add New Question
-    </a>
+    </a> -->
 <div class="table-wrapper">
     
     <table>
@@ -154,14 +154,15 @@ table img {
                 </td>
 
                 <!-- CORRECT -->
-              <td style="text-align:center; font-weight:bold; font-size:1.2em;">
-    <%= q.correct_option || "?" %>
+    <td style="text-align:center; font-weight:bold; font-size:1.2em;">
+    <%= q.correct ? ["A","B","C","D"][q.correct - 1] : "?" %>
 </td>
 
 
 
+
                 <td style="text-align:center;">
-                    <a href="/teacher/cbt/<%= examId %>/questions/<%= q.id %>/edit">Edit</a> |
+                    <!-- <a href="/teacher/cbt/<%= examId %>/questions/<%= q.id %>/edit">Edit</a> | -->
                     <a href="/teacher/cbt/questions/<%= q.id %>/delete"
                        onclick="return confirm('Delete this question?')">Delete</a>
                 </td>

@@ -12,7 +12,7 @@
 
         .exam-box {
             background: white;
-            max-width: 900px;
+            max-width: 1100px;
             margin: auto;
             padding: 30px;
             border-radius: 12px;
@@ -30,27 +30,46 @@
             margin-bottom: 25px;
         }
 
+        .page-indicator {
+            text-align:center;
+            font-weight:bold;
+            margin-bottom:25px;
+            color:#444;
+        }
+
+        /* GRID LAYOUT: 2 CARDS PER ROW */
+        .question-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+        }
+
         .question-card {
             background:#fdfdfd;
             padding:20px;
             border-radius:10px;
             border:1px solid #ddd;
-            margin-bottom:20px;
+        }
+
+        .question-number {
+            font-weight:bold;
+            font-size:1.2em;
+            margin-bottom:10px;
+            color:#333;
         }
 
         .question-text {
-            font-size:1.15em;
+            font-size:1.1em;
             margin-bottom:15px;
             line-height:1.6em;
         }
 
         .question-image img {
-            max-width:300px;
+            max-width:100%;
             max-height:250px;
             border-radius:8px;
             border:1px solid #ccc;
-            margin-top:10px;
-            margin-bottom:15px;
+            margin:10px 0 15px 0;
         }
 
         .option {
@@ -68,6 +87,16 @@
             font-weight:bold;
         }
 
+        .nav-btn {
+            display:inline-block;
+            padding:10px 15px;
+            background:#007bff;
+            color:white;
+            border-radius:6px;
+            text-decoration:none;
+            margin:5px;
+        }
+
         .back-btn {
             display:inline-block;
             padding:10px 15px;
@@ -76,6 +105,12 @@
             border-radius:6px;
             text-decoration:none;
             margin-top:25px;
+        }
+
+        @media (max-width: 800px) {
+            .question-grid {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
@@ -91,29 +126,64 @@
         <p>No questions added yet.</p>
     <% } %>
 
-    <% questions.forEach((q, i) => { %>
-        <div class="question-card">
+    <!-- PAGINATION LOGIC -->
+    <% 
+        const perPage = 4;
+        const totalPages = Math.ceil(questions.length / perPage);
+        const start = (page - 1) * perPage;
+        const end = start + perPage;
+        const pageQuestions = questions.slice(start, end);
+    %>
 
-            <div class="question-text">
-                <strong>Question <%= i+1 %>:</strong> <%= q.question %>
+    <!-- PAGE INDICATOR -->
+    <div class="page-indicator">
+        Page <%= page %> of <%= totalPages %>
+    </div>
+
+    <!-- QUESTIONS GRID -->
+    <div class="question-grid">
+
+        <% pageQuestions.forEach((q, index) => { %>
+            <div class="question-card">
+
+                <div class="question-number">
+                    Question <%= start + index + 1 %>
+                </div>
+
+                <div class="question-text">
+                    <%= q.question %>
+                </div>
+
+                <% if (q.image_path) { %>
+                    <div class="question-image">
+                        <img src="/uploads/questions/<%= q.image_path %>">
+                    </div>
+                <% } %>
+
+                <!-- OPTIONS -->
+                <% [q.option1, q.option2, q.option3, q.option4].forEach((opt, i) => { %>
+                    <% if (opt) { %>
+                        <div class="option <%= q.correct_option == i + 1 ? 'correct' : '' %>">
+                            <strong><%= String.fromCharCode(65 + i) %>.</strong> <%= opt %>
+                        </div>
+                    <% } %>
+                <% }) %>
+
             </div>
+        <% }) %>
 
-            <% if (q.image_path) { %>
-                <div class="question-image">
-                    <img src="/uploads/questions/<%= q.image_path %>">
-                </div>
-            <% } %>
+    </div>
 
-            <!-- OPTIONS -->
-            <% q.options.forEach((opt, index) => { %>
-                <div class="option <%= q.correct == index + 1 ? 'correct' : '' %>">
-                    <strong><%= String.fromCharCode(65 + index) %>.</strong>
-                    <%= opt %>
-                </div>
-            <% }) %>
+    <!-- PAGINATION BUTTONS -->
+    <div style="text-align:center; margin-top:25px;">
+        <% if (page > 1) { %>
+            <a href="?page=<%= page - 1 %>" class="nav-btn">⬅ Prev</a>
+        <% } %>
 
-        </div>
-    <% }) %>
+        <% if (page < totalPages) { %>
+            <a href="?page=<%= page + 1 %>" class="nav-btn">Next ➡</a>
+        <% } %>
+    </div>
 
     <a href="/teacher/cbt" class="back-btn">⬅ Back</a>
 

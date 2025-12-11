@@ -14,10 +14,10 @@
       --primary: #6366f1;
       --success: #10b981;
       --danger: #e74a3b;
-      --warning: #f59e0b;
-      --info: #3b82f6;
       --card-bg: #f8fafc;
     }
+
+    * { box-sizing: border-box; }
 
     body {
       background: #f1f5f9;
@@ -25,32 +25,32 @@
       padding-bottom: 60px;
     }
 
-    /* HEADER NAV */
-    .header-actions {
-      display: flex;
-      justify-content: space-between;
-      margin: 20px auto;
-      max-width: 1300px;
-      padding: 0 20px;
-    }
-
-   .back-nav-btn { 
-  background: var(--primary); 
-  color: white; 
-  width: 50px; 
-  height: 50px;
-  border-radius: 50%;
+    /* HEADER ACTIONS */
+ .header-actions {
   display: flex;
-  justify-content: center;
+  justify-content: space-between;
   align-items: center;
-  font-size: 1.4rem;
-  text-decoration: none;
-  box-shadow: 0 5px 15px rgba(0,0,0,0.15);
+  flex-direction: row-reverse;   /* ← this flips both sides */
+  margin: 20px auto;
+  max-width: 1300px;
+  padding: 0 20px;
 }
-.back-nav-btn:hover { 
-  background: #4f46e5; 
-  transform: scale(1.1); 
-}
+
+
+    .back-nav-btn {
+      background: var(--primary);
+      color: white;
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 1.4rem;
+      text-decoration: none;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.15);
+    }
+    .back-nav-btn:hover { background: #4f46e5; transform: scale(1.05); }
 
     .btn-bulk, .btn-ai {
       background: var(--success);
@@ -62,6 +62,7 @@
       box-shadow: 0 5px 15px rgba(16,185,129,0.3);
       transition: .2s;
     }
+    .btn-bulk[disabled] { opacity: 0.6; cursor: not-allowed; transform: none; box-shadow: none; }
     .btn-bulk:hover, .btn-ai:hover { background: #0da271; transform: translateY(-2px); }
 
     /* SUCCESS ALERT */
@@ -86,7 +87,6 @@
       box-shadow: 0 8px 25px rgba(0,0,0,0.08);
       border: 1px solid #e2e8f0;
     }
-
     .header-title { font-size: 2rem; font-weight: 800; color: #1e293b; }
     .header-subtitle { font-size: 1.1rem; color: #64748b; margin-bottom: 10px; }
 
@@ -95,9 +95,9 @@
       max-width: 1300px;
       margin: 0 auto;
       display: grid;
-      grid-template-columns: 0.5fr 3fr 2fr 1fr 1fr 1fr;
+      grid-template-columns: 0.6fr 3fr 2fr 1fr 1fr 1fr; /* first column small for checkbox/number */
       gap: 15px;
-      padding: 20px;
+      padding: 12px 20px;
       background: white;
       border-radius: 10px 10px 0 0;
       font-weight: 700;
@@ -105,6 +105,17 @@
       border: 1px solid #e2e8f0;
       border-bottom: 2px solid #e2e8f0;
       color: #475569;
+      align-items: center;
+    }
+
+    .select-all {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 700;
+    }
+    .select-all input[type="checkbox"] {
+      width: 18px; height: 18px;
     }
 
     /* Row cards */
@@ -115,14 +126,15 @@
       flex-direction: column;
       gap: 15px;
       position: relative;
+      padding: 0 20px 20px;
     }
 
     .table-row-card {
       display: grid;
-      grid-template-columns: 0.5fr 3fr 2fr 1fr 1fr 1fr;
+      grid-template-columns: 0.6fr 3fr 2fr 1fr 1fr 1fr;
       gap: 15px;
       background: var(--card-bg);
-      padding: 20px;
+      padding: 18px;
       border-radius: 10px;
       border: 1px solid #e2e8f0;
       transition: .3s;
@@ -130,10 +142,10 @@
     }
     .table-row-card:hover {
       transform: translateY(-3px);
-      box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.12);
     }
 
-    .table-cell { color: #334155; font-weight: 500; }
+    .table-cell { color: #334155; font-weight: 500; display:flex; align-items:center; gap:8px; }
     .question-text { font-weight: 700; color: #1e293b; }
 
     .correct-badge {
@@ -153,145 +165,71 @@
       border: 1px solid #e2e8f0;
     }
 
-    /* ACTIONS DROPDOWN FIX — COMPLETELY OUTSIDE THE CARD */
-    .action-cell-wrapper {
-      position: relative;
-      width: 100%;
-    }
-
+    /* ACTIONS */
+    .action-cell-wrapper { position: relative; width: 100%; }
     .action-btn {
       background: var(--primary);
       color: white;
-      padding: 12px 18px;
+      padding: 10px 12px;
       border-radius: 8px;
       width: 100%;
       border: none;
       cursor: pointer;
       font-weight: 600;
-      box-shadow: 0 4px 12px rgba(99,102,241,0.2);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      transition: all 0.2s;
+      display:flex; justify-content:space-between; align-items:center;
     }
-    
-    .action-btn:hover {
-      background: #4f46e5;
-    }
+.option-column {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
 
-    /* DROPDOWN MENU - POSITIONED ABSOLUTELY OUTSIDE THE GRID */
-    .dropdown-menu-container {
-      position: fixed; /* Use fixed to break out of all containers */
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      z-index: 10000;
-      display: none;
-      pointer-events: none;
-    }
+.option-item {
+  padding: 6px 10px;
+  background: #ffffff;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: #1e293b;
+}
 
+    /* DROPDOWN MENU (global) */
+    .dropdown-menu-container { position: fixed; top:0; left:0; width:100%; height:100%; z-index:10000; display:none; pointer-events:none; }
     .dropdown-menu-box {
-      position: absolute;
+      position: absolute; background: white; min-width: 260px; border-radius: 10px; box-shadow: 0 20px 50px rgba(0,0,0,0.25);
+      border: 1px solid #e2e8f0; padding: 12px; display:none; z-index:10001; pointer-events:auto;
+    }
+    .dropdown-menu-box.active { display:block; animation: fadeIn .15s ease; }
+    @keyframes fadeIn { from { opacity:0; transform: translateY(-6px) } to { opacity:1; transform: translateY(0) } }
+
+    /* MODAL (bulk import) */
+    .bulk-modal-backdrop {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.35); display:none; z-index: 10500;
+      align-items: center; justify-content:center;
+    }
+    .bulk-modal {
+      width: 100%;
+      max-width: 620px;
       background: white;
-      border: 1px solid #e2e8f0;
-      border-radius: 10px;
-      min-width: 220px;
-      box-shadow: 0 25px 50px rgba(0,0,0,0.25);
-      z-index: 10001;
-      pointer-events: auto;
-      display: none;
-      padding: 15px;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.25);
     }
+    .modal-header { display:flex; justify-content:space-between; align-items:center; gap:12px; }
+    .modal-body { margin-top: 12px; }
+    .modal-footer { display:flex; justify-content:flex-end; gap:12px; margin-top: 18px; }
 
-    .dropdown-menu-box.active {
-      display: block;
-      animation: fadeIn 0.2s ease-out;
-    }
+    .checkbox-cell input[type="checkbox"] { width: 18px; height: 18px; }
 
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(-10px); }
-      to { opacity: 1; transform: translateY(0); }
+    /* responsive */
+    @media (max-width: 992px) {
+      .table-header, .table-row-card { grid-template-columns: 1fr 2fr 1fr; }
+      .table-row-card .table-cell:nth-child(4),
+      .table-header .header-cell:nth-child(4),
+      .table-row-card .table-cell:nth-child(5),
+      .table-header .header-cell:nth-child(5) { display:none; }
     }
-
-    /* Items */
-    .dropdown-menu-box form {
-      margin-bottom: 15px;
-    }
-
-    .dropdown-menu-box .form-select {
-      width: 100%;
-      margin-bottom: 10px;
-      border-radius: 6px;
-      border: 1px solid #d1d5db;
-      padding: 8px 12px;
-    }
-
-    .dropdown-menu-box a,
-    .dropdown-menu-box button {
-      display: block;
-      padding: 10px 15px;
-      color: #334155;
-      font-weight: 600;
-      text-decoration: none;
-      background: none;
-      border: none;
-      width: 100%;
-      text-align: left;
-      border-radius: 6px;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-
-    .dropdown-menu-box a:hover,
-    .dropdown-menu-box button:hover {
-      background: #f1f5f9;
-      color: var(--primary);
-    }
-
-    .delete-item { 
-      color: var(--danger); 
-    }
-    
-    .delete-item:hover { 
-      background: #ffe4e4 !important; 
-      color: #b91c1c !important; 
-    }
-
-    /* Overlay background when dropdown is open */
-    .dropdown-overlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(0, 0, 0, 0.1);
-      z-index: 9999;
-      display: none;
-    }
-
-    .dropdown-overlay.active {
-      display: block;
-    }
-
-    /* PAGINATION */
-    .pagination {
-      margin-top: 30px;
-    }
-    
-    .page-item.active .page-link {
-      background-color: var(--primary);
-      border-color: var(--primary);
-    }
-    
-    .page-link {
-      color: var(--primary);
-    }
-    
-    .page-link:hover {
-      color: #4f46e5;
-    }
-
   </style>
 </head>
 <body>
@@ -306,22 +244,21 @@
 <!-- TOP BUTTONS -->
 <div class="header-actions">
 
-  <a href="/teacher/question-bank" class="back-nav-btn">
-         <i class="fas fa-arrow-left"></i>
+  <a href="/teacher/question-bank" class="back-nav-btn" title="Back">
+    <i class="fas fa-arrow-left"></i>
   </a>
 
-  <div>
+  <div style="display:flex; gap:10px; align-items:center;">
     <% if (questions.length > 0) { %>
-      <a href="/teacher/question-bank/<%= course_id %>/<%= class_id %>/ai"
-         class="btn-bulk">
+      <a href="/teacher/question-bank/<%= course_id %>/<%= class_id %>/ai" class="btn-bulk">
          🤖 Generate with AI
       </a>
     <% } %>
 
-    <!-- <a href="/teacher/cbt/import/bulk?course=<%= course_id %>&class=<%= class_id %>"
-       class="btn-bulk">
+    <!-- Bulk add button opens modal -->
+    <button id="openBulkBtn" class="btn-bulk" title="Bulk add selected to CBT" disabled>
       <i class="fa-solid fa-layer-group"></i> Bulk Add to CBT
-    </a> -->
+    </button>
   </div>
 
 </div>
@@ -334,7 +271,10 @@
 
 <!-- TABLE HEADER -->
 <div class="table-header">
-  <div>#</div>
+  <div class="select-all">
+    <input id="selectAll" type="checkbox" aria-label="Select all questions" />
+    <label for="selectAll">#</label>
+  </div>
   <div>Question</div>
   <div>Options</div>
   <div>Correct</div>
@@ -348,7 +288,43 @@
 <!-- DROPDOWN CONTAINER (positioned globally) -->
 <div class="dropdown-menu-container" id="globalDropdownContainer">
   <div class="dropdown-menu-box" id="globalDropdownMenu">
-    <!-- Dropdown content will be injected here -->
+    <!-- content injected in JS for single-row actions -->
+  </div>
+</div>
+
+<!-- BULK MODAL -->
+<div class="bulk-modal-backdrop" id="bulkBackdrop">
+  <div class="bulk-modal" role="dialog" aria-modal="true" aria-labelledby="bulkTitle">
+    <div class="modal-header">
+      <h4 id="bulkTitle">Bulk Add Selected Questions to CBT</h4>
+      <button id="closeBulk" class="btn btn-sm" title="Close">&times;</button>
+    </div>
+
+    <div class="modal-body">
+      <p id="bulkCountText">Selected <strong id="bulkCount">0</strong> question(s).</p>
+
+      <label><strong>Choose Exam</strong></label>
+      <select id="bulkExamSelect" class="form-select" required>
+        <option value="">Select Exam</option>
+        <% exams.forEach(ex => { %>
+          <option value="<%= ex.id %>"><%= ex.title %> — <%= ex.class_name %></option>
+        <% }) %>
+      </select>
+
+      <div style="margin-top:10px;">
+        <label><strong>Or create exam first</strong></label>
+        <div>
+          <a href="/teacher/cbt" class="btn btn-link">Go to CBT Dashboard</a>
+        </div>
+      </div>
+
+      <div id="bulkAlert" style="display:none;margin-top:12px;"></div>
+    </div>
+
+    <div class="modal-footer">
+      <button id="cancelBulk" class="btn btn-secondary">Cancel</button>
+      <button id="confirmBulk" class="btn btn-primary">Add to Exam</button>
+    </div>
   </div>
 </div>
 
@@ -358,19 +334,23 @@
   <% questions.forEach((q, i) => { %>
   <div class="table-row-card">
 
-    <!-- Number -->
-    <div class="table-cell"><%= i + 1 %></div>
+    <!-- Number + checkbox -->
+    <div class="table-cell checkbox-cell">
+      <input class="bulk-checkbox" type="checkbox" value="<%= q.id %>" aria-label="Select question <%= i+1 %>">
+      <span><%= i + 1 %></span>
+    </div>
 
     <!-- Question -->
     <div class="table-cell question-text"><%= q.question %></div>
 
     <!-- Options -->
-    <div class="table-cell">
-      <strong>A:</strong> <%= q.option1 %><br>
-      <strong>B:</strong> <%= q.option2 %><br>
-      <strong>C:</strong> <%= q.option3 || "—" %><br>
-      <strong>D:</strong> <%= q.option4 || "—" %>
-    </div>
+<div class="table-cell option-column">
+    <div class="option-item"><strong>A:</strong> <%= q.option1 %></div>
+    <div class="option-item"><strong>B:</strong> <%= q.option2 %></div>
+    <div class="option-item"><strong>C:</strong> <%= q.option3 || "—" %></div>
+    <div class="option-item"><strong>D:</strong> <%= q.option4 || "—" %></div>
+</div>
+
 
     <!-- Correct -->
     <div class="table-cell">
@@ -383,13 +363,13 @@
     <!-- Image -->
     <div class="table-cell">
       <% if (q.image_path) { %>
-        <img src="/uploads/questions/<%= q.image_path %>" class="question-img">
+        <img src="/uploads/questions/<%= q.image_path %>" class="question-img" alt="q image">
       <% } else { %>
         <em style="color:#94a3b8;">No Image</em>
       <% } %>
     </div>
 
-    <!-- ACTIONS BUTTON (no dropdown here, just the button) -->
+    <!-- ACTIONS: keep existing single-row import + edit/delete -->
     <div class="table-cell action-cell-wrapper">
       <button class="action-btn" 
               data-question-id="<%= q.id %>" 
@@ -400,6 +380,12 @@
 
   </div>
   <% }) %>
+
+  <% if (questions.length === 0) { %>
+    <div style="text-align:center; padding:40px; color:#64748b; background:white; border-radius:8px; border:1px dashed #e2e8f0;">
+      No questions available.
+    </div>
+  <% } %>
 
 </div>
 
@@ -429,99 +415,180 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+  // Elements
+  const selectAll = document.getElementById('selectAll');
+  const checkboxes = Array.from(document.querySelectorAll('.bulk-checkbox'));
+  const openBulkBtn = document.getElementById('openBulkBtn');
+  const bulkBackdrop = document.getElementById('bulkBackdrop');
+  const closeBulk = document.getElementById('closeBulk');
+  const cancelBulk = document.getElementById('cancelBulk');
+  const confirmBulk = document.getElementById('confirmBulk');
+  const bulkExamSelect = document.getElementById('bulkExamSelect');
+  const bulkCount = document.getElementById('bulkCount');
+  const bulkAlert = document.getElementById('bulkAlert');
+
+  // Dropdown global
   const dropdownContainer = document.getElementById('globalDropdownContainer');
   const dropdownMenu = document.getElementById('globalDropdownMenu');
-  const dropdownOverlay = document.getElementById('dropdownOverlay');
   let currentQuestionId = null;
-  
-  // Function to close dropdown
-  function closeDropdown() {
-    dropdownContainer.style.display = 'none';
-    dropdownMenu.classList.remove('active');
-    dropdownOverlay.classList.remove('active');
-    currentQuestionId = null;
-  }
-  
-  // Function to position and show dropdown
-  function showDropdown(button, questionId, questionIndex) {
-    currentQuestionId = questionId;
-    
-    // Get button position
-    const rect = button.getBoundingClientRect();
-    
-    // Position dropdown near the button
-    dropdownMenu.style.left = Math.min(rect.right - 220, window.innerWidth - 250) + 'px';
-    dropdownMenu.style.top = (rect.bottom + 10) + 'px';
-    
-    // Create dropdown content
-    dropdownMenu.innerHTML = `
-      <form action="/teacher/cbt/import-question" method="POST">
-        <select name="examId" required class="form-select mb-2">
-          <option value="">Select Exam</option>
-          <% exams.forEach(ex => { %>
-            <option value="<%= ex.id %>"><%= ex.title %> — <%= ex.class_name %></option>
-          <% }) %>
-        </select>
-       <input type="hidden" name="qid" value="${questionId}">
 
-        <input type="hidden" name="course_id" value="<%= course_id %>">
-        <input type="hidden" name="class_id" value="<%= class_id %>">
-        <button type="submit" class="action-item-btn" style="width:100%; padding:10px; background:#f1f5f9; border:none; border-radius:6px; cursor:pointer; font-weight:600;">
-          <i class="fas fa-plus-circle"></i> Add to Exam
-        </button>
-      </form>
-      
-      <a href="/teacher/question-bank/${questionId}/edit" class="action-item" style="display:block; padding:10px; text-decoration:none; color:#334155; border-radius:6px; margin-bottom:5px;">
-        <i class="fas fa-edit"></i> Edit Question
-      </a>
-      
-      <form action="/teacher/question-bank/${questionId}/delete" method="POST">
-        <button type="submit" class="delete-item" onclick="return confirm('Delete this question?')" style="width:100%; padding:10px; background:none; border:none; color:#e74a3b; text-align:left; border-radius:6px; cursor:pointer; font-weight:600;">
-          <i class="fas fa-trash-alt"></i> Delete Question
-        </button>
-      </form>
-    `;
-    
-    // Show dropdown
-    dropdownContainer.style.display = 'block';
-    setTimeout(() => {
-      dropdownMenu.classList.add('active');
-      dropdownOverlay.classList.add('active');
-    }, 10);
+  // Utility: update openBulkBtn enabled state
+  function updateBulkButtonState() {
+    const selected = checkboxes.filter(c => c.checked).length;
+    openBulkBtn.disabled = selected === 0;
+    bulkCount.textContent = selected;
   }
-  
-  // Add click event to all action buttons
-  document.querySelectorAll('.action-btn').forEach(button => {
-    button.addEventListener('click', function(e) {
-      e.stopPropagation();
-      e.preventDefault();
-      
-      const questionId = this.getAttribute('data-question-id');
-      const questionIndex = this.getAttribute('data-question-index');
-      
-      // Close if clicking the same button
-      if (currentQuestionId === questionId && dropdownContainer.style.display === 'block') {
-        closeDropdown();
-      } else {
-        showDropdown(this, questionId, questionIndex);
-      }
+
+  // Select / deselect all
+  selectAll && selectAll.addEventListener('change', () => {
+    checkboxes.forEach(cb => cb.checked = selectAll.checked);
+    updateBulkButtonState();
+  });
+
+  // each checkbox update
+  checkboxes.forEach(cb => {
+    cb.addEventListener('change', () => {
+      if (!cb.checked) selectAll.checked = false;
+      else if (checkboxes.every(c => c.checked)) selectAll.checked = true;
+      updateBulkButtonState();
     });
   });
-  
-  // Close dropdown when clicking overlay
-  dropdownOverlay.addEventListener('click', closeDropdown);
-  
-  // Close dropdown when clicking escape
-  document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape') {
-      closeDropdown();
+
+  updateBulkButtonState(); // initial
+
+  // Open bulk modal
+  openBulkBtn.addEventListener('click', () => {
+    const selectedIds = checkboxes.filter(c => c.checked).map(c => c.value);
+    if (!selectedIds.length) return; // should be disabled already
+    bulkAlert.style.display = 'none';
+    bulkBackdrop.style.display = 'flex';
+  });
+
+  // Close bulk modal helpers
+  function closeBulkModal() {
+    bulkBackdrop.style.display = 'none';
+    bulkExamSelect.value = "";
+    bulkAlert.style.display = 'none';
+  }
+  closeBulk.addEventListener('click', closeBulkModal);
+  cancelBulk.addEventListener('click', closeBulkModal);
+
+  // Confirm bulk import (POST JSON to /teacher/cbt/import/bulk)
+  confirmBulk.addEventListener('click', async () => {
+    const examId = bulkExamSelect.value;
+    if (!examId) {
+      bulkAlert.style.display = 'block';
+      bulkAlert.innerHTML = '<div style="padding:10px;border-radius:6px;background:#fff3cd;color:#856404;border:1px solid #ffeeba;">Please select an exam.</div>';
+      return;
+    }
+
+    const selectedIds = checkboxes.filter(c => c.checked).map(c => Number(c.value));
+    if (!selectedIds.length) {
+      bulkAlert.style.display = 'block';
+      bulkAlert.innerHTML = '<div style="padding:10px;border-radius:6px;background:#ffe2e2;color:#7a1f1f;border:1px solid #ffc9c9;">No questions selected.</div>';
+      return;
+    }
+
+    // Disable button while sending
+    confirmBulk.disabled = true;
+    confirmBulk.textContent = 'Adding...';
+
+    try {
+      const resp = await fetch('/teacher/cbt/import/bulk', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ exam_id: examId, questions: JSON.stringify(selectedIds) })
+      });
+
+      const data = await resp.json();
+
+      if (resp.ok && data && data.success) {
+        // success toast then reload
+        bulkAlert.style.display = 'block';
+        bulkAlert.innerHTML = '<div style="padding:10px;border-radius:6px;background:#d1fae5;color:#064e3b;border:1px solid #bbf7d0;">Added ' + (data.added || selectedIds.length) + ' question(s) to exam.</div>';
+        setTimeout(() => {
+          // close and reload same page to reflect changes
+          closeBulkModal();
+          window.location.reload();
+        }, 900);
+      } else {
+        bulkAlert.style.display = 'block';
+        bulkAlert.innerHTML = '<div style="padding:10px;border-radius:6px;background:#ffe4e6;color:#9b1c1c;border:1px solid #ffccd5;">Error: ' + (data.error || 'Request failed') + '</div>';
+      }
+    } catch (err) {
+      bulkAlert.style.display = 'block';
+      bulkAlert.innerHTML = '<div style="padding:10px;border-radius:6px;background:#ffe4e6;color:#9b1c1c;border:1px solid #ffccd5;">Network error</div>';
+      console.error(err);
+    } finally {
+      confirmBulk.disabled = false;
+      confirmBulk.textContent = 'Add to Exam';
     }
   });
-  
-  // Close dropdown when clicking anywhere else
-  document.addEventListener('click', function(e) {
-    if (!e.target.closest('.action-btn') && !e.target.closest('.dropdown-menu-box')) {
-      closeDropdown();
+
+  // Single-row action dropdown (existing behavior)
+  document.querySelectorAll('.action-btn').forEach(btn => {
+    btn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      e.preventDefault();
+      const qid = this.getAttribute('data-question-id');
+
+      // Close existing
+      dropdownContainer.style.display = 'block';
+      dropdownMenu.classList.remove('active');
+
+      // position near button
+      const rect = this.getBoundingClientRect();
+      const left = Math.min(rect.right - 260, window.innerWidth - 280);
+      const top = rect.bottom + 10;
+      dropdownMenu.style.left = left + 'px';
+      dropdownMenu.style.top = top + 'px';
+
+      // inject content (single-import form, edit, delete)
+      dropdownMenu.innerHTML = `
+        <form action="/teacher/cbt/import-question" method="POST" style="margin:0 0 8px 0;">
+          <select name="examId" required class="form-select mb-2">
+            <option value="">Select Exam</option>
+            <% exams.forEach(ex => { %>
+              <option value="<%= ex.id %>"><%= ex.title %> — <%= ex.class_name %></option>
+            <% }) %>
+          </select>
+          <input type="hidden" name="qid" value="${qid}">
+          <button type="submit" class="btn btn-sm" style="width:100%; background:#f1f5f9; border:1px solid #e2e8f0; padding:8px; border-radius:6px; font-weight:600;">
+            <i class="fas fa-plus-circle"></i> Add → Exam
+          </button>
+        </form>
+
+        <a href="/teacher/question-bank/${qid}/edit" style="display:block; padding:10px; text-decoration:none; color:#334155; border-radius:6px; margin-bottom:6px;">
+          <i class="fas fa-edit"></i> Edit Question
+        </a>
+
+        <form action="/teacher/question-bank/${qid}/delete" method="POST" style="margin:0;">
+          <button type="submit" style="width:100%; padding:10px; background:none; border:none; color:#e74a3b; text-align:left; border-radius:6px; cursor:pointer; font-weight:600;">
+            <i class="fas fa-trash-alt"></i> Delete Question
+          </button>
+        </form>
+      `;
+
+      setTimeout(() => dropdownMenu.classList.add('active'), 10);
+      currentQuestionId = qid;
+    });
+  });
+
+  // Close dropdown when clicking outside
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.dropdown-menu-box') && !e.target.closest('.action-btn')) {
+      dropdownContainer.style.display = 'none';
+      dropdownMenu.classList.remove('active');
+      currentQuestionId = null;
+    }
+  });
+
+  // keyboard escape closes modals/dropdowns
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      dropdownContainer.style.display = 'none';
+      dropdownMenu.classList.remove('active');
+      closeBulkModal();
     }
   });
 });

@@ -64,23 +64,23 @@
             color:white;
         }
 
-      .image-preview {
-    width: 100%;
-    max-width: 100%;
-    overflow: hidden;
-    text-align: center;
-}
+        .image-preview {
+            width: 100%;
+            max-width: 100%;
+            overflow: hidden;
+            text-align: center;
+            margin-bottom: 15px;
+        }
 
-.image-preview img {
-    width: 100%;
-    max-width: 300px;   /* hard limit */
-    height: auto;
-    max-height: 250px;
-    object-fit: contain;
-    border-radius: 8px;
-    border: 1px solid #ccc;
-}
-
+        .image-preview img {
+            width: 100%;
+            max-width: 300px;
+            height: auto;
+            max-height: 250px;
+            object-fit: contain;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+        }
     </style>
 </head>
 
@@ -92,42 +92,43 @@
 
     <form method="POST" enctype="multipart/form-data">
 
+        <!-- QUESTION TEXT -->
         <label><strong>Question:</strong></label>
-        <textarea name="question" required><%= question.question %></textarea>
+        <textarea name="question" required><%= q.question %></textarea>
 
-        <!-- SHOW EXISTING IMAGE -->
-        <% if (question.image_path) { %>
+        <!-- CURRENT IMAGE -->
+        <% if (q.image_path) { %>
             <div class="image-preview">
-                <img src="/uploads/questions/<%= question.image_path %>" alt="Question Image">
+                <img src="/uploads/questions/<%= q.image_path %>" alt="Question Image">
             </div>
         <% } %>
 
-        <!-- IMAGE UPLOAD -->
-        <label><strong>Change Image:</strong></label><br>
+        <!-- UPLOAD NEW IMAGE -->
+        <label><strong>Change Image:</strong></label>
         <input type="file" name="question_image">
-
-
 
         <br><br>
 
+        <!-- OPTIONS -->
         <label><strong>Option A:</strong></label>
-        <input type="text" name="option1" value="<%= options[0].option_text %>" required>
+        <input type="text" name="option1" value="<%= q.option1 %>" required>
 
         <label><strong>Option B:</strong></label>
-        <input type="text" name="option2" value="<%= options[1].option_text %>" required>
+        <input type="text" name="option2" value="<%= q.option2 %>" required>
 
         <label><strong>Option C:</strong></label>
-        <input type="text" name="option3" value="<%= options[2].option_text %>" required>
+        <input type="text" name="option3" value="<%= q.option3 %>" required>
 
         <label><strong>Option D:</strong></label>
-        <input type="text" name="option4" value="<%= options[3].option_text %>" required>
+        <input type="text" name="option4" value="<%= q.option4 %>" required>
 
+        <!-- CORRECT OPTION -->
         <label><strong>Correct Answer:</strong></label>
         <select name="correct" required>
-            <option value="1" <%= options[0].is_correct ? 'selected' : '' %>>A</option>
-            <option value="2" <%= options[1].is_correct ? 'selected' : '' %>>B</option>
-            <option value="3" <%= options[2].is_correct ? 'selected' : '' %>>C</option>
-            <option value="4" <%= options[3].is_correct ? 'selected' : '' %>>D</option>
+            <option value="1" <%= q.correct_option == 1 ? "selected" : "" %>>A</option>
+            <option value="2" <%= q.correct_option == 2 ? "selected" : "" %>>B</option>
+            <option value="3" <%= q.correct_option == 3 ? "selected" : "" %>>C</option>
+            <option value="4" <%= q.correct_option == 4 ? "selected" : "" %>>D</option>
         </select>
 
         <br><br>
