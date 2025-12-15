@@ -6678,201 +6678,190 @@ app.get('/teacher/question-bank/:course_id/:class_id/ai-image', (req, res) => {
   });
 });
 ///////////////////////////////////////////////////////////////////
-app.get("/student/results/download", isStudent, (req, res) => {
-  res.render("student_download_result", {
-    student: req.session.user
-  });
-  if (!isTermCompleted(result.subjects)) {
-  return res.status(403).send("Result not yet completed");
-}
+// app.get("/student/results/download", isStudent, (req, res) => {
+//   res.render("student_download_result", {
+//     student: req.session.user
+//   });
+//   if (!isTermCompleted(result.subjects)) {
+//   return res.status(403).send("Result not yet completed");
+// }
 
-});
-app.get("/student/results/preview", isStudent, async (req, res) => {
-  const { session, term } = req.query;
-  const studentId = req.session.user.id;
+// });
+// app.get("/student/results/preview", isStudent, async (req, res) => {
+//   const { session, term } = req.query;
+//   const studentId = req.session.user.id;
 
-  // 1️⃣ Fetch term + scores
-  const result = await getStudentResult(studentId, session, term);
+//   // 1️⃣ Fetch term + scores
+//   const result = await getStudentResult(studentId, session, term);
 
-  if (!result) {
-    return res.render("result_not_found");
-  }
+//   if (!result) {
+//     return res.render("result_not_found");
+//   }
 
-  res.render("student_result_preview", {
-    result,
-    session,
-    term
-  });
-});
+//   res.render("student_result_preview", {
+//     result,
+//     session,
+//     term
+//   });
+// });
+
+
+// async function getAnnualResult(studentId, session) {
+//   const terms = await query(`
+//     SELECT t.id, t.name
+//     FROM terms t
+//     JOIN academic_years ay ON ay.id = t.academic_year_id
+//     WHERE ay.name = ?
+//   `, [session]);
+
+//   let allSubjects = [];
+//   let totalScore = 0;
+//   let count = 0;
+
+//   for (const term of terms) {
+//     const termResult = await getStudentResult(studentId, session, term.name);
+//     if (!termResult || !isTermCompleted(termResult.subjects)) return null;
+
+//     termResult.subjects.forEach(s => {
+//       totalScore += s.total;
+//       count++;
+//       allSubjects.push({ ...s, term: term.name });
+//     });
+//   }
+
+//   return {
+//     subjects: allSubjects,
+//     average: (totalScore / count).toFixed(2)
+//   };
+// }
+
+// const PDFDocument = require("pdfkit");
+// const fs = require("fs");
+// const path = require("path");
+
+// app.get("/student/results/pdf", isStudent, async (req, res) => {
+//   const { session, term } = req.query;
+//   const studentId = req.session.user.id;
+
+//   let result;
+//   if (term === "annual") {
+//     result = await getAnnualResult(studentId, session);
+//   } else {
+//     result = await getStudentResult(studentId, session, term);
+//   }
+
+//   if (!result || !isTermCompleted(result.subjects)) {
+//     return res.status(403).send("Result not available");
+//   }
+
+//   const doc = new PDFDocument({ size: "A4", margin: 40 });
+//   res.setHeader("Content-Type", "application/pdf");
+//   res.setHeader("Content-Disposition", "attachment; filename=result.pdf");
+//   doc.pipe(res);
+
+//   /* ================= PATHS ================= */
+//   const logoPath = path.join(__dirname, "public/assets/school-logo.png");
+//   const passportPath = result.photo
+//     ? path.join(__dirname, "public/uploads/passports", result.photo)
+//     : null;
+
+//   /* ================= WATERMARK ================= */
+//   if (fs.existsSync(logoPath)) {
+//     doc.opacity(0.08)
+//       .image(logoPath, 150, 250, { width: 300 })
+//       .opacity(1);
+//   }
+
+//   /* ================= HEADER ================= */
+//   if (fs.existsSync(logoPath)) {
+//     doc.image(logoPath, 40, 40, { width: 80 });
+//   }
+
+//   doc.fontSize(18).text("LYTEBRIDGE ACADEMY", 140, 45);
+//   doc.fontSize(11).text("Academic Excellence & Character", 140, 70);
+
+//   /* ================= STUDENT PASSPORT ================= */
+//   if (passportPath && fs.existsSync(passportPath)) {
+//     doc
+//       .rect(460, 40, 90, 100)
+//       .stroke("#999");
+
+//     doc.image(passportPath, 465, 45, {
+//       width: 80,
+//       height: 90,
+//       fit: [80, 90],
+//       align: "center",
+//       valign: "center"
+//     });
+//   }
+
+//   doc.moveDown(3);
+
+//   doc.fontSize(14)
+//     .text(
+//       term === "annual"
+//         ? "ANNUAL RESULT REPORT"
+//         : `${term.toUpperCase()} TERM REPORT SHEET`,
+//       { align: "center" }
+//     );
+
+//   doc.moveDown(1.5);
+
+//   /* ================= STUDENT INFO ================= */
+//   doc.fontSize(10);
+//   doc.text(`Name: ${result.student_name}`);
+//   doc.text(`Class: ${result.class_name}`);
+//   doc.text(`Session: ${session}`);
+//   doc.moveDown();
+
+//   /* ================= TABLE HEADER ================= */
+//   let y = doc.y;
+//   doc.font("Helvetica-Bold");
+//   doc.text("Subject", 40, y);
+//   doc.text("CA", 220, y);
+//   doc.text("Exam", 260, y);
+//   doc.text("Total", 310, y);
+//   doc.text("Grade", 360, y);
+//   doc.text("Remark", 410, y);
+
+//   doc.font("Helvetica");
+//   y += 18;
+
+//   /* ================= SUBJECT ROWS ================= */
+//   result.subjects.forEach(s => {
+//     doc.text(s.subject, 40, y);
+//     doc.text(s.ca, 220, y);
+//     doc.text(s.exam, 260, y);
+//     doc.text(s.total, 310, y);
+//     doc.text(s.grade, 360, y);
+//     doc.text(s.remark, 410, y, { width: 130 });
+//     y += 16;
+//   });
+
+//   doc.moveDown(2);
+
+//   /* ================= SUMMARY ================= */
+//   doc.font("Helvetica-Bold");
+//   doc.text(`Average: ${result.average}`);
+//   doc.text(`Position: ${result.position || "-"}`);
+//   doc.moveDown();
+
+//   /* ================= COMMENTS ================= */
+//   doc.font("Helvetica");
+//   doc.text(`Class Teacher's Comment: ${getTeacherComment(result.average)}`);
+//   doc.moveDown(0.5);
+//   doc.text(`Principal's Comment: ${getPrincipalComment(result.average)}`);
+
+//   /* ================= SIGNATURES ================= */
+//   doc.moveDown(2);
+//   doc.text("_______________________          _______________________");
+//   doc.text("Class Teacher                       Principal");
+
+//   doc.end();
+// });
 
 
 
-app.get("/student/results/pdf", isStudent, async (req, res) => {
-  const { session, term } = req.query;
-  const studentId = req.session.user.id;
-
-  const result = await getStudentResult(studentId, session, term);
-  if (!result) return res.send("Result not found");
-
-  const doc = new PDFDocument({ margin: 30 });
-  res.setHeader("Content-Type", "application/pdf");
-  res.setHeader("Content-Disposition", "attachment; filename=result.pdf");
-
-  doc.pipe(res);
-
-  // HEADER
-  doc.fontSize(16).text("LYTEBRIDGE ACADEMY", { align: "center" });
-  doc.moveDown();
-  doc.fontSize(12).text(`${term.toUpperCase()} TERM REPORT SHEET`, { align: "center" });
-  doc.moveDown(2);
-
-  // STUDENT INFO
-  doc.text(`Name: ${result.student_name}`);
-  doc.text(`Class: ${result.class_name}`);
-  doc.text(`Session: ${session}`);
-  doc.moveDown();
-
-  // TABLE HEADER
-  doc.text("Subject | CA | Exam | Total | Grade | Remark");
-  doc.moveDown(0.5);
-
-  result.subjects.forEach(s => {
-    doc.text(
-      `${s.subject} | ${s.ca} | ${s.exam} | ${s.total} | ${s.grade} | ${s.remark}`
-    );
-  });
-
-  doc.moveDown();
-  doc.text(`Average: ${result.average}`);
-  doc.text(`Position: ${result.position}`);
-
-  doc.end();
-});
-
-async function getAnnualResult(studentId, session) {
-  const terms = await query(`
-    SELECT t.id, t.name
-    FROM terms t
-    JOIN academic_years ay ON ay.id = t.academic_year_id
-    WHERE ay.name = ?
-  `, [session]);
-
-  let allSubjects = [];
-  let totalScore = 0;
-  let count = 0;
-
-  for (const term of terms) {
-    const termResult = await getStudentResult(studentId, session, term.name);
-    if (!termResult || !isTermCompleted(termResult.subjects)) return null;
-
-    termResult.subjects.forEach(s => {
-      totalScore += s.total;
-      count++;
-      allSubjects.push({ ...s, term: term.name });
-    });
-  }
-
-  return {
-    subjects: allSubjects,
-    average: (totalScore / count).toFixed(2)
-  };
-}
-
-const PDFDocument = require("pdfkit");
-const fs = require("fs");
-const path = require("path");
-
-app.get("/student/results/pdf", isStudent, async (req, res) => {
-  const { session, term } = req.query;
-  const studentId = req.session.user.id;
-
-  let result;
-  if (term === "annual") {
-    result = await getAnnualResult(studentId, session);
-  } else {
-    result = await getStudentResult(studentId, session, term);
-  }
-
-  if (!result || !isTermCompleted(result.subjects)) {
-    return res.status(403).send("Result not available");
-  }
-
-  const doc = new PDFDocument({ size: "A4", margin: 40 });
-  res.setHeader("Content-Type", "application/pdf");
-  res.setHeader("Content-Disposition", "attachment; filename=result.pdf");
-  doc.pipe(res);
-
-  /* ================= WATERMARK ================= */
-  const logoPath = path.join(__dirname, "public/assets/school-logo.png");
-  doc.opacity(0.08)
-     .image(logoPath, 150, 250, { width: 300 })
-     .opacity(1);
-
-  /* ================= HEADER ================= */
-  doc.image(logoPath, 40, 40, { width: 80 });
-  doc.fontSize(18).text("LYTEBRIDGE ACADEMY", 140, 45);
-  doc.fontSize(11).text("Academic Excellence & Character", 140, 70);
-  doc.moveDown(2);
-
-  doc.fontSize(14)
-     .text(`${term.toUpperCase()} TERM REPORT SHEET`, { align: "center" });
-
-  doc.moveDown();
-
-  /* ================= STUDENT INFO ================= */
-  doc.fontSize(10);
-  doc.text(`Name: ${result.student_name}`);
-  doc.text(`Class: ${result.class_name}`);
-  doc.text(`Session: ${session}`);
-  doc.moveDown();
-
-  /* ================= TABLE HEADER ================= */
-  const startX = 40;
-  let y = doc.y;
-
-  doc.font("Helvetica-Bold");
-  doc.text("Subject", startX, y);
-  doc.text("CA", 220, y);
-  doc.text("Exam", 260, y);
-  doc.text("Total", 310, y);
-  doc.text("Grade", 360, y);
-  doc.text("Remark", 410, y);
-
-  doc.font("Helvetica");
-  y += 18;
-
-  /* ================= SUBJECT ROWS ================= */
-  result.subjects.forEach(s => {
-    doc.text(s.subject, startX, y);
-    doc.text(s.ca, 220, y);
-    doc.text(s.exam, 260, y);
-    doc.text(s.total, 310, y);
-    doc.text(s.grade, 360, y);
-    doc.text(s.remark, 410, y, { width: 130 });
-    y += 16;
-  });
-
-  doc.moveDown(2);
-
-  /* ================= SUMMARY ================= */
-  doc.font("Helvetica-Bold");
-  doc.text(`Average: ${result.average}`);
-  doc.text(`Position: ${result.position || "-"}`);
-  doc.moveDown();
-
-  /* ================= COMMENTS ================= */
-  doc.font("Helvetica");
-  doc.text(`Class Teacher's Comment: ${getTeacherComment(result.average)}`);
-  doc.moveDown(0.5);
-  doc.text(`Principal's Comment: ${getPrincipalComment(result.average)}`);
-
-  /* ================= SIGNATURES ================= */
-  doc.moveDown(2);
-  doc.text("_______________________          _______________________");
-  doc.text("Class Teacher                       Principal");
-
-  doc.end();
-});
 
 
 
