@@ -4,217 +4,874 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>E-Library • LYTEBRIDGE ACADEMY</title>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
 
   <style>
     :root {
-      --pink: #ff6b9d;
-      --cream: #fdf5e6;
-      --light-pink: #ffe6f0;
-      --gray: #6c757d;
-      --shadow: 0 6px 16px rgba(255, 107, 157, 0.15);
-      --bg: #fdf5e6;
-      --card-bg: #ffffff;
-      --text: #333333;
-      --border: #ffe0e9;
-      --radius: 16px;
-    }
-    [data-theme="dark"] {
-      --pink: #ff8ab3;
-      --light-pink: #2d1b3a;
-      --gray: #b0b0b0;
-      --shadow: 0 6px 16px rgba(0,0,0,0.4);
-      --bg: #121212;
-      --card-bg: #1e1e1e;
-      --text: #e0e0e0;
-      --border: #333333;
-    }
-    * { margin:0; padding:0; box-sizing:border-box; }
-    body {
-      font-family: 'Poppins', sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      min-height: 100vh;
-      transition: all 0.4s;
+      --primary-pink: #ec4899;
+      --primary-pink-dark: #db2777;
+      --primary-pink-light: #fce7f3;
+      --primary-pink-lighter: #fdf2f8;
+      --accent-purple: #8b5cf6;
+      --accent-blue: #6366f1;
+      --accent-teal: #14b8a6;
+      --accent-amber: #f59e0b;
+      --text-primary: #1f2937;
+      --text-secondary: #6b7280;
+      --bg-primary: #ffffff;
+      --bg-secondary: #f9fafb;
+      --bg-tertiary: #f3f4f6;
+      --border-light: #e5e7eb;
+      --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.05);
+      --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
+      --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+      --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+      --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+      --shadow-2xl: 0 25px 50px -12px rgba(236, 72, 153, 0.25);
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 16px;
+      --radius-xl: 20px;
+      --radius-2xl: 24px;
+      --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
-    .top-bar {
-      position: fixed; top:0; left:0; right:0;
-      background: var(--card-bg);
-      padding: 1.2rem 1.5rem;
-      box-shadow: var(--shadow);
-      z-index: 1030;
-      display: flex; justify-content: space-between; align-items: center;
-      border-bottom: 1px solid var(--border);
+    [data-theme="dark"] {
+      --primary-pink: #f472b6;
+      --primary-pink-dark: #db2777;
+      --primary-pink-light: #2d1b3a;
+      --primary-pink-lighter: #1a1125;
+      --accent-purple: #a78bfa;
+      --accent-blue: #818cf8;
+      --accent-teal: #2dd4bf;
+      --accent-amber: #fbbf24;
+      --text-primary: #f9fafb;
+      --text-secondary: #d1d5db;
+      --bg-primary: #111827;
+      --bg-secondary: #1f2937;
+      --bg-tertiary: #374151;
+      --border-light: #4b5563;
+      --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+      --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4);
+      --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.4);
+      --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.4);
+      --shadow-2xl: 0 25px 50px -12px rgba(244, 114, 182, 0.2);
     }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--primary-pink-lighter) 100%);
+      color: var(--text-primary);
+      min-height: 100vh;
+      transition: var(--transition);
+      line-height: 1.6;
+    }
+
+    /* Top Bar Redesign */
+    .top-bar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      background: linear-gradient(135deg, var(--bg-primary) 0%, rgba(255, 255, 255, 0.98) 100%);
+      backdrop-filter: blur(10px);
+      padding: 1.2rem 2rem;
+      box-shadow: var(--shadow-lg);
+      z-index: 1030;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: none;
+      transition: var(--transition);
+    }
+
+    [data-theme="dark"] .top-bar {
+      background: linear-gradient(135deg, var(--bg-primary) 0%, rgba(17, 24, 39, 0.98) 100%);
+    }
+
+    .top-bar::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--primary-pink) 0%, var(--accent-purple) 100%);
+    }
+
+    .school-brand {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .school-logo {
+      width: 45px;
+      height: 45px;
+      background: linear-gradient(135deg, var(--primary-pink) 0%, var(--accent-purple) 100%);
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 800;
+      font-size: 1.3rem;
+      box-shadow: var(--shadow-lg);
+    }
+
     .school-name {
-      font-size: 1.8rem; font-weight: 800;
-      background: linear-gradient(90deg, var(--pink), #ff8ab3);
+      font-size: 1.7rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, var(--primary-pink) 0%, var(--accent-purple) 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
+      letter-spacing: -0.5px;
     }
-    .top-controls { display: flex; align-items: center; gap: 16px; }
+
+    .top-controls {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    /* Theme Toggle */
     .theme-toggle {
-      background: var(--card-bg);
-      border: 2px solid var(--border);
+      background: var(--bg-tertiary);
+      border: 2px solid var(--border-light);
       border-radius: 50px;
-      width: 52px; height: 28px;
-      position: relative; cursor: pointer;
+      width: 62px;
+      height: 32px;
+      position: relative;
+      cursor: pointer;
+      transition: var(--transition);
+      overflow: hidden;
     }
+
     .theme-toggle::before {
-      content: ''; position: absolute;
-      top: 4px; left: 4px;
-      width: 20px; height: 20px;
-      background: var(--pink);
+      content: '';
+      position: absolute;
+      top: 4px;
+      left: 4px;
+      width: 24px;
+      height: 24px;
+      background: linear-gradient(135deg, var(--primary-pink) 0%, var(--accent-purple) 100%);
       border-radius: 50%;
-      transition: 0.3s;
+      transition: var(--transition);
+      z-index: 2;
     }
-    [data-theme="dark"] .theme-toggle::before { transform: translateX(24px); }
 
+    .theme-toggle::after {
+      content: '\f185';
+      font-family: 'Font Awesome 6 Free';
+      font-weight: 900;
+      position: absolute;
+      top: 50%;
+      left: 8px;
+      transform: translateY(-50%);
+      color: var(--primary-pink);
+      font-size: 0.9rem;
+      transition: var(--transition);
+      z-index: 1;
+    }
+
+    [data-theme="dark"] .theme-toggle::after {
+      content: '\f186';
+      left: 32px;
+      color: var(--accent-amber);
+    }
+
+    [data-theme="dark"] .theme-toggle::before {
+      transform: translateX(30px);
+    }
+
+    /* Buttons */
     .back-btn, .logout-btn {
-      padding: 10px 18px; border-radius: 50px;
-      font-weight: 600; text-decoration: none;
-      display: flex; align-items: center; gap: 8px;
+      padding: 10px 22px;
+      border-radius: 50px;
+      font-weight: 600;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      transition: var(--transition);
+      font-size: 0.95rem;
     }
-    .back-btn { background: transparent; color: var(--text); border: 2px solid var(--pink); }
-    .back-btn:hover { background: var(--pink); color: white; }
-    .logout-btn { background: var(--pink); color: white; box-shadow: var(--shadow); }
 
+    .back-btn {
+      background: transparent;
+      color: var(--text-primary);
+      border: 2px solid var(--border-light);
+      transition: var(--transition);
+    }
+
+    .back-btn:hover {
+      background: var(--primary-pink);
+      color: white;
+      border-color: var(--primary-pink);
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-lg);
+    }
+
+    .logout-btn {
+      background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+      color: white;
+      box-shadow: var(--shadow-md);
+      border: none;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .logout-btn::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+      opacity: 0;
+      transition: var(--transition);
+    }
+
+    .logout-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-xl);
+    }
+
+    .logout-btn:hover::before {
+      opacity: 1;
+    }
+
+    .logout-btn i {
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Main Content */
     .main-content {
-      margin-top: 90px;
-      padding: 30px 20px;
-      max-width: 1000px;
+      margin-top: 100px;
+      padding: 40px 20px;
+      max-width: 1200px;
       margin-left: auto;
       margin-right: auto;
     }
-    .page-title {
-      text-align: center; margin-bottom: 40px;
-      font-size: 2.4rem; font-weight: 800;
-      background: linear-gradient(90deg, var(--pink), #ff8ab3);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
+
+    /* Page Header */
+    .page-header {
+      text-align: center;
+      margin-bottom: 50px;
+      position: relative;
     }
 
-    .library-card {
-      background: var(--card-bg);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      overflow: hidden;
-      margin-bottom: 24px;
-      border-left: 6px solid var(--pink);
+    .page-title {
+      font-size: 3.2rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, var(--primary-pink) 0%, var(--accent-purple) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 16px;
+      position: relative;
+      display: inline-block;
     }
+
+    .page-title::after {
+      content: '';
+      position: absolute;
+      bottom: -10px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 80px;
+      height: 4px;
+      background: linear-gradient(90deg, var(--primary-pink) 0%, var(--accent-purple) 100%);
+      border-radius: 2px;
+    }
+
+    .page-subtitle {
+      font-size: 1.2rem;
+      color: var(--text-secondary);
+      max-width: 600px;
+      margin: 0 auto;
+      line-height: 1.6;
+    }
+
+    /* Stats Overview */
+    .stats-overview {
+      display: flex;
+      justify-content: center;
+      gap: 30px;
+      margin-bottom: 40px;
+      flex-wrap: wrap;
+    }
+
+    .stat-card {
+      background: var(--bg-primary);
+      padding: 24px 32px;
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-md);
+      border: 1px solid var(--border-light);
+      text-align: center;
+      min-width: 180px;
+      transition: var(--transition);
+    }
+
+    .stat-card:hover {
+      transform: translateY(-5px);
+      box-shadow: var(--shadow-xl);
+      border-color: var(--primary-pink-light);
+    }
+
+    .stat-number {
+      font-size: 2.8rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, var(--primary-pink) 0%, var(--accent-purple) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      line-height: 1;
+    }
+
+    .stat-label {
+      font-size: 0.95rem;
+      color: var(--text-secondary);
+      margin-top: 8px;
+    }
+
+    /* Library Cards */
+    .library-card {
+      background: var(--bg-primary);
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow-md);
+      overflow: hidden;
+      margin-bottom: 28px;
+      border: 1px solid var(--border-light);
+      transition: var(--transition);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .library-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, var(--primary-pink) 0%, var(--accent-purple) 100%);
+      transition: var(--transition);
+    }
+
+    .library-card:hover {
+      transform: translateY(-5px);
+      box-shadow: var(--shadow-2xl);
+      border-color: var(--primary-pink-light);
+    }
+
     .card-header {
-      background: var(--light-pink);
-      padding: 20px 24px;
+      background: var(--primary-pink-lighter);
+      padding: 24px 30px;
       cursor: pointer;
       display: flex;
       justify-content: space-between;
       align-items: center;
       font-weight: 700;
-      font-size: 1.25rem;
-      color: var(--text);
-      transition: 0.3s;
+      color: var(--text-primary);
+      transition: var(--transition);
+      position: relative;
     }
-    .card-header:hover { background: var(--pink); color: white; }
-    .card-header i { transition: transform 0.3s; font-size: 1.4rem; }
+
+    .card-header:hover {
+      background: var(--primary-pink-light);
+    }
+
+    .card-header-content {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+    }
+
+    .course-icon {
+      width: 50px;
+      height: 50px;
+      background: linear-gradient(135deg, var(--primary-pink) 0%, var(--accent-purple) 100%);
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 700;
+      font-size: 1.3rem;
+      flex-shrink: 0;
+    }
+
+    .course-info h3 {
+      font-size: 1.4rem;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .course-info .class-name {
+      font-size: 0.95rem;
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+
+    .file-count-badge {
+      background: linear-gradient(135deg, var(--primary-pink) 0%, var(--accent-purple) 100%);
+      color: white;
+      padding: 8px 20px;
+      border-radius: 50px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .card-header i {
+      transition: transform 0.3s ease;
+      font-size: 1.4rem;
+      color: var(--primary-pink);
+    }
+
+    .card-header[aria-expanded="true"] i {
+      transform: rotate(180deg);
+    }
+
+    /* File Items */
+    .file-list {
+      padding: 0;
+    }
 
     .file-item {
-      padding: 18px 24px;
-      border-bottom: 1px dashed var(--border);
+      padding: 22px 30px;
+      border-bottom: 1px dashed var(--border-light);
       display: flex;
       justify-content: space-between;
       align-items: center;
-      transition: 0.3s;
+      transition: var(--transition);
+      position: relative;
+      overflow: hidden;
     }
-    .file-item:hover { background: var(--light-pink); }
-    .file-info { display: flex; align-items: center; gap: 14px; }
-    .file-icon { font-size: 1.8rem; color: var(--pink); }
-    .file-name { font-weight: 600; }
-    .file-meta { font-size: 0.9rem; color: var(--gray); margin-top: 4px; }
-    .download-btn {
-      background: var(--pink);
-      color: white;
-      border: none;
-      padding: 8px 16px;
-      border-radius: 50px;
+
+    .file-item::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 3px;
+      background: var(--primary-pink);
+      transform: scaleY(0);
+      transition: var(--transition);
+    }
+
+    .file-item:hover {
+      background: var(--primary-pink-lighter);
+    }
+
+    .file-item:hover::before {
+      transform: scaleY(1);
+    }
+
+    .file-info {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .file-icon-container {
+      position: relative;
+    }
+
+    .file-icon {
+      font-size: 2.2rem;
+      color: var(--primary-pink);
+      transition: var(--transition);
+    }
+
+    .file-details {
+      flex: 1;
+    }
+
+    .file-name {
+      font-weight: 600;
+      font-size: 1.1rem;
+      color: var(--text-primary);
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .file-meta {
+      display: flex;
+      align-items: center;
+      gap: 20px;
       font-size: 0.9rem;
+      color: var(--text-secondary);
+    }
+
+    .meta-item {
       display: flex;
       align-items: center;
       gap: 6px;
-      transition: 0.3s;
     }
-    .download-btn:hover { background: #ff4d8a; transform: translateY(-2px); }
-    .no-files { text-align: center; padding: 50px; color: var(--gray); }
+
+    .meta-item i {
+      font-size: 0.9rem;
+    }
+
+    .download-btn {
+      background: linear-gradient(135deg, var(--primary-pink) 0%, var(--accent-purple) 100%);
+      color: white;
+      border: none;
+      padding: 10px 24px;
+      border-radius: 50px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      transition: var(--transition);
+      position: relative;
+      overflow: hidden;
+      text-decoration: none;
+    }
+
+    .download-btn::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(135deg, var(--primary-pink-dark) 0%, var(--accent-purple) 100%);
+      opacity: 0;
+      transition: var(--transition);
+    }
+
+    .download-btn:hover {
+      transform: translateY(-3px);
+      box-shadow: var(--shadow-lg);
+    }
+
+    .download-btn:hover::before {
+      opacity: 1;
+    }
+
+    .download-btn i, .download-btn span {
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Empty States */
+    .no-files {
+      text-align: center;
+      padding: 60px 30px;
+      color: var(--text-secondary);
+    }
+
+    .no-files i {
+      font-size: 4rem;
+      margin-bottom: 20px;
+      opacity: 0.3;
+    }
+
+    .no-files h4 {
+      font-size: 1.4rem;
+      font-weight: 600;
+      margin-bottom: 10px;
+      color: var(--text-secondary);
+    }
+
+    .no-files p {
+      font-size: 1rem;
+      max-width: 400px;
+      margin: 0 auto;
+    }
+
+    .no-subjects {
+      text-align: center;
+      padding: 80px 30px;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .no-subjects i {
+      font-size: 5rem;
+      color: var(--primary-pink);
+      margin-bottom: 25px;
+      opacity: 0.5;
+    }
+
+    .no-subjects h3 {
+      font-size: 1.8rem;
+      font-weight: 700;
+      margin-bottom: 15px;
+      color: var(--text-primary);
+    }
+
+    .no-subjects p {
+      font-size: 1.1rem;
+      color: var(--text-secondary);
+      margin-bottom: 30px;
+    }
+
+    /* Animation Classes */
+    .animate-fade-in {
+      animation: fadeInUp 0.6s ease-out forwards;
+    }
+
+    .animate-delay-1 {
+      animation-delay: 0.1s;
+    }
+
+    .animate-delay-2 {
+      animation-delay: 0.2s;
+    }
+
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Responsive Design */
+    @media (max-width: 992px) {
+      .top-bar {
+        padding: 1rem 1.5rem;
+        flex-direction: column;
+        gap: 20px;
+      }
+
+      .school-name {
+        font-size: 1.5rem;
+      }
+
+      .page-title {
+        font-size: 2.5rem;
+      }
+
+      .main-content {
+        margin-top: 140px;
+      }
+
+      .stats-overview {
+        gap: 20px;
+      }
+
+      .stat-card {
+        min-width: 150px;
+        padding: 20px;
+      }
+    }
 
     @media (max-width: 768px) {
-      .top-bar { flex-direction: column; gap: 16px; text-align: center; }
-      .file-item { flex-direction: column; align-items: start; gap: 12px; }
-      .download-btn { align-self: flex-end; }
+      .file-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 20px;
+      }
+
+      .file-info {
+        width: 100%;
+      }
+
+      .download-btn {
+        align-self: flex-start;
+      }
+
+      .card-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+      }
+
+      .course-info h3 {
+        font-size: 1.2rem;
+      }
+
+      .file-count-badge {
+        align-self: flex-start;
+      }
+
+      .page-title {
+        font-size: 2rem;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .top-controls {
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+
+      .back-btn, .logout-btn {
+        padding: 8px 16px;
+        font-size: 0.9rem;
+      }
+
+      .main-content {
+        padding: 30px 15px;
+      }
+
+      .page-title {
+        font-size: 1.8rem;
+      }
     }
   </style>
 </head>
 <body>
 
-  <div class="top-bar">
-    <div class="school-name">LYTEBRIDGE ACADEMY</div>
+  <!-- Top Navigation Bar -->
+  <div class="top-bar animate-fade-in">
+    <div class="school-brand">
+      <div class="school-logo">LA</div>
+      <div class="school-name">LYTEBRIDGE ACADEMY</div>
+    </div>
     <div class="top-controls">
+<<<<<<< HEAD
       <button class="theme-toggle" id="theme-toggle"></button>
       <a href="/dashboard" class="back-btn">Back to Dashboard</a>
       <!-- <a href="/logout" class="logout-btn">Logout</a> -->
+=======
+      <button class="theme-toggle" id="theme-toggle" aria-label="Toggle theme"></button>
+      <a href="/dashboard" class="back-btn">
+        <i class="fas fa-arrow-left"></i>
+        Back to Dashboard
+      </a>
+      <a href="/logout" class="logout-btn">
+        <i class="fas fa-power-off"></i>
+        Logout
+      </a>
+>>>>>>> 7e6ee669c33cc747cf15c7ca873c43df3af5f769
     </div>
   </div>
 
+  <!-- Main Content -->
   <div class="main-content">
-    <h1 class="page-title">E-Library</h1>
-    <p class="text-center text-muted mb-5">Download study materials uploaded by your teachers</p>
+    <!-- Page Header -->
+    <div class="page-header animate-fade-in">
+      <h1 class="page-title">E-Library</h1>
+      <p class="page-subtitle">Access and download study materials uploaded by your teachers. Stay organized and keep learning.</p>
+    </div>
 
+    <!-- Statistics Overview -->
+    <% if (courses && courses.length > 0) { 
+      let totalFiles = 0;
+      courses.forEach(course => {
+        totalFiles += course.files.length;
+      });
+    %>
+    <div class="stats-overview animate-fade-in animate-delay-1">
+      <div class="stat-card">
+        <div class="stat-number"><%= courses.length %></div>
+        <div class="stat-label">Subjects</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number"><%= totalFiles %></div>
+        <div class="stat-label">Total Files</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number">24/7</div>
+        <div class="stat-label">Access</div>
+      </div>
+    </div>
+    <% } %>
+
+    <!-- Library Content -->
     <% if (courses && courses.length > 0) { %>
       <% courses.forEach((course, index) => { %>
-        <div class="library-card">
+        <div class="library-card animate-fade-in <%= index === 0 ? '' : 'animate-delay-' + ((index % 3) + 1) %>">
           <div class="card-header"
                data-bs-toggle="collapse"
                data-bs-target="#libraryCollapse<%= index %>"
                aria-expanded="<%= index === 0 %>"
-               role="button">
-            <div class="d-flex align-items-center gap-3">
-              <i class="fas fa-chevron-down"></i>
-              <div>
-                <strong><%= course.course_name %></strong>
-                <small class="opacity-75 ms-2">— <%= course.class_name %></small>
+               role="button"
+               aria-controls="libraryCollapse<%= index %>">
+            <div class="card-header-content">
+              <div class="course-icon">
+                <%= course.course_name.charAt(0).toUpperCase() %>
+              </div>
+              <div class="course-info">
+                <h3><%= course.course_name %></h3>
+                <div class="class-name"><%= course.class_name %></div>
               </div>
             </div>
-            <span style="background:var(--pink);color:white;padding:6px 14px;border-radius:50px;font-size:0.9rem;">
+            <div class="file-count-badge">
+              <i class="fas fa-file"></i>
               <%= course.files.length %> file<%= course.files.length !== 1 ? 's' : '' %>
-            </span>
+            </div>
+            <i class="fas fa-chevron-down"></i>
           </div>
 
           <div class="collapse <%= index === 0 ? 'show' : '' %>" id="libraryCollapse<%= index %>">
-            <div class="card-body p-0">
+            <div class="file-list">
               <% if (course.files.length > 0) { %>
-                <% course.files.forEach(file => { %>
+                <% course.files.forEach((file, fileIndex) => { %>
                   <div class="file-item">
                     <div class="file-info">
-                      <i class="fas fa-file-pdf file-icon"></i>
-                      <div>
-                        <div class="file-name"><%= file.original_name %></div>
+                      <div class="file-icon-container">
+                        <i class="fas fa-file-pdf file-icon"></i>
+                      </div>
+                      <div class="file-details">
+                        <div class="file-name">
+                          <%= file.original_name %>
+                          <% if (fileIndex === 0) { %>
+                            <span style="background: var(--accent-teal); color: white; padding: 2px 10px; border-radius: 12px; font-size: 0.7rem; font-weight: 600;">NEW</span>
+                          <% } %>
+                        </div>
                         <div class="file-meta">
-                          <%= file.size_kb %> KB • <%= new Date(file.uploaded_at).toLocaleDateString() %>
+                          <div class="meta-item">
+                            <i class="fas fa-database"></i>
+                            <%= file.size_kb %> KB
+                          </div>
+                          <div class="meta-item">
+                            <i class="fas fa-calendar"></i>
+                            <%= new Date(file.uploaded_at).toLocaleDateString('en-US', { 
+                              year: 'numeric', 
+                              month: 'short', 
+                              day: 'numeric' 
+                            }) %>
+                          </div>
+                          <div class="meta-item">
+                            <i class="fas fa-clock"></i>
+                            <%= new Date(file.uploaded_at).toLocaleTimeString('en-US', { 
+                              hour: '2-digit', 
+                              minute: '2-digit' 
+                            }) %>
+                          </div>
                         </div>
                       </div>
                     </div>
                     <a href="/downloads/<%= file.filename %>" 
                        class="download-btn" 
-                       download="<%= file.original_name %>">
-                      <i class="fas fa-download"></i> Download
+                       download="<%= file.original_name %>"
+                       title="Download <%= file.original_name %>">
+                      <i class="fas fa-download"></i>
+                      <span>Download</span>
                     </a>
                   </div>
                 <% }) %>
               <% } else { %>
                 <div class="no-files">
-                  <i class="fas fa-folder-open fa-3x mb-3 text-muted"></i>
-                  <p>No files uploaded yet for this subject.</p>
+                  <i class="fas fa-folder-open"></i>
+                  <h4>No Files Available</h4>
+                  <p>No study materials have been uploaded for this subject yet.</p>
                 </div>
               <% } %>
             </div>
@@ -222,33 +879,94 @@
         </div>
       <% }) %>
     <% } else { %>
-      <div class="text-center py-5">
-        <i class="fas fa-book-reader fa-5x text-muted mb-4"></i>
-        <h3>No subjects found this term</h3>
+      <div class="no-subjects animate-fade-in">
+        <i class="fas fa-book-reader"></i>
+        <h3>No Subjects Available</h3>
+        <p>You are not enrolled in any subjects this term, or no materials have been uploaded yet.</p>
+        <a href="/dashboard" class="download-btn" style="text-decoration: none; display: inline-flex;">
+          <i class="fas fa-arrow-left"></i>
+          Return to Dashboard
+        </a>
       </div>
     <% } %>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script>
-    // Dark mode
+    // Theme Toggle
     const toggle = document.getElementById('theme-toggle');
     const html = document.documentElement;
-    html.setAttribute('data-theme', localStorage.getItem('theme') || 'light');
+    const savedTheme = localStorage.getItem('theme') || 'light';
+    
+    // Apply saved theme
+    html.setAttribute('data-theme', savedTheme);
 
     toggle.addEventListener('click', () => {
-      const newTheme = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+      const currentTheme = html.getAttribute('data-theme');
+      const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+      
+      // Update theme
       html.setAttribute('data-theme', newTheme);
       localStorage.setItem('theme', newTheme);
+      
+      // Add animation effect
+      toggle.style.transform = 'scale(0.9)';
+      setTimeout(() => {
+        toggle.style.transform = 'scale(1)';
+      }, 200);
     });
 
-    // Rotate chevron
+    // Collapse animations
     document.querySelectorAll('[data-bs-toggle="collapse"]').forEach(el => {
       el.addEventListener('click', function() {
+        const icon = this.querySelector('i.fa-chevron-down');
         const expanded = this.getAttribute('aria-expanded') === 'true';
+        
+        // Rotate icon
+        icon.style.transition = 'transform 0.3s ease';
+        icon.style.transform = expanded ? 'rotate(0deg)' : 'rotate(180deg)';
+        
+        // Update aria-expanded
         this.setAttribute('aria-expanded', !expanded);
       });
     });
+
+    // Add animation to cards on load
+    document.addEventListener('DOMContentLoaded', function() {
+      const cards = document.querySelectorAll('.library-card');
+      cards.forEach((card, index) => {
+        card.style.animationDelay = `${index * 0.1}s`;
+      });
+
+      // Add hover effects to download buttons
+      const downloadBtns = document.querySelectorAll('.download-btn');
+      downloadBtns.forEach(btn => {
+        btn.addEventListener('mouseenter', function() {
+          this.style.transform = 'translateY(-3px) scale(1.02)';
+        });
+        
+        btn.addEventListener('mouseleave', function() {
+          this.style.transform = 'translateY(-3px)';
+        });
+      });
+
+      // File item hover effects
+      const fileItems = document.querySelectorAll('.file-item');
+      fileItems.forEach(item => {
+        item.addEventListener('mouseenter', function() {
+          const icon = this.querySelector('.file-icon');
+          icon.style.transform = 'scale(1.2)';
+        });
+        
+        item.addEventListener('mouseleave', function() {
+          const icon = this.querySelector('.file-icon');
+          icon.style.transform = 'scale(1)';
+        });
+      });
+    });
+
+    // Smooth scroll to top when page loads
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   </script>
 </body>
 </html>

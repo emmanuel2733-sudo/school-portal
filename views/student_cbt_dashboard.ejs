@@ -4,82 +4,164 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CBT Exams •LYTEBRIDGE ACADEMY</title>
+  <title>CBT Exams • LYTEBRIDGE ACADEMY</title>
 
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
 
   <style>
     :root {
-      --pink: #ff6b9d;
-      --cream: #fdf5e6;
-      --light-pink: #ffe6f0;
-      --gray: #6c757d;
-      --shadow: 0 6px 16px rgba(255, 107, 157, 0.15);
-      --bg: #fdf5e6;
-      --card-bg: #ffffff;
-      --text: #333333;
-      --border: #ffe0e9;
-      --radius: 16px;
+      --primary-pink: #ec4899;
+      --primary-pink-dark: #db2777;
+      --primary-pink-light: #fce7f3;
+      --primary-pink-lighter: #fdf2f8;
+      --accent-purple: #8b5cf6;
+      --accent-blue: #6366f1;
+      --accent-teal: #14b8a6;
+      --accent-emerald: #10b981;
+      --accent-amber: #f59e0b;
+      --accent-red: #ef4444;
+      --accent-yellow: #fbbf24;
+      --text-primary: #1f2937;
+      --text-secondary: #6b7280;
+      --bg-primary: #ffffff;
+      --bg-secondary: #f9fafb;
+      --bg-tertiary: #f3f4f6;
+      --border-light: #e5e7eb;
+      --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.05);
+      --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
+      --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+      --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+      --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+      --shadow-2xl: 0 25px 50px -12px rgba(236, 72, 153, 0.25);
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 16px;
+      --radius-xl: 20px;
+      --radius-2xl: 24px;
+      --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
     [data-theme="dark"] {
-      --pink: #ff8ab3;
-      --light-pink: #2d1b3a;
-      --gray: #b0b0b0;
-      --shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
-      --bg: #121212;
-      --card-bg: #1e1e1e;
-      --text: #e0e0e0;
-      --border: #333333;
+      --primary-pink: #f472b6;
+      --primary-pink-dark: #db2777;
+      --primary-pink-light: #2d1b3a;
+      --primary-pink-lighter: #1a1125;
+      --accent-purple: #a78bfa;
+      --accent-blue: #818cf8;
+      --accent-teal: #2dd4bf;
+      --accent-emerald: #34d399;
+      --accent-amber: #fbbf24;
+      --accent-red: #f87171;
+      --accent-yellow: #fbbf24;
+      --text-primary: #f9fafb;
+      --text-secondary: #d1d5db;
+      --bg-primary: #111827;
+      --bg-secondary: #1f2937;
+      --bg-tertiary: #374151;
+      --border-light: #4b5563;
+      --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+      --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4);
+      --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.4);
+      --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.4);
+      --shadow-2xl: 0 25px 50px -12px rgba(244, 114, 182, 0.2);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
     }
 
     body {
-      font-family: 'Poppins', sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      transition: 0.3s;
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--primary-pink-lighter) 100%);
+      color: var(--text-primary);
+      min-height: 100vh;
+      transition: var(--transition);
+      line-height: 1.6;
     }
 
-    /* TOP BAR */
+    /* Top Bar Redesign */
     .top-bar {
       position: fixed;
       top: 0;
       left: 0;
       right: 0;
-      background: var(--card-bg);
-      padding: 1.2rem 1.5rem;
-      box-shadow: var(--shadow);
-      z-index: 1000;
+      background: linear-gradient(135deg, var(--bg-primary) 0%, rgba(255, 255, 255, 0.98) 100%);
+      backdrop-filter: blur(10px);
+      padding: 1.2rem 2rem;
+      box-shadow: var(--shadow-lg);
+      z-index: 1030;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      border-bottom: 1px solid var(--border);
+      border-bottom: none;
+      transition: var(--transition);
     }
 
-    .school-name {
-      font-size: 1.8rem;
-      font-weight: 800;
-      background: linear-gradient(90deg, var(--pink), #ff8ab3);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
+    [data-theme="dark"] .top-bar {
+      background: linear-gradient(135deg, var(--bg-primary) 0%, rgba(17, 24, 39, 0.98) 100%);
     }
 
-    .top-controls {
+    .top-bar::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--primary-pink) 0%, var(--accent-purple) 100%);
+    }
+
+    .school-brand {
       display: flex;
       align-items: center;
       gap: 16px;
     }
 
+    .school-logo {
+      width: 45px;
+      height: 45px;
+      background: linear-gradient(135deg, var(--primary-pink) 0%, var(--accent-purple) 100%);
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 800;
+      font-size: 1.3rem;
+      box-shadow: var(--shadow-lg);
+    }
+
+    .school-name {
+      font-size: 1.7rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, var(--primary-pink) 0%, var(--accent-purple) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      letter-spacing: -0.5px;
+    }
+
+    .top-controls {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    /* Theme Toggle */
     .theme-toggle {
-      background: var(--card-bg);
-      border: 2px solid var(--border);
+      background: var(--bg-tertiary);
+      border: 2px solid var(--border-light);
       border-radius: 50px;
-      width: 52px;
-      height: 28px;
+      width: 62px;
+      height: 32px;
       position: relative;
       cursor: pointer;
+      transition: var(--transition);
+      overflow: hidden;
     }
 
     .theme-toggle::before {
@@ -87,129 +169,555 @@
       position: absolute;
       top: 4px;
       left: 4px;
-      width: 20px;
-      height: 20px;
-      background: var(--pink);
+      width: 24px;
+      height: 24px;
+      background: linear-gradient(135deg, var(--primary-pink) 0%, var(--accent-purple) 100%);
       border-radius: 50%;
-      transition: 0.3s;
+      transition: var(--transition);
+      z-index: 2;
+    }
+
+    .theme-toggle::after {
+      content: '\f185';
+      font-family: 'Font Awesome 6 Free';
+      font-weight: 900;
+      position: absolute;
+      top: 50%;
+      left: 8px;
+      transform: translateY(-50%);
+      color: var(--primary-pink);
+      font-size: 0.9rem;
+      transition: var(--transition);
+      z-index: 1;
+    }
+
+    [data-theme="dark"] .theme-toggle::after {
+      content: '\f186';
+      left: 32px;
+      color: var(--accent-amber);
     }
 
     [data-theme="dark"] .theme-toggle::before {
-      transform: translateX(24px);
+      transform: translateX(30px);
     }
 
-    .btn-back,
-    .btn-logout {
-      padding: 10px 18px;
+    /* Navigation Buttons */
+    .nav-btn {
+      padding: 10px 22px;
       border-radius: 50px;
       font-weight: 600;
       text-decoration: none;
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 10px;
+      transition: var(--transition);
+      font-size: 0.95rem;
     }
 
     .btn-back {
-      border: 2px solid var(--pink);
-      color: var(--text);
       background: transparent;
+      color: var(--text-primary);
+      border: 2px solid var(--border-light);
+      transition: var(--transition);
     }
 
     .btn-back:hover {
-      background: var(--pink);
+      background: var(--primary-pink);
       color: white;
+      border-color: var(--primary-pink);
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-lg);
     }
 
     .btn-logout {
-      background: var(--pink);
+      background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
       color: white;
-      box-shadow: var(--shadow);
+      box-shadow: var(--shadow-md);
+      border: none;
+      position: relative;
+      overflow: hidden;
     }
 
-    /* MAIN CONTENT */
+    .btn-logout::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+      opacity: 0;
+      transition: var(--transition);
+    }
+
+    .btn-logout:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-xl);
+    }
+
+    .btn-logout:hover::before {
+      opacity: 1;
+    }
+
+    .btn-logout i {
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Main Content */
     .main-content {
       margin-top: 100px;
-      padding: 20px;
-      max-width: 1100px;
+      padding: 40px 20px;
+      max-width: 1200px;
       margin-left: auto;
       margin-right: auto;
     }
 
-    .page-title {
+    /* Page Header */
+    .page-header {
       text-align: center;
-      font-size: 2.4rem;
+      margin-bottom: 50px;
+      position: relative;
+    }
+
+    .page-title {
+      font-size: 3.2rem;
       font-weight: 800;
-      margin-bottom: 40px;
-      background: linear-gradient(90deg, var(--pink), #ff8ab3);
+      background: linear-gradient(135deg, var(--primary-pink) 0%, var(--accent-purple) 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
+      margin-bottom: 16px;
+      position: relative;
+      display: inline-block;
     }
 
-    /* TABLE */
-    .cbt-table {
-      width: 100%;
-      border-collapse: separate;
-      border-spacing: 0 12px;
+    .page-title::after {
+      content: '';
+      position: absolute;
+      bottom: -10px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 80px;
+      height: 4px;
+      background: linear-gradient(90deg, var(--primary-pink) 0%, var(--accent-purple) 100%);
+      border-radius: 2px;
     }
 
-    .cbt-row {
-      background: var(--card-bg);
-      box-shadow: var(--shadow);
-      border-radius: var(--radius);
+    .page-subtitle {
+      font-size: 1.2rem;
+      color: var(--text-secondary);
+      max-width: 600px;
+      margin: 0 auto;
+      line-height: 1.6;
+    }
+
+    /* Stats Overview */
+    .stats-overview {
+      display: flex;
+      justify-content: center;
+      gap: 30px;
+      margin-bottom: 40px;
+      flex-wrap: wrap;
+    }
+
+    .stat-card {
+      background: var(--bg-primary);
+      padding: 24px 32px;
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-md);
+      border: 1px solid var(--border-light);
+      text-align: center;
+      min-width: 180px;
+      transition: var(--transition);
+    }
+
+    .stat-card:hover {
+      transform: translateY(-5px);
+      box-shadow: var(--shadow-xl);
+      border-color: var(--primary-pink-light);
+    }
+
+    .stat-number {
+      font-size: 2.8rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, var(--primary-pink) 0%, var(--accent-purple) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      line-height: 1;
+    }
+
+    .stat-label {
+      font-size: 0.95rem;
+      color: var(--text-secondary);
+      margin-top: 8px;
+    }
+
+    /* Exam Cards Grid */
+    .exams-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+      gap: 25px;
+      margin-bottom: 40px;
+    }
+
+    .exam-card {
+      background: var(--bg-primary);
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow-md);
+      overflow: hidden;
+      border: 1px solid var(--border-light);
+      transition: var(--transition);
+      position: relative;
       overflow: hidden;
     }
 
-    th {
-      text-align: left;
-      padding: 14px;
-      font-weight: 700;
-      color: var(--pink);
+    .exam-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, var(--primary-pink) 0%, var(--accent-purple) 100%);
+      transition: var(--transition);
     }
 
-    td {
-      padding: 16px;
-      font-size: 0.95rem;
+    .exam-card:hover {
+      transform: translateY(-8px);
+      box-shadow: var(--shadow-2xl);
+      border-color: var(--primary-pink-light);
     }
 
-    .badge-open {
-      background: #28a745;
-      color: #fff;
-      padding: 6px 12px;
-      border-radius: 8px;
+    .exam-card-header {
+      padding: 25px 30px;
+      position: relative;
     }
 
-    .badge-not-open {
-      background: #ffc107;
-      padding: 6px 12px;
-      border-radius: 8px;
-    }
-
-    .badge-closed {
-      background: #dc3545;
+    .exam-course-badge {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background: linear-gradient(135deg, var(--primary-pink) 0%, var(--accent-purple) 100%);
       color: white;
-      padding: 6px 12px;
-      border-radius: 8px;
-    }
-
-    .write-btn {
-      background: var(--pink);
-      color: white;
-      padding: 10px 20px;
-      border-radius: 12px;
-      text-decoration: none;
+      padding: 6px 16px;
+      border-radius: 50px;
+      font-size: 0.85rem;
       font-weight: 600;
-      box-shadow: var(--shadow);
+      box-shadow: var(--shadow-sm);
     }
 
-    .write-btn.disabled {
-      background: #aaa;
+    .exam-icon {
+      width: 60px;
+      height: 60px;
+      background: linear-gradient(135deg, var(--primary-pink) 0%, var(--accent-purple) 100%);
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 1.5rem;
+      margin-bottom: 20px;
+    }
+
+    .exam-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 8px;
+      line-height: 1.3;
+    }
+
+    .exam-details {
+      padding: 0 30px 25px;
+    }
+
+    .detail-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 14px 0;
+      border-bottom: 1px dashed var(--border-light);
+    }
+
+    .detail-label {
+      font-size: 0.95rem;
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+
+    .detail-value {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      text-align: right;
+    }
+
+    .exam-card-footer {
+      padding: 20px 30px;
+      background: var(--bg-tertiary);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-top: 1px solid var(--border-light);
+    }
+
+    /* Status Badges */
+    .status-badge {
+      padding: 8px 20px;
+      border-radius: 50px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .status-open {
+      background: linear-gradient(135deg, var(--accent-emerald) 0%, #059669 100%);
+      color: white;
+    }
+
+    .status-not-open {
+      background: linear-gradient(135deg, var(--accent-amber) 0%, #d97706 100%);
+      color: white;
+    }
+
+    .status-closed {
+      background: linear-gradient(135deg, var(--accent-red) 0%, #dc2626 100%);
+      color: white;
+    }
+
+    /* Action Buttons */
+    .action-btn {
+      padding: 10px 28px;
+      border-radius: 50px;
+      font-weight: 600;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      transition: var(--transition);
+      font-size: 0.95rem;
+      border: none;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .btn-write {
+      background: linear-gradient(135deg, var(--primary-pink) 0%, var(--accent-purple) 100%);
+      color: white;
+      box-shadow: var(--shadow-md);
+    }
+
+    .btn-write::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(135deg, var(--primary-pink-dark) 0%, var(--accent-purple) 100%);
+      opacity: 0;
+      transition: var(--transition);
+    }
+
+    .btn-write:hover {
+      transform: translateY(-3px);
+      box-shadow: var(--shadow-xl);
+    }
+
+    .btn-write:hover::before {
+      opacity: 1;
+    }
+
+    .btn-write i, .btn-write span {
+      position: relative;
+      z-index: 1;
+    }
+
+    .btn-write.disabled {
+      background: var(--text-secondary);
+      cursor: not-allowed;
+      opacity: 0.6;
       pointer-events: none;
+    }
+
+    .btn-write.disabled:hover {
+      transform: none;
+      box-shadow: var(--shadow-md);
+    }
+
+    /* Empty State */
+    .empty-state {
+      text-align: center;
+      padding: 80px 30px;
+      max-width: 600px;
+      margin: 40px auto;
+      background: var(--bg-primary);
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow-md);
+      border: 1px solid var(--border-light);
+    }
+
+    .empty-state-icon {
+      font-size: 5rem;
+      color: var(--primary-pink);
+      margin-bottom: 25px;
+      opacity: 0.5;
+    }
+
+    .empty-state h3 {
+      font-size: 1.8rem;
+      font-weight: 700;
+      margin-bottom: 15px;
+      color: var(--text-primary);
+    }
+
+    .empty-state p {
+      font-size: 1.1rem;
+      color: var(--text-secondary);
+      margin-bottom: 30px;
+    }
+
+    /* Animation Classes */
+    .animate-fade-in {
+      animation: fadeInUp 0.6s ease-out forwards;
+    }
+
+    .animate-delay-1 {
+      animation-delay: 0.1s;
+    }
+
+    .animate-delay-2 {
+      animation-delay: 0.2s;
+    }
+
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Timer Badge */
+    .timer-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      background: var(--primary-pink-lighter);
+      border: 2px solid var(--primary-pink-light);
+      border-radius: var(--radius-md);
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--primary-pink);
+      margin-top: 8px;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 1200px) {
+      .exams-grid {
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      }
+    }
+
+    @media (max-width: 992px) {
+      .top-bar {
+        padding: 1rem 1.5rem;
+        flex-direction: column;
+        gap: 20px;
+      }
+
+      .school-name {
+        font-size: 1.5rem;
+      }
+
+      .page-title {
+        font-size: 2.5rem;
+      }
+
+      .main-content {
+        margin-top: 140px;
+      }
+
+      .stats-overview {
+        gap: 20px;
+      }
+
+      .stat-card {
+        min-width: 150px;
+        padding: 20px;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .exams-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .exam-card {
+        max-width: 500px;
+        margin: 0 auto;
+      }
+
+      .exam-card-footer {
+        flex-direction: column;
+        gap: 20px;
+        align-items: flex-start;
+      }
+
+      .action-btn {
+        width: 100%;
+        justify-content: center;
+      }
+
+      .page-title {
+        font-size: 2rem;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .top-controls {
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+
+      .nav-btn {
+        padding: 8px 16px;
+        font-size: 0.9rem;
+      }
+
+      .main-content {
+        padding: 30px 15px;
+      }
+
+      .page-title {
+        font-size: 1.8rem;
+      }
+
+      .exam-card-header {
+        padding: 20px;
+      }
+
+      .exam-details {
+        padding: 0 20px 20px;
+      }
+
+      .exam-card-footer {
+        padding: 20px;
+      }
     }
   </style>
 </head>
 
 <body>
 
+<<<<<<< HEAD
   <!-- TOP BAR -->
   <div class="top-bar">
     <div class="school-name">LYTEBRIDGE ACADEMY</div>
@@ -218,94 +726,305 @@
       <button id="theme-toggle" class="theme-toggle"></button>
       <a href="/dashboard" class="btn-back"><i class="fas fa-arrow-left"></i> Back to Dashboard</a>
       <!-- <a href="/logout" class="btn-logout">Logout</a> -->
+=======
+  <!-- Top Navigation Bar -->
+  <div class="top-bar animate-fade-in">
+    <div class="school-brand">
+      <div class="school-logo">LA</div>
+      <div class="school-name">LA-VOGUE BRITISH INTERNATIONAL SCHOOL</div>
+    </div>
+    <div class="top-controls">
+      <button class="theme-toggle" id="theme-toggle" aria-label="Toggle theme"></button>
+      <a href="/dashboard" class="nav-btn btn-back">
+        <i class="fas fa-arrow-left"></i>
+        Back to Dashboard
+      </a>
+      <a href="/logout" class="nav-btn btn-logout">
+        <i class="fas fa-power-off"></i>
+        Logout
+      </a>
+>>>>>>> 7e6ee669c33cc747cf15c7ca873c43df3af5f769
     </div>
   </div>
 
-  <!-- MAIN CONTENT -->
+  <!-- Main Content -->
   <div class="main-content">
-    <h1 class="page-title">Available CBT Exams</h1>
+    <!-- Page Header -->
+    <div class="page-header animate-fade-in">
+      <h1 class="page-title">CBT Exams</h1>
+      <p class="page-subtitle">Complete your Computer-Based Tests online. Track your progress and submit before deadlines.</p>
+    </div>
 
-    <% if (exams.length === 0) { %>
-      <div class="text-center py-5 text-muted">
-        <i class="fas fa-clipboard-list fa-4x mb-4 opacity-50"></i>
-        <h3>No CBT exams available.</h3>
+    <!-- Statistics Overview -->
+    <% if (exams.length > 0) { 
+      let openExams = 0;
+      let upcomingExams = 0;
+      let closedExams = 0;
+      
+      exams.forEach(ex => {
+        let now = Date.now();
+        let start = new Date(ex.start_time).getTime();
+        let end = new Date(ex.end_time).getTime();
+        
+        if (now < start) upcomingExams++;
+        else if (now >= start && now <= end) openExams++;
+        else closedExams++;
+      });
+    %>
+    <div class="stats-overview animate-fade-in animate-delay-1">
+      <div class="stat-card">
+        <div class="stat-number"><%= exams.length %></div>
+        <div class="stat-label">Total Exams</div>
       </div>
-    <% } else { %>
-
-      <table class="cbt-table">
-        <thead>
-          <tr>
-            <th>S/N</th>
-            <th>Course</th>
-            <th>Exam Title</th>
-            <th>Opens</th>
-            <th>Closes</th>
-            <th>Status</th>
-            <th></th>
-          </tr>
-        </thead>
-
-        <tbody>
-          <% exams.forEach((ex, i) => { 
-              let now = Date.now();
-              let start = new Date(ex.start_time).getTime();
-              let end = new Date(ex.end_time).getTime();
-
-              let status = "";
-              let canWrite = false;
-
-              if (now < start) status = "Not Open";
-              else if (now >= start && now <= end) { status = "Open"; canWrite = true; }
-              else status = "Closed";
-          %>
-
-            <tr class="cbt-row">
-              <td><%= i + 1 %></td>
-              <td><%= ex.course_name %></td>
-              <td><%= ex.title %></td>
-              <td><%= ex.start_time %></td>
-              <td><%= ex.end_time %></td>
-
-              <td>
-                <% if (status === "Open") { %>
-                  <span class="badge-open">Open</span>
-                <% } else if (status === "Not Open") { %>
-                  <span class="badge-not-open">Not Open</span>
-                <% } else { %>
-                  <span class="badge-closed">Closed</span>
-                <% } %>
-              </td>
-
-              <td>
-                <% if (canWrite) { %>
-                  <a href="/student/cbt/<%= ex.id %>/start" class="write-btn">Write</a>
-                <% } else { %>
-                  <a class="write-btn disabled">Write</a>
-                <% } %>
-              </td>
-            </tr>
-
-          <% }) %>
-        </tbody>
-      </table>
-
+      <div class="stat-card">
+        <div class="stat-number"><%= openExams %></div>
+        <div class="stat-label">Open Now</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number"><%= upcomingExams %></div>
+        <div class="stat-label">Upcoming</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number"><%= closedExams %></div>
+        <div class="stat-label">Closed</div>
+      </div>
+    </div>
     <% } %>
 
+    <!-- Exams Grid -->
+    <% if (exams.length === 0) { %>
+      <div class="empty-state animate-fade-in">
+        <i class="fas fa-clipboard-list empty-state-icon"></i>
+        <h3>No CBT Exams Available</h3>
+        <p>There are currently no Computer-Based Tests scheduled for you. Please check back later or contact your teacher.</p>
+        <a href="/dashboard" class="action-btn btn-write" style="text-decoration: none;">
+          <i class="fas fa-arrow-left"></i>
+          Return to Dashboard
+        </a>
+      </div>
+    <% } else { %>
+      <div class="exams-grid">
+        <% exams.forEach((ex, i) => { 
+            let now = Date.now();
+            let start = new Date(ex.start_time).getTime();
+            let end = new Date(ex.end_time).getTime();
+            
+            let status = "";
+            let canWrite = false;
+            let timeRemaining = "";
+            
+            if (now < start) {
+              status = "Not Open";
+              let diff = start - now;
+              let hours = Math.floor(diff / (1000 * 60 * 60));
+              timeRemaining = `Opens in ${hours}h`;
+            } else if (now >= start && now <= end) {
+              status = "Open";
+              canWrite = true;
+              let diff = end - now;
+              let hours = Math.floor(diff / (1000 * 60 * 60));
+              let minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+              timeRemaining = `${hours}h ${minutes}m remaining`;
+            } else {
+              status = "Closed";
+              timeRemaining = "Exam period ended";
+            }
+        %>
+          <div class="exam-card animate-fade-in <%= i === 0 ? '' : 'animate-delay-' + ((i % 3) + 1) %>">
+            <div class="exam-card-header">
+              <div class="exam-course-badge"><%= ex.course_name %></div>
+              <div class="exam-icon">
+                <i class="fas fa-laptop-code"></i>
+              </div>
+              <h3 class="exam-title"><%= ex.title %></h3>
+              <div class="timer-badge">
+                <i class="fas fa-clock"></i>
+                <%= timeRemaining %>
+              </div>
+            </div>
+            
+            <div class="exam-details">
+              <div class="detail-row">
+                <span class="detail-label">Exam ID:</span>
+                <span class="detail-value">#<%= ex.id %></span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label">Opens:</span>
+                <span class="detail-value">
+                  <i class="fas fa-calendar-alt me-1" style="color: var(--accent-emerald);"></i>
+                  <%= new Date(ex.start_time).toLocaleString('en-US', {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                  }) %>
+                </span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label">Closes:</span>
+                <span class="detail-value">
+                  <i class="fas fa-calendar-times me-1" style="color: var(--accent-red);"></i>
+                  <%= new Date(ex.end_time).toLocaleString('en-US', {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                  }) %>
+                </span>
+              </div>
+              <div class="detail-row" style="border-bottom: none;">
+                <span class="detail-label">Duration:</span>
+                <span class="detail-value">
+                  <% 
+                    let durationMs = new Date(ex.end_time) - new Date(ex.start_time);
+                    let durationHours = Math.floor(durationMs / (1000 * 60 * 60));
+                    let durationMinutes = Math.floor((durationMs % (1000 * 60 * 60)) / (1000 * 60));
+                  %>
+                  <%= durationHours %>h <%= durationMinutes %>m
+                </span>
+              </div>
+            </div>
+            
+            <div class="exam-card-footer">
+              <div class="status-container">
+                <% if (status === "Open") { %>
+                  <span class="status-badge status-open">
+                    <i class="fas fa-check-circle"></i>
+                    Open for Attempt
+                  </span>
+                <% } else if (status === "Not Open") { %>
+                  <span class="status-badge status-not-open">
+                    <i class="fas fa-clock"></i>
+                    Not Open Yet
+                  </span>
+                <% } else { %>
+                  <span class="status-badge status-closed">
+                    <i class="fas fa-times-circle"></i>
+                    Closed
+                  </span>
+                <% } %>
+              </div>
+              
+              <div class="action-container">
+                <% if (canWrite) { %>
+                  <a href="/student/cbt/<%= ex.id %>/start" class="action-btn btn-write">
+                    <i class="fas fa-pen"></i>
+                    Start Exam
+                  </a>
+                <% } else { %>
+                  <span class="action-btn btn-write disabled">
+                    <i class="fas fa-pen"></i>
+                    Start Exam
+                  </span>
+                <% } %>
+              </div>
+            </div>
+          </div>
+        <% }) %>
+      </div>
+    <% } %>
+
+    <!-- Footer Note -->
+    <% if (exams.length > 0) { %>
+      <div class="text-center mt-5 mb-3" style="color: var(--text-secondary); font-size: 0.95rem;">
+        <i class="fas fa-info-circle me-2" style="color: var(--primary-pink);"></i>
+        Please ensure you have a stable internet connection before starting any exam. Exams cannot be paused once started.
+      </div>
+    <% } %>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
   <script>
-    // Dark/Light Mode Toggle
-    const html = document.documentElement;
+    // Theme Toggle
     const toggle = document.getElementById('theme-toggle');
-    html.setAttribute('data-theme', localStorage.getItem('theme') || 'light');
+    const html = document.documentElement;
+    const savedTheme = localStorage.getItem('theme') || 'light';
+    
+    // Apply saved theme
+    html.setAttribute('data-theme', savedTheme);
 
     toggle.addEventListener('click', () => {
-      const newTheme = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+      const currentTheme = html.getAttribute('data-theme');
+      const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+      
+      // Update theme
       html.setAttribute('data-theme', newTheme);
       localStorage.setItem('theme', newTheme);
+      
+      // Add animation effect
+      toggle.style.transform = 'scale(0.9)';
+      setTimeout(() => {
+        toggle.style.transform = 'scale(1)';
+      }, 200);
     });
+
+    // Add hover effects to exam cards
+    document.addEventListener('DOMContentLoaded', function() {
+      const examCards = document.querySelectorAll('.exam-card');
+      examCards.forEach((card, index) => {
+        card.style.animationDelay = `${index * 0.1}s`;
+        
+        // Add hover effect for cards
+        card.addEventListener('mouseenter', function() {
+          this.style.zIndex = '10';
+          const icon = this.querySelector('.exam-icon');
+          if (icon) {
+            icon.style.transform = 'scale(1.1)';
+            icon.style.transition = 'transform 0.3s ease';
+          }
+        });
+        
+        card.addEventListener('mouseleave', function() {
+          this.style.zIndex = '1';
+          const icon = this.querySelector('.exam-icon');
+          if (icon) {
+            icon.style.transform = 'scale(1)';
+          }
+        });
+      });
+
+      // Add click feedback to action buttons
+      const actionBtns = document.querySelectorAll('.action-btn:not(.disabled)');
+      actionBtns.forEach(btn => {
+        btn.addEventListener('mousedown', function() {
+          this.style.transform = 'translateY(-1px) scale(0.98)';
+        });
+        
+        btn.addEventListener('mouseup', function() {
+          this.style.transform = 'translateY(-3px)';
+        });
+        
+        btn.addEventListener('mouseleave', function() {
+          this.style.transform = 'translateY(0)';
+        });
+      });
+
+      // Update timers every minute
+      function updateTimers() {
+        const timerBadges = document.querySelectorAll('.timer-badge');
+        timerBadges.forEach(badge => {
+          // This would need server-side data to calculate accurately
+          // For now, we'll just update the display
+          const text = badge.textContent;
+          if (text.includes('remaining')) {
+            // Simple animation to indicate update
+            badge.style.transform = 'scale(1.05)';
+            setTimeout(() => {
+              badge.style.transform = 'scale(1)';
+            }, 300);
+          }
+        });
+      }
+
+      // Update timers every minute (60000ms)
+      setInterval(updateTimers, 60000);
+    });
+
+    // Smooth scroll to top when page loads
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   </script>
 
 </body>
