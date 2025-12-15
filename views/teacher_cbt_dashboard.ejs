@@ -9,36 +9,53 @@
     body {
         background:#f1f5f9;
         font-family: 'Segoe UI', sans-serif;
-        padding: 30px;
+        padding: 0;
+        margin: 0;
     }
 
-    .dashboard-container {
-        max-width: 1300px;
-        margin: auto;
-        position: relative;
-    }
-
-    /* TOP RIGHT BACK BUTTON */
-    .back-nav-btn {
-        position: absolute;
+    /* NAV HEADER */
+    .nav-header {
+        width: 97%;
+        background: white;
+        padding: 20px 30px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        border-bottom: 1px solid #e2e8f0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        position: sticky;
         top: 0;
-        right: 0;
+        z-index: 50;
+    }
+
+    .nav-title {
+        font-size: 1.8rem;
+        font-weight: 800;
+        color: #1e293b;
+    }
+
+    .nav-back-btn {
         background: #6366f1;
         color: white;
-        width: 55px;
-        height: 55px;
+        width: 50px;
+        height: 50px;
         border-radius: 50%;
         display: flex;
         justify-content: center;
         align-items: center;
-        font-size: 1.4rem;
+        font-size: 1.3rem;
         text-decoration: none;
         box-shadow: 0 5px 15px rgba(99,102,241,0.3);
         transition: 0.25s;
     }
-    .back-nav-btn:hover {
+    .nav-back-btn:hover {
         background:#4f46e5;
-        transform: scale(1.15);
+        transform: scale(1.12);
+    }
+
+    .dashboard-container {
+        max-width: 1300px;
+        margin: 30px auto;
     }
 
     .box {
@@ -81,7 +98,6 @@
         color:#334155;
     }
 
-    /* BADGES */
     .badge {
         padding:6px 12px;
         border-radius:6px;
@@ -93,7 +109,6 @@
     .published { background:#10b981; }
     .closed { background:#6b7280; }
 
-    /* ACTION BUTTON */
     .btn-actions {
         background:#6366f1;
         color:white;
@@ -113,7 +128,6 @@
         background:#4f46e5;
     }
 
-    /* DROPDOWN MENU */
     .dropdown-menu {
         display:none;
         position:absolute;
@@ -146,16 +160,15 @@
     .delete-item:hover {
         background:#ffe4e6 !important;
     }
+
 </style>
 
 <script>
     function toggleMenu(id) {
         const menu = document.getElementById("menu-" + id);
 
-        // Close all menus first
         document.querySelectorAll(".dropdown-menu").forEach(m => m.style.display = "none");
 
-        // Toggle selected
         menu.style.display = (menu.style.display === "block") ? "none" : "block";
     }
 
@@ -171,12 +184,16 @@
 
 <body>
 
-<div class="dashboard-container">
+<!-- NAV HEADER -->
+<div class="nav-header">
+    <div class="nav-title">CBT</div>
 
-    <!-- TOP RIGHT BACK BUTTON -->
-    <a href="/dashboard" class="back-nav-btn">
+    <a href="/dashboard" class="nav-back-btn" title="Back">
         <i class="fas fa-arrow-left"></i>
     </a>
+</div>
+
+<div class="dashboard-container">
 
     <div class="box">
 

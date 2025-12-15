@@ -127,9 +127,122 @@
       border-radius: var(--r); font-size: 1.25rem; font-weight: 700; color: var(--p);
       margin: 20px 0; border: 1px solid var(--l);
     }
+    /* ===== NAV HEADER (LYTEBRIDGE STYLE) ===== */
+.top-bar {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  background: var(--card-bg, #ffffff);
+  padding: 1.2rem 1.5rem;
+  box-shadow: 0 6px 16px rgba(255, 107, 157, 0.15);
+  border-bottom: 1px solid #ffe0e9;
+  z-index: 1030;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.school-name {
+  font-size: 1.8rem;
+  font-weight: 800;
+  background: linear-gradient(90deg, #ff6b9d, #ff8ab3);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.top-controls {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+/* Dark mode toggle (slider) */
+.theme-toggle {
+  width: 52px;
+  height: 28px;
+  border-radius: 50px;
+  border: 2px solid #ffe0e9;
+  background: var(--card-bg, #ffffff);
+  position: relative;
+  cursor: pointer;
+}
+
+.theme-toggle::before {
+  content: '';
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  width: 20px;
+  height: 20px;
+  background: #ff6b9d;
+  border-radius: 50%;
+  transition: transform 0.3s ease;
+}
+
+[data-theme="dark"] .theme-toggle::before {
+  transform: translateX(24px);
+}
+
+/* Buttons */
+.back-btn,
+.logout-btn {
+  padding: 10px 18px;
+  border-radius: 50px;
+  font-weight: 600;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: 0.3s ease;
+}
+
+.back-btn {
+  border: 2px solid #ff6b9d;
+  color: var(--text, #333);
+}
+
+.back-btn:hover {
+  background: #ff6b9d;
+  color: #fff;
+}
+
+.logout-btn {
+  background: #ff6b9d;
+  color: #fff;
+  box-shadow: 0 6px 16px rgba(255, 107, 157, 0.3);
+}
+
+.logout-btn:hover {
+  background: #e55a87;
+}
+.main-content,
+.container {
+  margin-top: 100px;
+}
+
+
   </style>
 </head>
 <body>
+  <!-- TOP NAV BAR -->
+<div class="top-bar">
+  <div class="school-name">LYTEBRIDGE ACADEMY</div>
+
+  <div class="top-controls">
+    <!-- Dark Mode Toggle -->
+    <button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark mode"></button>
+
+    <!-- Back Button -->
+    <a href="/dashboard" class="back-btn">
+      <i class="fas fa-arrow-left"></i> Back
+    </a>
+
+    <!-- Logout (optional) -->
+    <a href="/logout" class="logout-btn">
+      <i class="fas fa-sign-out-alt"></i> Logout
+    </a>
+  </div>
+</div>
+
   <div class="container">
 
     <div class="top-bar">
@@ -139,8 +252,8 @@
       </div>
       <div class="top-controls">
         <button class="theme-toggle" id="theme-toggle">Moon</button>
-        <a href="/dashboard" class="back-btn">Back </a>
-        <a href="/logout" class="logout-btn">Logout</a>
+        <a href="/dashboard" class="back-btn">Back to Dashboard </a>
+        <!-- <a href="/logout" class="logout-btn">Logout</a> -->
       </div>
     </div>
 
@@ -245,6 +358,21 @@
 
     <% } %>
   </div>
+<script>
+  const toggle = document.getElementById('theme-toggle');
+  const html = document.documentElement;
+
+  const savedTheme = localStorage.getItem('theme') || 'light';
+  html.setAttribute('data-theme', savedTheme);
+
+  toggle.addEventListener('click', () => {
+    const next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+    html.setAttribute('data-theme', next);
+    localStorage.setItem('theme', next);
+  });
+</script>
+
+
 
   <script>
     const toggle = document.getElementById('theme-toggle');

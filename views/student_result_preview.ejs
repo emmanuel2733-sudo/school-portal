@@ -1,0 +1,46 @@
+<div class="container mt-5">
+  <h3 class="text-center">
+    <%= session %> • <%= term.toUpperCase() %> TERM RESULT
+  </h3>
+
+  <!-- STUDENT INFO -->
+  <table class="table table-bordered mt-4">
+    <tr><th>Name</th><td><%= result.student_name %></td></tr>
+    <tr><th>Class</th><td><%= result.class_name %></td></tr>
+    <tr><th>Average</th><td><%= result.average %></td></tr>
+    <tr><th>Position</th><td><%= result.position %></td></tr>
+  </table>
+
+  <!-- SUBJECT TABLE -->
+  <table class="table table-striped">
+    <thead>
+      <tr>
+        <th>Subject</th>
+        <th>CA</th>
+        <th>Exam</th>
+        <th>Total</th>
+        <th>Grade</th>
+        <th>Remark</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% result.subjects.forEach(s => { %>
+        <tr>
+          <td><%= s.subject %></td>
+          <td><%= s.ca %></td>
+          <td><%= s.exam %></td>
+          <td><%= s.total %></td>
+          <td><%= s.grade %></td>
+          <td><%= s.remark %></td>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table>
+
+  <div class="text-center mt-4">
+    <a href="/student/results/pdf?session=<%= session %>&term=<%= term %>"
+       class="btn btn-success">
+      Download PDF
+    </a>
+  </div>
+</div>

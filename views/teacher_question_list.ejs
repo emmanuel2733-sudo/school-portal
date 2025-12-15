@@ -10,6 +10,30 @@
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
 
   <style>
+
+    /* FULL LEFT OVERRIDE - FIXES BOOTSTRAP FLEX CENTERING */
+.table-row-card,
+.table-row-card * ,
+.table-cell,
+.table-cell *,
+.option-column,
+.option-item,
+.question-text {
+    text-align: left !important;
+    justify-content: flex-start !important;
+    align-items: flex-start !important;
+}
+
+    .table-header,
+.table-row-card,
+.table-body,
+.table-cell,
+.option-item,
+.question-text {
+  text-align: left !important;
+  justify-content: flex-start !important;
+}
+
     :root {
       --primary: #6366f1;
       --success: #10b981;
@@ -18,6 +42,48 @@
     }
 
     * { box-sizing: border-box; }
+
+    /* TOP NAV */
+    .top-nav {
+      width: 100%;
+      background: white;
+      padding: 18px 25px;
+      border-bottom: 1px solid #e2e8f0;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.05);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+
+    .nav-title {
+      font-size: 1.8rem;
+      font-weight: 800;
+      color: #1e293b;
+    }
+
+    .nav-back-btn {
+      background: var(--primary);
+      color: white;
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 1.4rem;
+      text-decoration: none;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.15);
+      transition: .2s;
+    }
+
+    .nav-back-btn:hover {
+      background: #4f46e5;
+      transform: scale(1.05);
+    }
+
 
     body {
       background: #f1f5f9;
@@ -32,8 +98,40 @@
   align-items: center;
   flex-direction: row-reverse;   /* ← this flips both sides */
   margin: 20px auto;
-  max-width: 1300px;
+  max-width: 95%;
   padding: 0 20px;
+}
+/* EXPAND WIDTH */
+.header-actions,
+.header-section,
+.table-header,
+.table-body,
+.success-alert {
+  max-width: 95% !important;
+}
+
+/* ALIGN EVERYTHING LEFT */
+.table-header,
+.table-row-card,
+.table-body,
+.table-cell,
+.option-item,
+.question-text {
+  text-align: left !important;
+  justify-content: flex-start !important;
+}
+
+/* WIDER GRID */
+.table-header {
+  grid-template-columns: 0.6fr 4fr 2.5fr 1fr 1fr 1fr !important;
+}
+.table-row-card {
+  grid-template-columns: 0.6fr 4fr 2.5fr 1fr 1fr 1fr !important;
+}
+
+/* BIGGER IMAGE */
+img.question-img {
+  max-width: 150px !important;
 }
 
 
@@ -67,7 +165,7 @@
 
     /* SUCCESS ALERT */
     .success-alert {
-      max-width: 1300px;
+        max-width: 95%;
       margin: 10px auto 0;
       padding: 15px 20px;
       background: #d1fae5;
@@ -79,7 +177,7 @@
 
     /* HEADER SECTION */
     .header-section {
-      max-width: 1300px;
+        max-width: 95%;
       margin: 20px auto;
       background: white;
       padding: 25px 30px;
@@ -92,7 +190,7 @@
 
     /* Table header */
     .table-header {
-      max-width: 1300px;
+        max-width: 95%;
       margin: 0 auto;
       display: grid;
       grid-template-columns: 0.6fr 3fr 2fr 1fr 1fr 1fr; /* first column small for checkbox/number */
@@ -120,7 +218,7 @@
 
     /* Row cards */
     .table-body {
-      max-width: 1300px;
+      max-width: 95%;
       margin: 0 auto;
       display: flex;
       flex-direction: column;
@@ -138,6 +236,7 @@
       border-radius: 10px;
       border: 1px solid #e2e8f0;
       transition: .3s;
+      text-align: left;
       position: relative;
     }
     .table-row-card:hover {
@@ -145,7 +244,7 @@
       box-shadow: 0 8px 20px rgba(0,0,0,0.12);
     }
 
-    .table-cell { color: #334155; font-weight: 500; display:flex; align-items:center; gap:8px; }
+    .table-cell { color: #334155; font-weight: 500; display:flex; align-items:center; gap:8px; text-align: left;}
     .question-text { font-weight: 700; color: #1e293b; }
 
     .correct-badge {
@@ -160,7 +259,7 @@
 
     img.question-img {
       width: 100%;
-      max-width: 110px;
+       max-width: 95%;
       border-radius: 8px;
       border: 1px solid #e2e8f0;
     }
@@ -176,7 +275,7 @@
       border: none;
       cursor: pointer;
       font-weight: 600;
-      display:flex; justify-content:space-between; align-items:center;
+      display:flex; justify-content:flex-start; align-items:flex-start;
     }
 .option-column {
   display: flex;
@@ -210,7 +309,7 @@
     }
     .bulk-modal {
       width: 100%;
-      max-width: 620px;
+       max-width: 95%;
       background: white;
       border-radius: 12px;
       padding: 20px;
@@ -230,6 +329,7 @@
       .table-row-card .table-cell:nth-child(5),
       .table-header .header-cell:nth-child(5) { display:none; }
     }
+    
   </style>
 </head>
 <body>
@@ -240,15 +340,29 @@
     <i class="fas fa-check-circle"></i> Question imported successfully!
   </div>
 <% } %>
+<!-- ░░░ TOP NAV ░░░ -->
+<div class="top-nav">
+  <div class="nav-title">QUESTION LIST</div>
+
+  <a href="/teacher/question-bank" class="nav-back-btn">
+    <i class="fas fa-arrow-left"></i>
+  </a>
+</div>
 
 <!-- TOP BUTTONS -->
 <div class="header-actions">
 
-  <a href="/teacher/question-bank" class="back-nav-btn" title="Back">
+  <!-- <a href="/teacher/question-bank" class="back-nav-btn" title="Back">
     <i class="fas fa-arrow-left"></i>
-  </a>
+  </a> -->
 
   <div style="display:flex; gap:10px; align-items:center;">
+   <a href="/teacher/question-bank/<%= course_id %>/<%= class_id %>/ai-image"
+   class="btn btn-outline-primary">
+   Generate From Image
+</a>
+
+
     <% if (questions.length > 0) { %>
       <a href="/teacher/question-bank/<%= course_id %>/<%= class_id %>/ai" class="btn-bulk">
          🤖 Generate with AI
@@ -265,7 +379,7 @@
 
 <!-- HEADER -->
 <div class="header-section">
-  <h1 class="header-title">QUESTION LIST</h1>
+  <!-- <h1 class="header-title">QUESTION LIST</h1> -->
   <p class="header-subtitle">Manage questions for <%= course_name %> — <%= class_name %></p>
 </div>
 
@@ -340,6 +454,8 @@
       <span><%= i + 1 %></span>
     </div>
 
+  
+
     <!-- Question -->
     <div class="table-cell question-text"><%= q.question %></div>
 
@@ -360,10 +476,11 @@
       </span>
     </div>
 
+
     <!-- Image -->
     <div class="table-cell">
       <% if (q.image_path) { %>
-        <img src="/uploads/questions/<%= q.image_path %>" class="question-img" alt="q image">
+        <img src="/uploads/question_bank/<%= q.image_path %>" class="question-img" alt="q image">
       <% } else { %>
         <em style="color:#94a3b8;">No Image</em>
       <% } %>
@@ -377,6 +494,17 @@
         Actions <i class="fas fa-chevron-down"></i>
       </button>
     </div>
+
+    <div class="table-cell">
+  <% if (q.question_image) { %>
+    <img src="/uploads/questions/<%= q.question_image %>"
+         class="question-img"
+         alt="question image">
+  <% } else { %>
+    <em style="color:#94a3b8;">No Image</em>
+  <% } %>
+</div>
+
 
   </div>
   <% }) %>

@@ -10,6 +10,8 @@ require('dotenv').config();
 const fs = require('fs');
 const Jimp = require('jimp');
 const app = express();
+const PDFDocument = require("pdfkit");
+
 const SQLiteStore = require('connect-sqlite3')(session);
 
 // === CRITICAL: Parse JSON bodies ===
@@ -185,6 +187,27 @@ const openai = new OpenAI({
 });
 
 
+const imageStorage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        cb(null, path.join(__dirname, "public/uploads/questions"));
+    },
+    filename: (req, file, cb) => {
+        cb(null, "img_" + Date.now() + path.extname(file.originalname));
+    }
+});
+
+// const uploadQuestionImage = multer({
+//     storage: imageStorage,
+//     limits: { fileSize: 5 * 1024 * 1024 },
+//     fileFilter: (req, file, cb) => {
+//         const allowed = /jpg|jpeg|png|gif/;
+//         const ext = path.extname(file.originalname).toLowerCase();
+//         if (!allowed.test(ext)) return cb(new Error("Only JPG, PNG, GIF allowed"));
+//         cb(null, true);
+//     }
+// });
+
+
 // ======================
 // STUDENT WEBCAM SNAPSHOT UPLOADER
 // ======================
@@ -217,7 +240,23 @@ app.use('/uploads/question_bank', express.static('uploads/question_bank'));
 
 ////////////////////////////////////////////////////////////
 
+function isTermCompleted(subjects) {
+  return subjects.every(s => s.ca !== null && s.exam !== null);
+}
 
+function getTeacherComment(avg) {
+  if (avg >= 80) return "Excellent performance. Keep it up.";
+  if (avg >= 65) return "Very good effort. Aim higher.";
+  if (avg >= 50) return "Good performance. Can improve.";
+  if (avg >= 40) return "Fair result. Needs more focus.";
+  return "Poor performance. Serious improvement needed.";
+}
+
+function getPrincipalComment(avg) {
+  if (avg >= 70) return "An impressive academic result.";
+  if (avg >= 50) return "Satisfactory performance.";
+  return "Needs strong academic support.";
+}
 
 
 
@@ -4236,24 +4275,40 @@ app.get('/teacher/topics/create/:courseId', isTeacher, async (req, res) => {
 });
 });
 
-// VIEW TOPICS
+// VIEW TOPICS (FIXED)
 app.get('/teacher/topics/view/:courseId', isTeacher, async (req, res) => {
   const courseId = req.params.courseId;
-  const [course] = await query('SELECT c.name AS course_name, cl.name AS class_name FROM courses c JOIN classes cl ON c.class_id = cl.id WHERE c.id = ?', [courseId]);
-  const topics = await query('SELECT topic_name FROM topics WHERE course_id = ? ORDER BY id', [courseId]);
- res.render('teacher_view_topics', { 
-  topics: topics || [], 
-  course_name: course.course_name, 
-  class_name: course.class_name,
-  classTeacherOf: req.session.user.classTeacherOf || ''
-});
+
+  const [course] = await query(`
+    SELECT c.name AS course_name, cl.name AS class_name
+    FROM courses c
+    JOIN classes cl ON c.class_id = cl.id
+    WHERE c.id = ?
+  `, [courseId]);
+
+  const topics = await query(`
+    SELECT id, topic_name 
+    FROM topics 
+    WHERE course_id = ? 
+    ORDER BY id
+  `, [courseId]);
+
+  res.render('teacher_view_topics', { 
+    topics,
+    course_id: courseId,
+    course_name: course.course_name,
+    class_name: course.class_name,
+    classTeacherOf: req.session.user.classTeacherOf || ''
+  });
 });
 
-// SAVE TOPICS (FINAL WORKING VERSION)
+
+// SAVE TOPICS (FIXED & SAFE)
 app.post('/teacher/topics/save', isTeacher, async (req, res) => {
   try {
     const courseId = parseInt(req.body.course_id);
     const rawTopics = req.body.topics || [];
+
     const topics = rawTopics
       .map(t => t?.trim())
       .filter(t => t && t.length > 0);
@@ -4262,23 +4317,24 @@ app.post('/teacher/topics/save', isTeacher, async (req, res) => {
       return res.redirect('/teacher/topics?error=no_topics');
     }
 
-    // Delete old topics and insert new ones
+    // Delete old topics
     await query('DELETE FROM topics WHERE course_id = ?', [courseId]);
 
-    const stmt = await new Promise((resolve, reject) => {
-      db.prepare('INSERT INTO topics (course_id, topic_name) VALUES (?, ?)', (err, stmt) => {
-        if (err) reject(err);
-        else resolve(stmt);
-      });
-    });
+    // ✅ CORRECT sqlite prepare usage
+    const stmt = db.prepare(
+      'INSERT INTO topics (course_id, topic_name) VALUES (?, ?)'
+    );
 
     for (const topic of topics) {
       await new Promise((resolve, reject) => {
-        stmt.run([courseId, topic], err => err ? reject(err) : resolve());
+        stmt.run(courseId, topic, err => {
+          if (err) reject(err);
+          else resolve();
+        });
       });
     }
 
-    await new Promise((resolve) => stmt.finalize(() => resolve()));
+    stmt.finalize();
 
     res.redirect('/teacher/topics?success=topics_saved');
   } catch (err) {
@@ -4286,6 +4342,63 @@ app.post('/teacher/topics/save', isTeacher, async (req, res) => {
     res.redirect('/teacher/topics?error=save_failed');
   }
 });
+
+
+// DELETE TOPIC
+app.post('/teacher/topics/delete/:id', isTeacher, async (req, res) => {
+  try {
+    const topicId = req.params.id;
+    await query('DELETE FROM topics WHERE id = ?', [topicId]);
+    res.redirect('back');
+  } catch (err) {
+    console.error('Delete topic error:', err);
+    res.redirect('back');
+  }
+});
+
+// EDIT TOPIC FORM
+app.get('/teacher/topics/edit/:id', isTeacher, async (req, res) => {
+  const topicId = req.params.id;
+
+  const [topic] = await query(`
+    SELECT t.id, t.topic_name, c.id AS course_id,
+           c.name AS course_name, cl.name AS class_name
+    FROM topics t
+    JOIN courses c ON t.course_id = c.id
+    JOIN classes cl ON c.class_id = cl.id
+    WHERE t.id = ?
+  `, [topicId]);
+
+  if (!topic) return res.redirect('/teacher/topics');
+
+  res.render('teacher_edit_topic', {
+    topic,
+    classTeacherOf: req.session.user.classTeacherOf || ''
+  });
+});
+
+// UPDATE TOPIC
+app.post('/teacher/topics/update/:id', isTeacher, async (req, res) => {
+  try {
+    const topicId = req.params.id;
+    const topicName = req.body.topic_name.trim();
+
+    if (!topicName) {
+      return res.redirect('back');
+    }
+
+    await query(
+      'UPDATE topics SET topic_name = ? WHERE id = ?',
+      [topicName, topicId]
+    );
+
+    res.redirect('/teacher/topics');
+  } catch (err) {
+    console.error('Update topic error:', err);
+    res.redirect('back');
+  }
+});
+
 
 
 ////////////////////////////////////////////////////////////////////////
@@ -4358,6 +4471,45 @@ app.post('/teacher/e-library/upload', isTeacher, uploadDocument.single('document
       res.redirect('back');
   }
 });
+// DELETE E-LIBRARY FILE
+app.post('/teacher/e-library/delete/:id', isTeacher, async (req, res) => {
+  try {
+    const fileId = req.params.id;
+
+    // Get file info
+    const [file] = await query(
+      'SELECT filename FROM e_library_files WHERE id = ?',
+      [fileId]
+    );
+
+    if (!file) {
+      return res.redirect('/teacher/e-library');
+    }
+
+    // Delete DB record
+    await query('DELETE FROM e_library_files WHERE id = ?', [fileId]);
+
+    // Delete physical file
+    const filePath = path.join(
+      __dirname,
+      'public/uploads/e-library',
+      file.filename
+    );
+
+    if (fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath);
+    }
+
+    req.flash('success', 'File deleted successfully');
+    res.redirect('/teacher/e-library');
+
+  } catch (err) {
+    console.error('Delete file error:', err);
+    req.flash('error', 'Failed to delete file');
+    res.redirect('/teacher/e-library');
+  }
+});
+
 ////////////////////////////////////////////////////////////////////////
 
 // GET: Class Activities dashboard
@@ -6363,83 +6515,6 @@ app.post("/teacher/question-bank/:course_id/:class_id/delete", (req, res) => {
   );
 });
 
-
-// // GET - paginated question list
-// app.get("/teacher/question-bank/:course_id/:class_id/questions", (req, res) => {
-//   if (!req.session.userId || req.session.role !== "teacher") return res.redirect("/login");
-
-//   const course_id = Number(req.params.course_id);
-//   const class_id  = Number(req.params.class_id);
-
-//   const pageSize = 10; // questions per page (you can change)
-//   const currentPage = Math.max(1, Number(req.query.page) || 1);
-//   const offset = (currentPage - 1) * pageSize;
-
-//   // 1) total count
-//   db.get(
-//     `SELECT COUNT(*) AS cnt FROM question_bank WHERE course_id = ? AND class_id = ?`,
-//     [course_id, class_id],
-//     (err, row) => {
-//       if (err) {
-//         console.error("COUNT ERROR:", err);
-//         return res.send("Error loading questions");
-//       }
-//       const total = row ? row.cnt : 0;
-//       const totalPages = Math.max(1, Math.ceil(total / pageSize));
-
-//       // 2) fetch page
-//       db.all(
-//         `SELECT * FROM question_bank
-//          WHERE course_id = ? AND class_id = ?
-//          ORDER BY id DESC
-//          LIMIT ? OFFSET ?`,
-//         [course_id, class_id, pageSize, offset],
-//         (err2, questions) => {
-//           if (err2) {
-//             console.error("QUESTIONS ERROR:", err2);
-//             return res.send("Error loading questions");
-//           }
-
-//           // 3) fetch exams for the import dropdown
-//           db.all(
-//             `SELECT e.id, e.title, c.name AS class_name
-//              FROM cbt_exams e
-//              LEFT JOIN classes c ON c.id = e.class_id
-//              WHERE e.course_id = ? AND e.class_id = ?`,
-//             [course_id, class_id],
-//             (err3, exams) => {
-//               if (err3) {
-//                 console.error("EXAM ERROR:", err3);
-//                 return res.send("Error loading exams");
-//               }
-
-//               // Pass flash-like query params: import_success, deleted_count (if present)
-//               const import_success = req.query.import === "success";
-//               const deleted_count = Number(req.query.deleted || 0);
-
-//               res.render("teacher_question_list", {
-//                 questions,
-//                 exams,
-//                 course_id,
-//                 class_id,
-//                 course_name: req.query.courseName || '', // optional friendly name if you pass it
-//                 class_name: req.query.className || '',
-//                 currentPage,
-//                 totalPages,
-//                 pageSize,
-//                 total,
-//                 import_success,
-//                 deleted_count
-//               });
-//             }
-//           );
-//         }
-//       );
-//     }
-//   );
-// });
-
-// POST - bulk delete selected questions
 app.post("/teacher/question-bank/bulk-delete", (req, res) => {
   if (!req.session.userId || req.session.role !== "teacher") return res.status(403).send("Auth");
 
@@ -6464,6 +6539,341 @@ app.post("/teacher/question-bank/bulk-delete", (req, res) => {
     res.redirect(req.get('referer') ? (req.get('referer') + (req.get('referer').includes('?') ? '&' : '?') + 'deleted=' + this.changes) : '/teacher/question-bank');
   });
 });
+
+
+
+app.post('/teacher/question-bank/:course_id/:class_id/ai-image', uploadQuestionImage.single('image'),
+  async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: 'No image uploaded' });
+      }
+
+      const { count = 5 } = req.body;
+
+      // 🔹 Convert image to base64
+      const imagePath = req.file.path;
+      const imageBase64 = fs.readFileSync(imagePath, { encoding: 'base64' });
+
+      const prompt = `
+Analyze the image and generate ${count} multiple-choice questions
+based ONLY on the visible content.
+
+Return PURE JSON only. No explanation.
+
+Format:
+[
+  {
+    "question": "",
+    "optionA": "",
+    "optionB": "",
+    "optionC": "",
+    "optionD": "",
+    "correct_option": "A"
+  }
+]
+`;
+
+      // 🔹 OpenAI Vision call
+      const completion = await openai.chat.completions.create({
+        model: "gpt-4o",
+        messages: [
+          {
+            role: "user",
+            content: [
+              { type: "text", text: prompt },
+              {
+                type: "image_url",
+                image_url: {
+                  url: `data:image/jpeg;base64,${imageBase64}`
+                }
+              }
+            ]
+          }
+        ],
+        temperature: 0
+      });
+
+      let output = completion.choices[0].message.content
+        .replace(/```json/gi, "")
+        .replace(/```/g, "")
+        .trim();
+
+      const questions = JSON.parse(output);
+
+      res.json({
+        success: true,
+        image: req.file.filename,
+        questions
+      });
+
+    } catch (err) {
+  if (err.code === "insufficient_quota") {
+    return res.status(402).json({
+      error: "AI quota exhausted. Please add billing to continue."
+    });
+  }
+
+  console.error("IMAGE AI ERROR:", err);
+  res.status(500).json({ error: "Image AI generation failed" });
+}
+
+  }
+);
+
+app.post('/teacher/question-bank/:course_id/:class_id/ai-generate-image/save',(req, res) => {
+
+    if (!req.session.userId || req.session.role !== "teacher")
+        return res.status(403).json({ error: "Unauthorized" });
+
+    const teacherId = req.session.userId;
+    const { course_id, class_id } = req.params;
+    const { questions, image } = req.body;
+
+    let arr;
+    try {
+        arr = JSON.parse(questions);
+    } catch {
+        return res.status(400).json({ error: "Invalid JSON" });
+    }
+
+    const stmt = db.prepare(`
+        INSERT INTO question_bank
+        (teacher_id, course_id, class_id, question, option1, option2, option3, option4, correct_option, question_image)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `);
+
+    arr.forEach(q => {
+        stmt.run(
+            teacherId,
+            course_id,
+            class_id,
+            q.question,
+            q.optionA,
+            q.optionB,
+            q.optionC,
+            q.optionD,
+            q.correct_option,
+            image
+        );
+    });
+
+    stmt.finalize(() => {
+        res.json({ success: true, added: arr.length });
+    });
+});
+
+
+// 📸 AI IMAGE QUESTION GENERATOR PAGE
+app.get('/teacher/question-bank/:course_id/:class_id/ai-image', (req, res) => {
+  if (!req.session.userId || req.session.role !== 'teacher') {
+    return res.redirect('/login');
+  }
+
+  const { course_id, class_id } = req.params;
+
+  res.render('teacher_ai_image_generator', {
+    course_id,
+    class_id
+  });
+});
+///////////////////////////////////////////////////////////////////
+app.get("/student/results/download", isStudent, (req, res) => {
+  res.render("student_download_result", {
+    student: req.session.user
+  });
+  if (!isTermCompleted(result.subjects)) {
+  return res.status(403).send("Result not yet completed");
+}
+
+});
+app.get("/student/results/preview", isStudent, async (req, res) => {
+  const { session, term } = req.query;
+  const studentId = req.session.user.id;
+
+  // 1️⃣ Fetch term + scores
+  const result = await getStudentResult(studentId, session, term);
+
+  if (!result) {
+    return res.render("result_not_found");
+  }
+
+  res.render("student_result_preview", {
+    result,
+    session,
+    term
+  });
+});
+
+
+
+app.get("/student/results/pdf", isStudent, async (req, res) => {
+  const { session, term } = req.query;
+  const studentId = req.session.user.id;
+
+  const result = await getStudentResult(studentId, session, term);
+  if (!result) return res.send("Result not found");
+
+  const doc = new PDFDocument({ margin: 30 });
+  res.setHeader("Content-Type", "application/pdf");
+  res.setHeader("Content-Disposition", "attachment; filename=result.pdf");
+
+  doc.pipe(res);
+
+  // HEADER
+  doc.fontSize(16).text("LYTEBRIDGE ACADEMY", { align: "center" });
+  doc.moveDown();
+  doc.fontSize(12).text(`${term.toUpperCase()} TERM REPORT SHEET`, { align: "center" });
+  doc.moveDown(2);
+
+  // STUDENT INFO
+  doc.text(`Name: ${result.student_name}`);
+  doc.text(`Class: ${result.class_name}`);
+  doc.text(`Session: ${session}`);
+  doc.moveDown();
+
+  // TABLE HEADER
+  doc.text("Subject | CA | Exam | Total | Grade | Remark");
+  doc.moveDown(0.5);
+
+  result.subjects.forEach(s => {
+    doc.text(
+      `${s.subject} | ${s.ca} | ${s.exam} | ${s.total} | ${s.grade} | ${s.remark}`
+    );
+  });
+
+  doc.moveDown();
+  doc.text(`Average: ${result.average}`);
+  doc.text(`Position: ${result.position}`);
+
+  doc.end();
+});
+
+async function getAnnualResult(studentId, session) {
+  const terms = await query(`
+    SELECT t.id, t.name
+    FROM terms t
+    JOIN academic_years ay ON ay.id = t.academic_year_id
+    WHERE ay.name = ?
+  `, [session]);
+
+  let allSubjects = [];
+  let totalScore = 0;
+  let count = 0;
+
+  for (const term of terms) {
+    const termResult = await getStudentResult(studentId, session, term.name);
+    if (!termResult || !isTermCompleted(termResult.subjects)) return null;
+
+    termResult.subjects.forEach(s => {
+      totalScore += s.total;
+      count++;
+      allSubjects.push({ ...s, term: term.name });
+    });
+  }
+
+  return {
+    subjects: allSubjects,
+    average: (totalScore / count).toFixed(2)
+  };
+}
+
+const PDFDocument = require("pdfkit");
+const fs = require("fs");
+const path = require("path");
+
+app.get("/student/results/pdf", isStudent, async (req, res) => {
+  const { session, term } = req.query;
+  const studentId = req.session.user.id;
+
+  let result;
+  if (term === "annual") {
+    result = await getAnnualResult(studentId, session);
+  } else {
+    result = await getStudentResult(studentId, session, term);
+  }
+
+  if (!result || !isTermCompleted(result.subjects)) {
+    return res.status(403).send("Result not available");
+  }
+
+  const doc = new PDFDocument({ size: "A4", margin: 40 });
+  res.setHeader("Content-Type", "application/pdf");
+  res.setHeader("Content-Disposition", "attachment; filename=result.pdf");
+  doc.pipe(res);
+
+  /* ================= WATERMARK ================= */
+  const logoPath = path.join(__dirname, "public/assets/school-logo.png");
+  doc.opacity(0.08)
+     .image(logoPath, 150, 250, { width: 300 })
+     .opacity(1);
+
+  /* ================= HEADER ================= */
+  doc.image(logoPath, 40, 40, { width: 80 });
+  doc.fontSize(18).text("LYTEBRIDGE ACADEMY", 140, 45);
+  doc.fontSize(11).text("Academic Excellence & Character", 140, 70);
+  doc.moveDown(2);
+
+  doc.fontSize(14)
+     .text(`${term.toUpperCase()} TERM REPORT SHEET`, { align: "center" });
+
+  doc.moveDown();
+
+  /* ================= STUDENT INFO ================= */
+  doc.fontSize(10);
+  doc.text(`Name: ${result.student_name}`);
+  doc.text(`Class: ${result.class_name}`);
+  doc.text(`Session: ${session}`);
+  doc.moveDown();
+
+  /* ================= TABLE HEADER ================= */
+  const startX = 40;
+  let y = doc.y;
+
+  doc.font("Helvetica-Bold");
+  doc.text("Subject", startX, y);
+  doc.text("CA", 220, y);
+  doc.text("Exam", 260, y);
+  doc.text("Total", 310, y);
+  doc.text("Grade", 360, y);
+  doc.text("Remark", 410, y);
+
+  doc.font("Helvetica");
+  y += 18;
+
+  /* ================= SUBJECT ROWS ================= */
+  result.subjects.forEach(s => {
+    doc.text(s.subject, startX, y);
+    doc.text(s.ca, 220, y);
+    doc.text(s.exam, 260, y);
+    doc.text(s.total, 310, y);
+    doc.text(s.grade, 360, y);
+    doc.text(s.remark, 410, y, { width: 130 });
+    y += 16;
+  });
+
+  doc.moveDown(2);
+
+  /* ================= SUMMARY ================= */
+  doc.font("Helvetica-Bold");
+  doc.text(`Average: ${result.average}`);
+  doc.text(`Position: ${result.position || "-"}`);
+  doc.moveDown();
+
+  /* ================= COMMENTS ================= */
+  doc.font("Helvetica");
+  doc.text(`Class Teacher's Comment: ${getTeacherComment(result.average)}`);
+  doc.moveDown(0.5);
+  doc.text(`Principal's Comment: ${getPrincipalComment(result.average)}`);
+
+  /* ================= SIGNATURES ================= */
+  doc.moveDown(2);
+  doc.text("_______________________          _______________________");
+  doc.text("Class Teacher                       Principal");
+
+  doc.end();
+});
+
 
 
 

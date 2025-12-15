@@ -332,11 +332,16 @@
     }
     
     /* Show dropdown on hover - FIXED */
-    .actions-dropdown:hover .dropdown-content {
+    /* .actions-dropdown:hover .dropdown-content {
       display: block;
       animation: fadeIn 0.2s ease;
-    }
-    
+    } */
+    /* Click-open state */
+.actions-dropdown.open .dropdown-content {
+  display: block;
+  animation: fadeIn 0.2s ease;
+}
+
     @keyframes fadeIn {
       from {
         opacity: 0;
@@ -472,7 +477,7 @@
     <!-- HEADER SECTION -->
     <div class="header-section">
       <h1 class="header-title">QUESTION BANK</h1>
-      <p class="header-subtitle">Manage all your question banks in one place</p>
+      <p class="header-subtitle">Manage all your question in one place</p>
       
       <!-- ADD QUESTION BANK BUTTON -->
       <a class="btn-success-custom" href="/teacher/question-bank/add">
@@ -579,6 +584,37 @@
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script>
+document.addEventListener('DOMContentLoaded', function () {
+
+  // Toggle dropdown on button click
+  document.querySelectorAll('.dropdown-btn').forEach(btn => {
+    btn.addEventListener('click', function (e) {
+      e.stopPropagation(); // prevent document click close
+
+      const dropdown = this.closest('.actions-dropdown');
+
+      // Close all other dropdowns
+      document.querySelectorAll('.actions-dropdown').forEach(d => {
+        if (d !== dropdown) d.classList.remove('open');
+      });
+
+      // Toggle this one
+      dropdown.classList.toggle('open');
+    });
+  });
+
+  // Close dropdown when clicking outside
+  document.addEventListener('click', function () {
+    document.querySelectorAll('.actions-dropdown').forEach(d => {
+      d.classList.remove('open');
+    });
+  });
+
+});
+</script>
+
+  <!-- <script>
+
     // Add animation to rows when they appear
     document.addEventListener('DOMContentLoaded', function() {
       const rows = document.querySelectorAll('.table-row-card');
@@ -603,6 +639,8 @@
         }
       });
     });
-  </script>
+  </script> -->
+
+
 </body>
 </html>

@@ -1,0 +1,15 @@
+<form id="imageAiForm" enctype="multipart/form-data">
+    <input type="file" name="question_image" required class="form-control mb-2">
+
+    <select name="difficulty" class="form-control mb-2">
+        <option>Easy</option>
+        <option>Medium</option>
+        <option>Hard</option>
+    </select>
+
+    <input type="number" name="count" value="5" class="form-control mb-2">
+
+    <button class="btn btn-primary">Generate From Image</button>
+</form>
+
+<div id="result"></div>

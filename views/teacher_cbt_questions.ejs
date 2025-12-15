@@ -3,6 +3,8 @@
 <head>
     <title>Exam Questions</title>
     <link rel="stylesheet" href="/style.css">
+     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
 
     <!-- MathJax -->
     <script>
@@ -13,16 +15,57 @@
     <style>
         body {
             background:#f5f5f5;
-            padding:30px;
-            font-family:Arial;
+            margin:0;
+            font-family:Arial, sans-serif;
         }
 
+        /* NAV HEADER */
+        .nav-header {
+            width: 97%;
+            background: white;
+            padding: 20px 30px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 50;
+        }
+
+        .nav-title {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: #1e293b;
+        }
+
+        .nav-back-btn {
+        background: #6366f1;
+        color: white;
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 1.3rem;
+        text-decoration: none;
+        box-shadow: 0 5px 15px rgba(99,102,241,0.3);
+        transition: 0.25s;
+    }
+    .nav-back-btn:hover {
+        background:#4f46e5;
+        transform: scale(1.12);
+    }
+
+        /* PAGE CONTAINER */
         .container {
             background:white;
             padding:30px;
             border-radius:12px;
             max-width:1200px;
-            margin:auto;
+            margin:30px auto;
             box-shadow:0 4px 20px rgba(0,0,0,0.1);
         }
 
@@ -32,10 +75,18 @@
             margin-bottom:20px;
         }
 
+        .table-wrapper {
+            width: 100%;
+            overflow-x: auto;
+            overflow-y: hidden;
+        }
+
         table {
             width:100%;
             border-collapse:collapse;
             margin-top:20px;
+            table-layout: fixed;
+            word-wrap: break-word;
         }
 
         th, td {
@@ -53,7 +104,7 @@
         .question-box {
             font-size:1.1em;
             line-height:1.6em;
-            white-space:pre-wrap; /* makes long questions readable */
+            white-space:pre-wrap;
         }
 
         .options-box div {
@@ -61,20 +112,14 @@
             font-size:1.05em;
         }
 
-        img.question-img {
-            max-width:350px;
-            max-height:260px;
-            margin-top:12px;
+        img.question-img,
+        table img {
+            max-width:250px;
+            max-height:200px;
+            object-fit:contain;
             border-radius:6px;
             border:1px solid #ccc;
-        }
-
-        .btn-primary {
-            padding:10px 15px;
-            background:#007bff;
-            color:white;
-            border-radius:5px;
-            text-decoration:none;
+            margin-top:10px;
         }
 
         .btn-secondary {
@@ -84,96 +129,77 @@
             border-radius:5px;
             text-decoration:none;
         }
-        .table-wrapper {
-    width: 100%;
-    overflow-x: auto;   /* enables horizontal scrolling if content is too wide */
-    overflow-y: hidden;
-}
-
-table {
-    width: 100%;
-    border-collapse: collapse;
-    table-layout: fixed; /* prevents table from expanding beyond container */
-    word-wrap: break-word;
-}
-table img {
-    max-width: 250px;
-    max-height: 200px;
-    height: auto;
-    object-fit: contain;
-    border-radius: 6px;
-    border: 1px solid #ccc;
-}
-
 
     </style>
 </head>
 
 <body>
 
+<!-- TOP NAV HEADER -->
+<div class="nav-header">
+    <div class="nav-title">CBT Questions</div>
+
+    <a href="/teacher/cbt" class="nav-back-btn" title="Back">
+        <i class="fas fa-arrow-left"></i>
+    </a>
+</div>
+
 <div class="container">
 
     <h1>Questions – <%= exam.course_name %></h1>
 
-    <!-- <a href="/teacher/cbt/<%= examId %>/questions/add" class="btn btn-primary">
-        + Add New Question
-    </a> -->
-<div class="table-wrapper">
-    
-    <table>
-        <tr>
-            <th width="5%">S/N</th>
-            <th width="50%">Question</th>
-            <th width="27%">Options</th>
-             <th width="6%">Correct</th>
-            <th width="12%">Actions</th>
-
-        </tr>
-
-        <% questions.forEach((q, index) => { %>
+    <div class="table-wrapper">
+        <table>
             <tr>
-                <td style="text-align:center;"><%= index + 1 %></td>
-
-                <!-- QUESTION -->
-                <td class="question-box">
-                    <%= q.question %>
-
-                    <% if (q.image) { %>
-                        <br>
-                        <img src="/uploads/questions/<%= q.image %>">
-
-                    <% } %>
-                </td>
-
-                <!-- OPTIONS -->
-                <td class="options-box">
-                    <div><strong>A.</strong> <%= q.options[0] %></div>
-                    <div><strong>B.</strong> <%= q.options[1] %></div>
-                    <div><strong>C.</strong> <%= q.options[2] %></div>
-                    <div><strong>D.</strong> <%= q.options[3] %></div>
-                </td>
-
-                <!-- CORRECT -->
-    <td style="text-align:center; font-weight:bold; font-size:1.2em;">
-    <%= q.correct ? ["A","B","C","D"][q.correct - 1] : "?" %>
-</td>
-
-
-
-
-                <td style="text-align:center;">
-                    <!-- <a href="/teacher/cbt/<%= examId %>/questions/<%= q.id %>/edit">Edit</a> | -->
-                    <a href="/teacher/cbt/questions/<%= q.id %>/delete"
-                       onclick="return confirm('Delete this question?')">Delete</a>
-                </td>
+                <th width="5%">S/N</th>
+                <th width="50%">Question</th>
+                <th width="27%">Options</th>
+                <th width="6%">Correct</th>
+                <th width="12%">Actions</th>
             </tr>
-        <% }) %>
 
-    </table>
-    </div>  
+            <% questions.forEach((q, index) => { %>
+                <tr>
+                    <td style="text-align:center;"><%= index + 1 %></td>
+
+                    <!-- QUESTION -->
+                    <td class="question-box">
+                        <%= q.question %>
+
+                        <% if (q.image) { %>
+                            <br>
+                            <img src="/uploads/question_bank/<%= q.image %>">
+                        <% } %>
+                    </td>
+
+                    <!-- OPTIONS -->
+                    <td class="options-box">
+                        <div><strong>A.</strong> <%= q.options[0] %></div>
+                        <div><strong>B.</strong> <%= q.options[1] %></div>
+                        <div><strong>C.</strong> <%= q.options[2] %></div>
+                        <div><strong>D.</strong> <%= q.options[3] %></div>
+                    </td>
+
+                    <!-- CORRECT -->
+                    <td style="text-align:center; font-weight:bold; font-size:1.2em;">
+                        <%= q.correct ? ["A","B","C","D"][q.correct - 1] : "?" %>
+                    </td>
+
+                    <!-- ACTIONS -->
+                    <td style="text-align:center;">
+                        <a href="/teacher/cbt/questions/<%= q.id %>/delete"
+                           onclick="return confirm('Delete this question?')">
+                           Delete
+                        </a>
+                    </td>
+                </tr>
+            <% }) %>
+
+        </table>
+    </div>
 
     <br>
-    <a href="/teacher/cbt" class="btn btn-secondary">⬅ Back</a>
+    <a href="/teacher/cbt" class="btn-secondary">⬅ Back</a>
 
 </div>
 
