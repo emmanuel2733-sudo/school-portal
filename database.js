@@ -471,6 +471,37 @@ db.run(`
   }
 });
 
+// 🔧 ADD term_id TO term_settings (REQUIRED FOR ATTENDANCE)
+db.run(`
+  ALTER TABLE term_settings
+  ADD COLUMN term_id INTEGER
+`, err => {
+  if (err && !err.message.includes('duplicate column')) {
+    console.error('term_id column error:', err.message);
+  } else {
+    console.log('term_id column ready in term_settings');
+  }
+});
+
+// 🔧 ENSURE ONE SETTING PER CLASS PER TERM
+db.run(`
+  CREATE UNIQUE INDEX IF NOT EXISTS idx_term_settings_unique
+  ON term_settings (class_id, term_id)
+`, err => {
+  if (err) {
+    console.error('term_settings index error:', err.message);
+  } else {
+    console.log('term_settings unique index ready');
+  }
+});
+// ⚠ CLEAN OLD TERM SETTINGS (RUN ONCE)
+db.run(`DELETE FROM term_settings`, err => {
+  if (err) {
+    console.error('Cleanup error:', err.message);
+  } else {
+    console.log('Old term_settings cleared');
+  }
+});
 
 
 

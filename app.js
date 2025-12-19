@@ -11,8 +11,20 @@ const fs = require('fs');
 const Jimp = require('jimp');
 const app = express();
 const PDFDocument = require("pdfkit");
-
 const SQLiteStore = require('connect-sqlite3')(session);
+
+
+
+db.get('PRAGMA foreign_keys', (err, row) => {
+  console.log('Foreign keys enabled:', row);
+});
+
+db.run(`
+  UPDATE terms
+  SET is_completed = 1
+  WHERE is_current = 0 AND is_completed IS NULL
+`);
+
 
 // === CRITICAL: Parse JSON bodies ===
 app.use(express.json()); // This enables req.body for JSON
@@ -86,6 +98,47 @@ async function getYearPosition(studentId, yearId) {
   return `${rank}${rank === 1 ? 'st' : rank === 2 ? 'nd' : rank === 3 ? 'rd' : 'th'} of ${all.length}`;
 }
 
+function getTeacherComment(avg) {
+  if (avg >= 75) return "Excellent performance. Keep it up!";
+  if (avg >= 60) return "Very good result. More effort required.";
+  if (avg >= 50) return "Good performance. Can do better.";
+  return "Needs serious improvement.";
+}
+
+function getPrincipalComment(avg) {
+  if (avg >= 75) return "Outstanding academic achievement.";
+  if (avg >= 60) return "Commendable performance.";
+  if (avg >= 50) return "Fair performance.";
+  return "Must improve academically.";
+}
+
+function formatDate(date) {
+  if (!date) return '-';
+  return new Date(date).toLocaleDateString('en-GB', {
+    day: '2-digit',
+    month: 'long',
+    year: 'numeric'
+  });
+}
+
+//////////////////////////////////////////////////
+///////////////////////////////////////////////////
+
+/* ===== HELPER FUNCTIONS ===== */
+function getSubjectRemark(total) {
+if (total >= 75) return "Excellent";
+  if (total >= 65) return "Very Good";
+   if (total >= 55) return "Good";
+   if (total >= 45) return "Fair";
+   return "Poor";
+ }
+
+
+//////////////////////////////////////////////////
+//////////////////////////////////////////////////
+
+
+
 // AFTER: const db = new sqlite3.Database(...);
 function initializeAcademicYear(start, end) {
   const yearStr = `${start}/${end}`;
@@ -102,6 +155,7 @@ function initializeAcademicYear(start, end) {
 }
 app.use('/uploads', express.static(path.join(__dirname, 'public/uploads')));
 app.use(express.static('public'));
+app.use('/assets', express.static(path.join(__dirname, 'public/assets')));
 // === MULTER: SAVE TO TEMP ===
 const upload = multer({
   dest: 'public/uploads/temp/',
@@ -366,6 +420,226 @@ async function getStudentCurrentInfo(studentId) {
     LIMIT 1
   `, [studentId, currentTermId]);
 }
+async function getAnnualResult(studentId, session) {
+  const terms = await query(`
+    SELECT t.id, t.name
+    FROM terms t
+    JOIN academic_years ay ON ay.id = t.academic_year_id
+    WHERE ay.name = ?
+  `, [session]);
+
+  let allSubjects = [];
+  let totalScore = 0;
+  let count = 0;
+
+  for (const term of terms) {
+    const termResult = await getStudentResult(studentId, session, term.name);
+    if (!termResult || !isTermCompleted(termResult.subjects)) return null;
+
+    termResult.subjects.forEach(s => {
+      totalScore += s.total;
+      count++;
+      allSubjects.push({ ...s, term: term.name });
+    });
+  }
+
+  return {
+    subjects: allSubjects,
+    average: (totalScore / count).toFixed(2)
+  };
+}
+async function getCompletedTermResult(studentId, academicYear, termLabel) {
+
+  // Academic year
+  const year = await query(
+    'SELECT id FROM academic_years WHERE year = ?',
+    [academicYear]
+  );
+  if (!year.length) return null;
+  const yearId = year[0].id;
+
+// ✅ Get term (DO NOT block preview)
+const termRow = await query(`
+  SELECT id
+  FROM terms
+  WHERE year_id = ?
+    AND name LIKE ?
+  LIMIT 1
+`, [yearId, `%${termLabel}%`]);
+
+if (!termRow.length) return null;
+
+const termId = termRow[0].id;
+
+
+
+  // Class
+  const classRow = await query(`
+    SELECT cl.name AS class_name
+    FROM student_enrollments se
+    JOIN courses c ON se.course_id = c.id
+    JOIN classes cl ON c.class_id = cl.id
+    WHERE se.student_id = ? AND se.term_id = ?
+    LIMIT 1
+  `, [studentId, termId]);
+
+  const className = classRow[0]?.class_name;
+
+// ================= ATTENDANCE (FINAL FIX) =================
+const attendanceRow = await query(`
+  SELECT 
+    ta.days_present,
+    ts.total_school_days,
+    ts.next_term_begins
+  FROM term_attendance ta
+  LEFT JOIN term_settings ts 
+    ON ts.term = ta.term_id
+  WHERE ta.student_id = ?
+    AND ta.term_id = ?
+  LIMIT 1
+`, [studentId, termId]);
+
+const attendance = {
+  present: attendanceRow[0]?.days_present ?? null,
+  total: attendanceRow[0]?.total_school_days ?? null
+};
+
+const next_term_date =
+  attendanceRow[0]?.next_term_begins ?? null;
+
+
+
+
+  // ================= CLASS TEACHER =================
+  const teacherRow = await query(`
+    SELECT DISTINCT u.name AS teacher_name
+    FROM teacher_assignments ta
+    JOIN users u ON ta.teacher_id = u.id
+    JOIN courses c ON ta.course_id = c.id
+    JOIN classes cl ON c.class_id = cl.id
+    WHERE cl.name = ?
+    LIMIT 1
+  `, [className]);
+
+  const classTeacher = teacherRow[0]?.teacher_name || 'Not Assigned';
+
+  // ================= CLASS STATS =================
+  const classStats = await query(`
+    SELECT 
+      MAX(g.total) AS highest,
+      MIN(g.total) AS lowest,
+      AVG(g.total) AS class_average
+    FROM grades g
+    JOIN courses c ON g.course_id = c.id
+    WHERE g.term_id = ?
+  `, [termId]);
+
+  // ================= POSITION =================
+  const positionRow = await query(`
+    SELECT student_id,
+           RANK() OVER (ORDER BY SUM(total) DESC) AS position
+    FROM grades
+    WHERE term_id = ?
+    GROUP BY student_id
+  `, [termId]);
+
+  const studentPosition =
+    positionRow.find(p => p.student_id === studentId)?.position || '-';
+
+  // ================= SUBJECTS =================
+  const rows = await query(`
+    SELECT 
+      c.name AS subject,
+      g.ca,
+      g.exam,
+      g.total,
+      g.grade,
+
+      (SELECT MAX(total) FROM grades WHERE course_id = c.id AND term_id = ?) AS max_score,
+      (SELECT MIN(total) FROM grades WHERE course_id = c.id AND term_id = ?) AS min_score,
+      (SELECT ROUND(AVG(total), 2) FROM grades WHERE course_id = c.id AND term_id = ?) AS class_average
+    FROM grades g
+    JOIN courses c ON g.course_id = c.id
+    WHERE g.student_id = ? AND g.term_id = ?
+    ORDER BY c.name
+  `, [termId, termId, termId, studentId, termId]);
+
+  if (!rows.length) return null;
+
+  const subjects = rows.map(r => ({
+    subject: r.subject,
+    ca: r.ca,
+    exam: r.exam,
+    total: r.total,
+    max_score: r.max_score,
+    min_score: r.min_score,
+    class_average: r.class_average,
+    grade: r.grade,
+    remark: getSubjectRemark(r.total)
+  }));
+
+  // ================= STUDENT =================
+  const studentRow = await query(`
+    SELECT name, photo FROM users WHERE id = ?
+  `, [studentId]);
+
+  const studentName = studentRow[0]?.name || 'Student';
+  const studentPhoto = studentRow[0]?.photo
+    ? `/uploads/${studentRow[0].photo}`
+    : '/assets/default-avatar.png';
+
+  const average =
+    (subjects.reduce((s, r) => s + r.total, 0) / subjects.length).toFixed(2);
+
+  // ================= FINAL RESULT =================
+  return {
+    student_name: studentName,
+    student_photo: studentPhoto,
+    academic_year: academicYear,
+    term: termLabel,
+    class_name: className,
+    class_teacher: classTeacher,
+    subjects,
+    average,
+    position: studentPosition,
+    class_highest: classStats[0]?.highest?.toFixed(2) || '-',
+    class_lowest: classStats[0]?.lowest?.toFixed(2) || '-',
+    class_average: classStats[0]?.class_average?.toFixed(2) || '-',
+    attendance,
+    next_term_date
+  };
+}
+
+
+async function getCompletedAnnualResult(studentId, academicYear) {
+
+  const terms = ['First Term', 'Second Term', 'Third Term'];
+  let allSubjects = [];
+  let total = 0;
+  let count = 0;
+
+  for (const term of terms) {
+    const termResult = await getCompletedTermResult(studentId, academicYear, term);
+    if (!termResult) return null;
+
+    termResult.subjects.forEach(s => {
+      total += s.total;
+      count++;
+      allSubjects.push({ ...s, term });
+    });
+  }
+
+  return {
+    academic_year: academicYear,
+    term: 'Annual',
+    subjects: allSubjects,
+    average: (total / count).toFixed(2)
+  };
+}
+
+
+
+
 
 
 app.use((req, res, next) => {
@@ -698,43 +972,45 @@ if (role === 'student') {
 
 // === STUDENT: CURRENT TERM RESULTS === /////////////////////////////
 app.get('/student/results', (req, res) => {
-  if (!req.session.userId || req.session.role !== 'student') return res.redirect('/login');
-  const studentId = req.session.userId;
+  if (!req.session.userId || req.session.role !== 'student') {
+    return res.redirect('/login');
+  }
+
+  // 🔹 Get current academic year
   db.get(`
-    SELECT t.id AS term_id
-    FROM academic_years ay
-    JOIN terms t ON t.id = ay.current_term_id
-    WHERE ay.current = 1
-  `, (err, term) => {
-    const termId = term ? term.term_id : null;
-    if (!termId) {
-      return res.render('student_results', { user: req.session, results: [], gpa: 'N/A' });
-    }
-    db.all(`
-      SELECT c.name AS course_name,
-             COALESCE(g.total, 0) AS score,
-             COALESCE(g.grade, 'N/A') AS grade
-      FROM student_enrollments se
-      JOIN courses c ON se.course_id = c.id
-      LEFT JOIN grades g ON g.course_id = c.id AND g.student_id = ? AND g.term_id = ?
-      WHERE se.student_id = ? AND se.term_id = ?
-      ORDER BY c.name
-    `, [studentId, termId, studentId, termId], (err, results) => {
-      if (err) results = [];
-      // Calculate GPA
-      const points = { 'A':5, 'B':4, 'C':3, 'D':2, 'E':1, 'F':0 };
-      let total = 0, count = 0;
-      results.forEach(r => {
-        if (r.grade && points[r.grade] !== undefined) {
-          total += points[r.grade];
-          count++;
-        }
+    SELECT id, year
+    FROM academic_years
+    WHERE current = 1
+    LIMIT 1
+  `, (err, yearRow) => {
+    if (err || !yearRow) {
+      return res.render('student_results', {
+        session: '',
+        terms: [],
+        errorMsg: 'No active academic year found'
       });
-      const gpa = count > 0 ? (total / count).toFixed(2) : 'N/A';
-      res.render('student_results', { user: req.session, results, gpa });
+    }
+
+    const yearId = yearRow.id;
+
+    // 🔹 Get terms ONLY for this academic year
+    db.all(`
+      SELECT name
+      FROM terms
+      WHERE year_id = ?
+      ORDER BY term_number
+    `, [yearId], (err, terms) => {
+      if (err) terms = [];
+
+      res.render('student_results', {
+        session: yearRow.year,   // ✅ e.g. 2026/2027
+        terms,                   // ✅ ONLY this year’s terms
+        errorMsg: null
+      });
     });
   });
 });
+
 //////////////////////////////////////////////////////////////////////
 
 // STUDENT: VIEW ALL TOPICS (WORKS 100% - SAME STYLE AS YOUR RESULTS ROUTE)
@@ -970,6 +1246,13 @@ const isTeacher = (req, res, next) => {
   req.flash('error', 'Access denied. Teachers only.');
   res.redirect('/login');
 };
+function isStudent(req, res, next) {
+  if (req.session.user && req.session.user.role === "student") {
+    return next();
+  }
+  return res.redirect("/login");
+}
+
 ///////////////////////////////////////////////////////////////
 
 // TEACHER COURSES — FINAL VERSION THAT WORKS WITH YOUR CURRENT 35+ ENROLLMENTS
@@ -1403,94 +1686,103 @@ app.get('/admin/academic-years', (req, res) => {
 });
 //////////////////////////////////////////////////////////////////////////////
 /// === CREATE NEW ACADEMIC YEAR WITH 3 TERMS AUTOMATICALLY === ////////////////
-app.post('/admin/academic-years', [
-  check('year').matches(/^\d{4}\/\d{4}$/).withMessage('Use format: 2025/2026')
-], async (req, res) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return db.all('SELECT * FROM academic_years ORDER BY year DESC', (err, years) => {
-      res.render('admin_academic_years', {
-        years,
-        errors: errors.array(),
-        successMsg: null,
-        errorMsg: errors.array()[0].msg
-      });
-    });
-  }
+app.post(
+  '/admin/academic-years',
+  [
+    check('year')
+      .matches(/^\d{4}\/\d{4}$/)
+      .withMessage('Use format: 2025/2026')
+  ],
+  async (req, res) => {
+    const errors = validationResult(req);
 
-  const year = req.body.year.trim();
-
-  try {
-    // Step 1: Reset all years to not current
-    await runQuery('UPDATE academic_years SET current = 0');
-
-    // Step 2: Insert new year and set as current
-    const result = await runQuery(
-      'INSERT INTO academic_years (year, current) VALUES (?, 1)',
-      [year]
-    );
-
-    const yearId = result.lastID;
-
-    // Step 3: Create 3 terms automatically
-    const [start] = year.split('/');
-    const termNames = [
-      `${start} First Term`,
-      `${start} Second Term`,
-      `${start} Third Term`
-    ];
-
-    for (let i = 0; i < termNames.length; i++) {
-      await runQuery(
-        'INSERT INTO terms (name, year_id, term_number, is_current) VALUES (?, ?, ?, ?)',
-        [termNames[i], yearId, i + 1, i === 0 ? 1 : 0]
+    if (!errors.isEmpty()) {
+      return db.all(
+        'SELECT * FROM academic_years ORDER BY year DESC',
+        (err, years) => {
+          res.render('admin_academic_years', {
+            years,
+            errors: errors.array(),
+            successMsg: null,
+            errorMsg: errors.array()[0].msg
+          });
+        }
       );
     }
 
-    // Step 4: Set the first term as current_term_id
-    const firstTerm = await get(
-      'SELECT id FROM terms WHERE year_id = ? ORDER BY term_number LIMIT 1',
-      [yearId]
-    );
+    const year = req.body.year.trim();
 
-    if (firstTerm) {
+    try {
+      /* 1️⃣ Reset current year */
+      await runQuery('UPDATE academic_years SET current = 0');
+
+      /* 2️⃣ Create new academic year */
+      const result = await runQuery(
+        'INSERT INTO academic_years (year, current) VALUES (?, 1)',
+        [year]
+      );
+
+      const yearId = result.lastID;
+
+      /* 3️⃣ Create 3 terms (CORRECT year_id) */
+      const termNames = ['First Term', 'Second Term', 'Third Term'];
+
+      for (let i = 0; i < termNames.length; i++) {
+        await runQuery(
+          `
+          INSERT INTO terms (year_id, name, term_number, is_current)
+          VALUES (?, ?, ?, 0)
+          `,
+          [yearId, termNames[i], i + 1]
+        );
+      }
+
+      /* 4️⃣ Clear current_term_id (admin must select manually) */
       await runQuery(
-        'UPDATE academic_years SET current_term_id = ? WHERE id = ?',
-        [firstTerm.id, yearId]
+        'UPDATE academic_years SET current_term_id = NULL WHERE id = ?',
+        [yearId]
+      );
+
+      res.redirect(
+        '/admin/academic-years?success=New+year+created.+Select+current+term.'
+      );
+    } catch (err) {
+      console.error('Year creation error:', err);
+
+      if (err.message?.includes('UNIQUE')) {
+        return res.redirect(
+          '/admin/academic-years?error=Academic+year+already+exists'
+        );
+      }
+
+      res.redirect(
+        '/admin/academic-years?error=Failed+to+create+academic+year'
       );
     }
-
-    res.redirect('/admin/academic-years?success=New+year+created+and+set+as+current');
-  } catch (err) {
-    console.error('Year creation error:', err);
-    if (err.message.includes('UNIQUE')) {
-      res.redirect('/admin/academic-years?error=Year+already+exists');
-    } else {
-      res.redirect('/admin/academic-years?error=Failed+to+create+year');
-    }
   }
-});
+);
+
 
 
 // === SET CURRENT TERM (ADMIN) === /////////////////////////////
-app.post('/admin/set-current-term/:termId', (req, res) => {
-  const termId = req.params.termId;
-  db.get('SELECT year_id FROM terms WHERE id = ?', [termId], (err, term) => {
-    if (!term) return res.redirect('/admin/academic-years?error=Term+not+found');
-    db.get('SELECT id FROM academic_years WHERE id = ? AND current = 1', [term.year_id], (err, year) => {
-      if (!year) return res.redirect('/admin/academic-years?error=Year+not+current');
-     // First: reset all terms
-db.run('UPDATE terms SET is_current = 0', () => {
-  // Then: set new current term
-  db.run('UPDATE terms SET is_current = 1 WHERE id = ?', [termId], () => {
-    db.run('UPDATE academic_years SET current_term_id = ? WHERE id = ?', [termId, year.id], () => {
-      res.redirect('/admin/academic-years?success=Current+term+set');
-    });
-  });
-});
-    });
-  });
-});
+// app.post('/admin/set-current-term/:termId', (req, res) => {
+//   const termId = req.params.termId;
+//   db.get('SELECT year_id FROM terms WHERE id = ?', [termId], (err, term) => {
+//     if (!term) return res.redirect('/admin/academic-years?error=Term+not+found');
+//     db.get('SELECT id FROM academic_years WHERE id = ? AND current = 1', [term.year_id], (err, year) => {
+//       if (!year) return res.redirect('/admin/academic-years?error=Year+not+current');
+//      // First: reset all terms
+// db.run('UPDATE terms SET is_current = 0', () => {
+//   // Then: set new current term
+//   db.run('UPDATE terms SET is_current = 1 WHERE id = ?', [termId], () => {
+//     db.run('UPDATE academic_years SET current_term_id = ? WHERE id = ?', [termId, year.id], () => {
+//       res.redirect('/admin/academic-years?success=Current+term+set');
+//     });
+//   });
+// });
+//     });
+//   });
+// });
 /// === STUDENT: VIEW COURSES & GRADES BY TERM === /////////////////////////////
 app.get('/student/courses', (req, res) => {
   if (req.session.role !== 'student') return res.redirect('/login');
@@ -1540,100 +1832,105 @@ app.post('/admin/academic-year/:yearId/set-current-term/:termId', (req, res) => 
   const termId = parseInt(req.params.termId, 10);
 
   if (isNaN(yearId) || isNaN(termId)) {
-    return res.redirect(`/admin/academic-years?error=Invalid IDs`);
+    return res.redirect('/admin/academic-years?error=Invalid+IDs');
   }
 
-  // Step 1: Verify term belongs to this year
-  db.get('SELECT 1 FROM terms WHERE id = ? AND year_id = ?', [termId, yearId], (err, row) => {
-    if (err || !row) {
-      return res.redirect(`/admin/academic-years?error=Term not in this year`);
-    }
-
-    // Step 2: Reset ALL terms to is_current = 0
-    db.run('UPDATE terms SET is_current = 0', (err) => {
-      if (err) {
-        console.error('Reset is_current failed:', err);
-        return res.redirect(`/admin/academic-years?error=Failed to reset terms`);
+  // ✅ FIXED COLUMN NAME (year_id)
+  db.get(
+    'SELECT id FROM terms WHERE id = ? AND year_id = ?',
+    [termId, yearId],
+    (err, row) => {
+      if (err || !row) {
+        return res.redirect('/admin/academic-years?error=Term+not+in+this+year');
       }
 
-      // Step 3: Set the selected term as current
-      db.run('UPDATE terms SET is_current = 1 WHERE id = ?', [termId], (err) => {
+      // Reset all terms
+      db.run('UPDATE terms SET is_current = 0', err => {
         if (err) {
-          console.error('Set is_current = 1 failed:', err);
-          return res.redirect(`/admin/academic-years?error=Failed to set current term`);
+          console.error(err);
+          return res.redirect('/admin/academic-years?error=Failed+to+reset+terms');
         }
 
-        // Step 4: Update academic_years.current_term_id
-        db.run('UPDATE academic_years SET current_term_id = ? WHERE id = ? AND current = 1', [termId, yearId], function(err) {
-          if (err || this.changes === 0) {
-            return res.redirect(`/admin/academic-years?error=Failed to update current term ID`);
-          }
+        // Set selected term
+        db.run(
+          'UPDATE terms SET is_current = 1 WHERE id = ?',
+          [termId],
+          err => {
+            if (err) {
+              console.error(err);
+              return res.redirect('/admin/academic-years?error=Failed+to+set+term');
+            }
 
-          console.log(`Current term set to ID: ${termId} (Year: ${yearId})`);
-          res.redirect(`/admin/academic-years?success=Current term updated successfully`);
-        });
+            // Update academic year pointer
+            db.run(
+              'UPDATE academic_years SET current_term_id = ? WHERE id = ?',
+              [termId, yearId],
+              err => {
+                if (err) {
+                  console.error(err);
+                  return res.redirect('/admin/academic-years?error=Failed+to+update+year');
+                }
+
+                res.redirect(
+                  `/admin/academic-year/${yearId}/terms?success=Current+term+updated`
+                );
+              }
+            );
+          }
+        );
       });
-    });
-  });
+    }
+  );
 });
+
+
 /////////////////////////////////////////////////////////////////////////
 
 /// === 1. SET CURRENT YEAR – IMPROVED & SAFE === ////////////////
-app.post('/admin/academic-years/set-current/:id', async (req, res) => {
+app.post('/admin/academic-years/set-current/:id', (req, res) => {
   const yearId = parseInt(req.params.id, 10);
-
-  try {
-    // Check if the target year exists and is NOT already completed
-    const year = await new Promise((resolve, reject) => {
-      db.get('SELECT is_completed FROM academic_years WHERE id = ?', [yearId], (err, row) => {
-        if (err) reject(err);
-        else if (!row) reject(new Error('Year not found'));
-        else if (row.is_completed === 1) reject(new Error('Cannot set a completed year as current'));
-        else resolve(row);
-      });
-    });
-
-    // Transaction: Ensure atomicity and only one current year
-    await new Promise((resolve, reject) => {
-      db.exec('BEGIN TRANSACTION', err => { if (err) reject(err); });
-    });
-
-    // Remove current from all years
-    await new Promise((resolve, reject) => {
-      db.run('UPDATE academic_years SET current = 0', err => {
-        if (err) reject(err);
-        else resolve();
-      });
-    });
-
-    // Set the new current year (safe: we already checked it's not completed)
-    await new Promise((resolve, reject) => {
-      db.run('UPDATE academic_years SET current = 1 WHERE id = ?', [yearId], function(err) {
-        if (err) reject(err);
-        else if (this.changes === 0) reject(new Error('Year not found'));
-        else resolve();
-      });
-    });
-
-    await new Promise((resolve, reject) => {
-      db.exec('COMMIT', err => { if (err) reject(err); else resolve(); });
-    });
-
-    res.redirect('/admin/academic-years?success=Current+year+updated');
-  } catch (err) {
-    // Rollback on error
-    db.exec('ROLLBACK');
-    console.error('Set current year error:', err.message);
-
-    if (err.message.includes('completed')) {
-      res.redirect('/admin/academic-years?error=Cannot+set+a+completed+year+as+current');
-    } else if (err.message.includes('not found')) {
-      res.redirect('/admin/academic-years?error=Academic+year+not+found');
-    } else {
-      res.redirect('/admin/academic-years?error=Failed+to+set+current+year');
-    }
+  if (isNaN(yearId)) {
+    return res.redirect('/admin/academic-years?error=Invalid+year+ID');
   }
+
+  // Check year exists & not completed
+  db.get(
+    'SELECT is_completed FROM academic_years WHERE id = ?',
+    [yearId],
+    (err, row) => {
+      if (err || !row) {
+        return res.redirect('/admin/academic-years?error=Academic+year+not+found');
+      }
+
+      if (row.is_completed === 1) {
+        return res.redirect('/admin/academic-years?error=Cannot+set+completed+year+as+current');
+      }
+
+      // Clear current year
+      db.run('UPDATE academic_years SET current = 0', err => {
+        if (err) {
+          console.error(err);
+          return res.redirect('/admin/academic-years?error=Failed+to+update');
+        }
+
+        // Set selected year as current
+        db.run(
+          'UPDATE academic_years SET current = 1 WHERE id = ?',
+          [yearId],
+          err => {
+            if (err) {
+              console.error(err);
+              return res.redirect('/admin/academic-years?error=Failed+to+set+current');
+            }
+
+            res.redirect('/admin/academic-years?success=Current+year+updated');
+          }
+        );
+      });
+    }
+  );
 });
+
 
 // 2. MARK AS COMPLETED – ALREADY GOOD, just slightly improved
 app.post('/admin/academic-years/mark-completed/:id', async (req, res) => {
@@ -1641,25 +1938,22 @@ app.post('/admin/academic-years/mark-completed/:id', async (req, res) => {
 
   try {
     const result = await new Promise((resolve, reject) => {
-      db.run(
-        `UPDATE academic_years 
-         SET is_completed = 1, current = 0 
-         WHERE id = ? AND is_completed = 0`,  // Prevent re-marking
-        [yearId],
-        function(err) {
-          if (err) reject(err);
-          else if (this.changes === 0) {
-            // Either not found or already completed
-            db.get('SELECT is_completed FROM academic_years WHERE id = ?', [yearId], (err, row) => {
-              if (err || !row) reject(new Error('Year not found'));
-              else if (row.is_completed === 1) reject(new Error('Already completed'));
-              else reject(new Error('Unknown error'));
-            });
-          } else {
-            resolve(this.changes);
-          }
-        }
-      );
+     db.run(
+  `UPDATE academic_years
+   SET is_completed = 1,
+       current = 0,
+       current_term_id = NULL
+   WHERE id = ?`,
+  [yearId],
+  function (err) {
+    if (err) {
+      console.error(err);
+      return res.redirect('/admin/academic-years?error=Failed+to+mark+year+completed');
+    }
+    res.redirect('/admin/academic-years?success=Year+marked+completed');
+  }
+);
+
     });
 
     res.redirect('/admin/academic-years?success=Year+marked+as+completed');
@@ -1707,80 +2001,123 @@ app.get('/admin/academic-year/:yearId/terms', (req, res) => {
 });
 // === DELETE ACADEMIC YEAR + ALL RELATED DATA (FIXED) === ////////////////
 app.post('/admin/academic-years/delete/:id', (req, res) => {
-  if (!req.session || !req.session.userId || req.session.role !== 'admin') {
+  if (!req.session || req.session.role !== 'admin') {
     return res.redirect('/login');
   }
+
   const yearId = req.params.id;
-  db.get('SELECT year FROM academic_years WHERE id = ?', [yearId], (err, year) => {
-    if (err || !year) {
-      return res.redirect('/admin/academic-years?error=Year not found');
-    }
-    const yearName = year.year;
-    // Use transaction for safety
-    db.serialize(() => {
-      // 1. Get all term IDs for this year
-      db.all('SELECT id FROM terms WHERE year_id = ?', [yearId], (err, terms) => {
-        if (err) {
-          console.error('Get terms error:', err);
-          return res.redirect('/admin/academic-years?error=DB error');
+
+  db.serialize(() => {
+
+    db.get(
+      'SELECT year FROM academic_years WHERE id = ?',
+      [yearId],
+      (err, yearRow) => {
+        if (err || !yearRow) {
+          return res.redirect('/admin/academic-years?error=Year not found');
         }
-        const termIds = terms.map(t => t.id);
-        if (termIds.length === 0) {
-          // No terms → just delete year
-          db.run('DELETE FROM academic_years WHERE id = ?', [yearId], () => {
-            res.redirect('/admin/academic-years?success=Year ' + yearName + ' deleted (no terms)');
-          });
-          return;
-        }
-        // 2. Delete grades for these terms
-        const placeholders = termIds.map(() => '?').join(',');
-        db.run(`DELETE FROM grades WHERE term_id IN (${placeholders})`, termIds, (err) => {
-          if (err) console.error('Delete grades error:', err);
-        });
-        // 3. Delete enrollments for these terms
-        db.run(`DELETE FROM student_enrollments WHERE term_id IN (${placeholders})`, termIds, (err) => {
-          if (err) console.error('Delete enrollments error:', err);
-        });
-        // 4. Delete teacher assignments for courses in this year
-        db.run(`
-          DELETE FROM teacher_assignments
-          WHERE course_id IN (
-            SELECT DISTINCT c.id
-            FROM courses c
-            JOIN student_enrollments se ON c.id = se.course_id
-            WHERE se.term_id IN (${placeholders})
-          )
-        `, termIds, (err) => {
-          if (err) console.error('Delete assignments error:', err);
-        });
-        // 5. Delete courses used in this year
-        db.run(`
-          DELETE FROM courses
-          WHERE id IN (
-            SELECT DISTINCT c.id
-            FROM courses c
-            JOIN student_enrollments se ON c.id = se.course_id
-            WHERE se.term_id IN (${placeholders})
-          )
-        `, termIds, (err) => {
-          if (err) console.error('Delete courses error:', err);
-        });
-        // 6. Delete terms
-        db.run(`DELETE FROM terms WHERE id IN (${placeholders})`, termIds, (err) => {
-          if (err) console.error('Delete terms error:', err);
-        });
-        // 7. Finally delete the year
-        db.run('DELETE FROM academic_years WHERE id = ?', [yearId], function (err) {
-          if (err) {
-            console.error('Delete year error:', err);
-            return res.redirect('/admin/academic-years?error=Delete failed');
+
+        const yearName = yearRow.year;
+
+        // 1️⃣ Get terms
+        db.all(
+          'SELECT id, name FROM terms WHERE year_id = ?',
+          [yearId],
+          (err, terms) => {
+            if (err) {
+              console.error(err);
+              return res.redirect('/admin/academic-years?error=DB error');
+            }
+
+            const termIds = terms.map(t => t.id);
+            const termNames = terms.map(t => t.name);
+
+            const termIdPlaceholders = termIds.map(() => '?').join(',');
+
+            // 2️⃣ Delete grades
+            db.run(
+              `DELETE FROM grades WHERE term_id IN (${termIdPlaceholders})`,
+              termIds,
+              () => {
+
+                // 3️⃣ Delete attendance
+                db.run(
+                  `DELETE FROM term_attendance WHERE term IN (${termNames.map(() => '?').join(',')})`,
+                  termNames,
+                  () => {
+
+                    // 4️⃣ Delete term settings
+                    db.run(
+                      `DELETE FROM term_settings WHERE term IN (${termNames.map(() => '?').join(',')})`,
+                      termNames,
+                      () => {
+
+                        // 5️⃣ Delete enrollments
+                        db.run(
+                          `DELETE FROM student_enrollments WHERE term_id IN (${termIdPlaceholders})`,
+                          termIds,
+                          () => {
+
+                            // 6️⃣ Delete teacher assignments
+                            db.run(
+                              `
+                              DELETE FROM teacher_assignments
+                              WHERE course_id IN (
+                                SELECT DISTINCT course_id
+                                FROM student_enrollments
+                              )
+                              `,
+                              () => {
+
+                                // 7️⃣ Delete courses
+                                db.run(
+                                  `DELETE FROM courses WHERE class_id IN (
+                                    SELECT id FROM classes
+                                  )`,
+                                  () => {
+
+                                    // 8️⃣ Delete terms
+                                    db.run(
+                                      `DELETE FROM terms WHERE year_id = ?`,
+                                      [yearId],
+                                      () => {
+
+                                        // 9️⃣ Finally delete academic year
+                                        db.run(
+                                          `DELETE FROM academic_years WHERE id = ?`,
+                                          [yearId],
+                                          err => {
+                                            if (err) {
+                                              console.error(err);
+                                              return res.redirect('/admin/academic-years?error=Delete failed');
+                                            }
+
+                                            res.redirect(
+                                              `/admin/academic-years?success=Year ${yearName} deleted`
+                                            );
+                                          }
+                                        );
+                                      }
+                                    );
+                                  }
+                                );
+                              }
+                            );
+                          }
+                        );
+                      }
+                    );
+                  }
+                );
+              }
+            );
           }
-          res.redirect('/admin/academic-years?success=Year ' + yearName + ' and all data deleted');
-        });
-      });
-    });
+        );
+      }
+    );
   });
 });
+
 // === EDIT ACADEMIC YEAR ===
 app.get('/admin/academic-years/edit/:id', (req, res) => {
   if (!req.session || !req.session.userId || req.session.role !== 'admin') {
@@ -4089,16 +4426,35 @@ app.get('/student/profile', async (req, res) => {
 // ================= TEACHER ATTENDANCE SHEET =================
 app.get('/teacher/attendance', isTeacher, async (req, res) => {
   try {
-    const teacherId = req.session.userId;
+    // 🔹 CLASS NAME (❗ FIXED)
     const className = req.session.user.classTeacherOf;
-    const currentTerm = req.session.currentTerm || 'First Term 2025/2026';
 
     if (!className) {
       req.flash('error', 'You are not assigned to any class');
       return res.redirect('/dashboard');
     }
 
-    // Get all real students in your class (from enrollments)
+    // 🔹 CURRENT TERM (ID + NAME)
+    const currentTermRow = await query(`
+      SELECT id, name
+      FROM terms
+      WHERE is_current = 1
+      LIMIT 1
+    `);
+
+    if (!currentTermRow.length) {
+      req.flash('error', 'No active term found');
+      return res.redirect('/dashboard');
+    }
+
+    const currentTermId = currentTermRow[0].id;
+    const currentTermName = currentTermRow[0].name;
+
+    // 🔹 keep session in sync
+    req.session.currentTermId = currentTermId;
+    req.session.currentTermName = currentTermName;
+
+    // 🔹 LOAD STUDENTS + ATTENDANCE
     const students = await query(`
       SELECT 
         u.id,
@@ -4108,17 +4464,27 @@ app.get('/teacher/attendance', isTeacher, async (req, res) => {
       INNER JOIN student_enrollments se ON u.id = se.student_id
       INNER JOIN courses c ON se.course_id = c.id
       INNER JOIN classes cl ON c.class_id = cl.id
-      LEFT JOIN term_attendance ta ON u.id = ta.student_id AND ta.term = ?
+      LEFT JOIN term_attendance ta 
+        ON u.id = ta.student_id AND ta.term_id = ?
       WHERE u.role = 'student'
         AND cl.name = ?
       GROUP BY u.id, u.name
       ORDER BY u.name ASC
-    `, [currentTerm, className]);
+    `, [currentTermId, className]);
+
+    // 🔹 TERM SETTINGS
+    const settings = await query(`
+      SELECT ts.total_school_days, ts.next_term_begins
+      FROM term_settings ts
+      INNER JOIN classes c ON ts.class_id = c.id
+      WHERE c.name = ? AND ts.term_id = ?
+    `, [className, currentTermId]);
 
     res.render('teacher_attendance', {
-      students: students || [],
+      students,
       class_name: className,
-      current_term_name: currentTerm,
+      current_term_name: currentTermName,
+      termSettings: settings[0] || {},
       successMsg: req.flash('success'),
       errorMsg: req.flash('error')
     });
@@ -4130,20 +4496,23 @@ app.get('/teacher/attendance', isTeacher, async (req, res) => {
   }
 });
 
+
 // SAVE ATTENDANCE
 app.post('/teacher/attendance/save', isTeacher, async (req, res) => {
   try {
     const { studentId, daysPresent } = req.body;
-    const term = req.session.currentTerm || 'First Term 2025/2026';
+    const termId = req.session.currentTermId;
 
-    const days = parseInt(daysPresent) || 0;
+    if (!termId) {
+      return res.json({ success: false, message: 'No active term' });
+    }
 
     await query(`
-      INSERT INTO term_attendance (student_id, term, days_present, class_id)
-      VALUES (?, ?, ?, 0)
-      ON CONFLICT(student_id, term) DO UPDATE SET
+      INSERT INTO term_attendance (student_id, term_id, days_present)
+      VALUES (?, ?, ?)
+      ON CONFLICT(student_id, term_id) DO UPDATE SET
         days_present = excluded.days_present
-    `, [studentId, term, days]);
+    `, [studentId, termId, parseInt(daysPresent) || 0]);
 
     res.json({ success: true });
 
@@ -4152,6 +4521,46 @@ app.post('/teacher/attendance/save', isTeacher, async (req, res) => {
     res.json({ success: false });
   }
 });
+
+
+app.post('/teacher/attendance/settings', isTeacher, async (req, res) => {
+  try {
+    const { totalDays, nextTermBegins } = req.body;
+    const className = req.session.user.classTeacherOf;
+    const termId = req.session.currentTermId;
+
+    if (!className || !termId) {
+      return res.json({ success: false });
+    }
+
+    const cls = await query(
+      `SELECT id FROM classes WHERE name = ?`,
+      [className]
+    );
+
+    if (!cls.length) {
+      return res.json({ success: false });
+    }
+
+    const classId = cls[0].id;
+
+    await query(`
+      INSERT INTO term_settings (class_id, term_id, total_school_days, next_term_begins)
+      VALUES (?, ?, ?, ?)
+      ON CONFLICT(class_id, term_id) DO UPDATE SET
+        total_school_days = excluded.total_school_days,
+        next_term_begins = excluded.next_term_begins
+    `, [classId, termId, totalDays, nextTermBegins]);
+
+    res.json({ success: true });
+
+  } catch (err) {
+    console.error('Settings save error:', err);
+    res.json({ success: false });
+  }
+});
+
+
 
 
 
@@ -6678,344 +7087,366 @@ app.get('/teacher/question-bank/:course_id/:class_id/ai-image', (req, res) => {
   });
 });
 ///////////////////////////////////////////////////////////////////
-// app.get("/student/results/download", isStudent, (req, res) => {
-//   res.render("student_download_result", {
-//     student: req.session.user
-//   });
-//   if (!isTermCompleted(result.subjects)) {
-//   return res.status(403).send("Result not yet completed");
-// }
-
-// });
-// app.get("/student/results/preview", isStudent, async (req, res) => {
-//   const { session, term } = req.query;
-//   const studentId = req.session.user.id;
-
-//   // 1️⃣ Fetch term + scores
-//   const result = await getStudentResult(studentId, session, term);
-
-//   if (!result) {
-//     return res.render("result_not_found");
-//   }
-
-//   res.render("student_result_preview", {
-//     result,
-//     session,
-//     term
-//   });
-// });
-
-
-// async function getAnnualResult(studentId, session) {
-//   const terms = await query(`
-//     SELECT t.id, t.name
-//     FROM terms t
-//     JOIN academic_years ay ON ay.id = t.academic_year_id
-//     WHERE ay.name = ?
-//   `, [session]);
-
-//   let allSubjects = [];
-//   let totalScore = 0;
-//   let count = 0;
-
-//   for (const term of terms) {
-//     const termResult = await getStudentResult(studentId, session, term.name);
-//     if (!termResult || !isTermCompleted(termResult.subjects)) return null;
-
-//     termResult.subjects.forEach(s => {
-//       totalScore += s.total;
-//       count++;
-//       allSubjects.push({ ...s, term: term.name });
-//     });
-//   }
-
-//   return {
-//     subjects: allSubjects,
-//     average: (totalScore / count).toFixed(2)
-//   };
-// }
-
-// const PDFDocument = require("pdfkit");
-// const fs = require("fs");
-// const path = require("path");
-
-// app.get("/student/results/pdf", isStudent, async (req, res) => {
-//   const { session, term } = req.query;
-//   const studentId = req.session.user.id;
-
-//   let result;
-//   if (term === "annual") {
-//     result = await getAnnualResult(studentId, session);
-//   } else {
-//     result = await getStudentResult(studentId, session, term);
-//   }
-
-//   if (!result || !isTermCompleted(result.subjects)) {
-//     return res.status(403).send("Result not available");
-//   }
-
-//   const doc = new PDFDocument({ size: "A4", margin: 40 });
-//   res.setHeader("Content-Type", "application/pdf");
-//   res.setHeader("Content-Disposition", "attachment; filename=result.pdf");
-//   doc.pipe(res);
-
-//   /* ================= PATHS ================= */
-//   const logoPath = path.join(__dirname, "public/assets/school-logo.png");
-//   const passportPath = result.photo
-//     ? path.join(__dirname, "public/uploads/passports", result.photo)
-//     : null;
-
-//   /* ================= WATERMARK ================= */
-//   if (fs.existsSync(logoPath)) {
-//     doc.opacity(0.08)
-//       .image(logoPath, 150, 250, { width: 300 })
-//       .opacity(1);
-//   }
-
-//   /* ================= HEADER ================= */
-//   if (fs.existsSync(logoPath)) {
-//     doc.image(logoPath, 40, 40, { width: 80 });
-//   }
-
-//   doc.fontSize(18).text("LYTEBRIDGE ACADEMY", 140, 45);
-//   doc.fontSize(11).text("Academic Excellence & Character", 140, 70);
-
-//   /* ================= STUDENT PASSPORT ================= */
-//   if (passportPath && fs.existsSync(passportPath)) {
-//     doc
-//       .rect(460, 40, 90, 100)
-//       .stroke("#999");
-
-//     doc.image(passportPath, 465, 45, {
-//       width: 80,
-//       height: 90,
-//       fit: [80, 90],
-//       align: "center",
-//       valign: "center"
-//     });
-//   }
-
-//   doc.moveDown(3);
-
-//   doc.fontSize(14)
-//     .text(
-//       term === "annual"
-//         ? "ANNUAL RESULT REPORT"
-//         : `${term.toUpperCase()} TERM REPORT SHEET`,
-//       { align: "center" }
-//     );
-
-//   doc.moveDown(1.5);
-
-//   /* ================= STUDENT INFO ================= */
-//   doc.fontSize(10);
-//   doc.text(`Name: ${result.student_name}`);
-//   doc.text(`Class: ${result.class_name}`);
-//   doc.text(`Session: ${session}`);
-//   doc.moveDown();
-
-//   /* ================= TABLE HEADER ================= */
-//   let y = doc.y;
-//   doc.font("Helvetica-Bold");
-//   doc.text("Subject", 40, y);
-//   doc.text("CA", 220, y);
-//   doc.text("Exam", 260, y);
-//   doc.text("Total", 310, y);
-//   doc.text("Grade", 360, y);
-//   doc.text("Remark", 410, y);
-
-//   doc.font("Helvetica");
-//   y += 18;
-
-//   /* ================= SUBJECT ROWS ================= */
-//   result.subjects.forEach(s => {
-//     doc.text(s.subject, 40, y);
-//     doc.text(s.ca, 220, y);
-//     doc.text(s.exam, 260, y);
-//     doc.text(s.total, 310, y);
-//     doc.text(s.grade, 360, y);
-//     doc.text(s.remark, 410, y, { width: 130 });
-//     y += 16;
-//   });
-
-//   doc.moveDown(2);
-
-//   /* ================= SUMMARY ================= */
-//   doc.font("Helvetica-Bold");
-//   doc.text(`Average: ${result.average}`);
-//   doc.text(`Position: ${result.position || "-"}`);
-//   doc.moveDown();
-
-//   /* ================= COMMENTS ================= */
-//   doc.font("Helvetica");
-//   doc.text(`Class Teacher's Comment: ${getTeacherComment(result.average)}`);
-//   doc.moveDown(0.5);
-//   doc.text(`Principal's Comment: ${getPrincipalComment(result.average)}`);
-
-//   /* ================= SIGNATURES ================= */
-//   doc.moveDown(2);
-//   doc.text("_______________________          _______________________");
-//   doc.text("Class Teacher                       Principal");
-
-//   doc.end();
-// });
-
-
-
-
-
-
-
-
-
-
-// app.get("/teacher/question-bank/:examId?", (req, res) => {
-//     const currentExamId = req.params.examId || null;
-
-//     db.all(`
-//         SELECT qb.*, c.name AS course_name, cl.name AS class_name
-//         FROM question_bank qb
-//         JOIN courses c ON qb.course_id = c.id
-//         JOIN classes cl ON qb.class_id = cl.id
-//         WHERE qb.teacher_id = ?
-//     `, [req.session.userId], (err, rows) => {
-//         res.render("teacher_question_bank", {
-//             questions: rows,
-//             currentExamId
-//         });
-//     });
-// });
-
-
-
-
-
-
-
-
-// app.get("/teacher/question-bank/bulk", (req, res) => {
-//     if (req.session.role !== "teacher") return res.redirect("/login");
-//     res.render("teacher_question_bank_bulk");
-// });
-
-// app.post("/teacher/question-bank/bulk", bulkUpload.single("file"), (req, res) => {
-//     if (!req.file) return res.send("No file uploaded");
-
-//     const teacherId = req.session.userId;
-//     const filePath = req.file.path;
-//     const ext = req.file.originalname.split(".").pop().toLowerCase();
-
-//     let rows = [];
-
-//     function saveRows(rows) {
-//         const stmt = db.prepare(`
-//             INSERT INTO question_bank 
-//             (teacher_id, course_id, class_id, question, option1, option2, option3, option4, correct_option)
-//             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-//         `);
-
-//         rows.forEach(r => {
-//             stmt.run(
-//                 teacherId,
-//                 r.course_id,
-//                 r.class_id,
-//                 r.question,
-//                 r.option1,
-//                 r.option2,
-//                 r.option3,
-//                 r.option4,
-//                 r.correct_option
-//             );
-//         });
-
-//         stmt.finalize(() => {
-//             fs.unlinkSync(filePath);
-//             res.redirect("/teacher/question-bank");
-//         });
-//     }
-
-//     if (ext === "csv") {
-//         fs.createReadStream(filePath)
-//             .pipe(csv())
-//             .on("data", row => rows.push(row))
-//             .on("end", () => saveRows(rows));
-//     } else {
-//         const workbook = xlsx.readFile(filePath);
-//         const sheet = workbook.Sheets[workbook.SheetNames[0]];
-//         rows = xlsx.utils.sheet_to_json(sheet);
-//         saveRows(rows);
-//     }
-// });
-
-// app.post('/teacher/cbt/:examId/import-question/:qid', (req, res) => {
-//     const examId = req.params.examId;
-//     const qid = req.params.qid;
-
-//     db.get(`SELECT * FROM question_bank WHERE id=?`, [qid], (err, q) => {
-//         if (err || !q) return res.json({ error: "Question missing" });
-
-//         db.run(`
-//             INSERT INTO cbt_questions 
-//             (exam_id, question, option1, option2, option3, option4, correct_option, image_path)
-//             VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-//         `,
-//         [
-//             examId,
-//             q.question,
-//             q.option1,
-//             q.option2,
-//             q.option3,
-//             q.option4,
-//             q.correct_option,
-//             q.image_path
-//         ],
-//         err2 => {
-//             if (err2) return res.json({ error: "Import failed" });
-
-//             res.json({ success: true });
-//         });
-//     });
-// });
-
-// app.post('/teacher/cbt/:examId/import-all', (req, res) => {
-//     const { course_id, class_id } = req.body;
-//     const examId = req.params.examId;
-
-//     db.all(`
-//         SELECT * FROM question_bank 
-//         WHERE course_id=? AND class_id=?
-//     `, [course_id, class_id], (err, rows) => {
-//         if (err) return res.json({ error: "DB error" });
-
-//         const stmt = db.prepare(`
-//             INSERT INTO cbt_questions
-//             (exam_id, question, option1, option2, option3, option4, correct_option, image_path)
-//             VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-//         `);
-
-//         rows.forEach(q => {
-//             stmt.run(
-//                 examId,
-//                 q.question,
-//                 q.option1,
-//                 q.option2,
-//                 q.option3,
-//                 q.option4,
-//                 q.correct_option,
-//                 q.image_path
-//             );
-//         });
-
-//         stmt.finalize(() => res.json({ success: true, imported: rows.length }));
-//     });
-// });
-
-
-
-//KEV72MyT
-
-
-
+app.get("/student/results/download", isStudent, async (req, res) => {
+  try {
+    const studentId = req.session.userId;
+
+    // 1️⃣ Get current academic year
+    const yearRow = await query(`
+      SELECT id, year
+      FROM academic_years
+      WHERE current = 1
+      LIMIT 1
+    `);
+
+    if (!yearRow.length) {
+      return res.render("student_download_result", {
+        session: "",
+        terms: []
+      });
+    }
+
+    const yearId = yearRow[0].id;
+    const session = yearRow[0].year;
+
+    // 2️⃣ Get ALL terms for this year (completed OR not)
+    const terms = await query(`
+      SELECT name
+      FROM terms
+      WHERE year_id = ?
+      ORDER BY term_number
+    `, [yearId]);
+
+    // 3️⃣ Render page with REQUIRED variables
+    res.render("student_download_result", {
+      session,
+      terms
+    });
+
+  } catch (err) {
+    console.error("Download result page error:", err);
+    res.redirect("/dashboard");
+  }
+});
+
+app.get("/student/results/preview", isStudent, async (req, res) => {
+  const { session, term } = req.query;
+  const studentId = req.session.userId;
+  // 🔹 Load current term (ID + name)
+const currentTermRow = await query(`
+  SELECT id, name 
+  FROM terms 
+  WHERE is_current = 1 
+  LIMIT 1
+`);
+
+if (!currentTermRow.length) {
+  return res.render("result_not_found");
+}
+
+// Keep session consistent for result functions
+req.session.currentTermId = currentTermRow[0].id;
+req.session.currentTermName = currentTermRow[0].name;
+
+
+  // 🔧 Normalize term
+  let cleanTerm = term?.toLowerCase();
+
+  if (cleanTerm.includes("annual")) {
+    cleanTerm = "Annual";
+  } else if (cleanTerm.includes("first")) {
+    cleanTerm = "First Term";
+  } else if (cleanTerm.includes("second")) {
+    cleanTerm = "Second Term";
+  } else if (cleanTerm.includes("third")) {
+    cleanTerm = "Third Term";
+  }
+
+  let result;
+  if (cleanTerm === "Annual") {
+    result = await getCompletedAnnualResult(studentId, session);
+  } else {
+    result = await getCompletedTermResult(studentId, session, cleanTerm);
+  }
+
+  if (!result) {
+    return res.render("result_not_found");
+  }
+
+  res.render("student_result_preview", { result });
+});
+
+app.get("/student/results/pdf", isStudent, async (req, res) => {
+  const { session, term } = req.query;
+  const studentId = req.session.user.id;
+  // 🔹 Load current term (ID + name)
+const currentTermRow = await query(`
+  SELECT id, name 
+  FROM terms 
+  WHERE is_current = 1 
+  LIMIT 1
+`);
+
+if (!currentTermRow.length) {
+  return res.render("result_not_found");
+}
+
+// Keep session consistent for result functions
+req.session.currentTermId = currentTermRow[0].id;
+req.session.currentTermName = currentTermRow[0].name;
+
+
+  /* ========= NORMALIZE TERM ========= */
+  let cleanTerm = term?.toLowerCase() || "";
+  if (cleanTerm.includes("annual")) cleanTerm = "Annual";
+  else if (cleanTerm.includes("first")) cleanTerm = "First Term";
+  else if (cleanTerm.includes("second")) cleanTerm = "Second Term";
+  else if (cleanTerm.includes("third")) cleanTerm = "Third Term";
+
+  const result =
+    cleanTerm === "Annual"
+      ? await getCompletedAnnualResult(studentId, session)
+      : await getCompletedTermResult(studentId, session, cleanTerm);
+
+  if (!result) return res.status(403).send("Result not available");
+
+  /* ========= PDF SETUP ========= */
+  const PDFDocument = require("pdfkit");
+  const fs = require("fs");
+  const path = require("path");
+
+  const doc = new PDFDocument({ size: "A4", margin: 40 });
+  res.setHeader("Content-Type", "application/pdf");
+  res.setHeader(
+    "Content-Disposition",
+    `attachment; filename=${session}_${cleanTerm.replace(" ", "_")}_result.pdf`
+  );
+  doc.pipe(res);
+
+  const pageWidth = doc.page.width;
+  const pageHeight = doc.page.height;
+  const left = doc.page.margins.left;
+
+  /* ========= WATERMARK (PAGE 1 ONLY) ========= */
+  const logoPath = path.join(__dirname, "public/assets/school-logo.png");
+  if (fs.existsSync(logoPath)) {
+    doc.opacity(0.05).image(logoPath, 120, 260, { width: 350 }).opacity(1);
+  }
+
+  /* ========= HEADER ========= */
+  doc.image(logoPath, left, 40, { width: 70 });
+
+  doc
+    .font("Helvetica-Bold")
+    .fontSize(17)
+    .text("LYTEBRIDGE ACADEMY", 0, 45, { align: "center" });
+
+  doc
+    .font("Helvetica")
+    .fontSize(10)
+    .text("Academic Excellence & Character", { align: "center" })
+    .text(
+      "call: +234 (0) 9136806652 | email: lytebridgeacademy@gmail.com",
+      { align: "center" }
+    );
+
+  doc
+    .moveDown(0.5)
+    .font("Helvetica-Bold")
+    .fontSize(12)
+    .fillColor("blue")
+    .text(`REPORT SHEET FOR ${cleanTerm.toUpperCase()}`, { align: "center" })
+    .text(`${session} SESSION`, { align: "center" })
+    .fillColor("black");
+
+  /* ========= STUDENT PHOTO ========= */
+  const photoPath = result.student_photo
+    ? path.join(__dirname, "public", result.student_photo)
+    : null;
+
+  if (photoPath && fs.existsSync(photoPath)) {
+    doc.image(photoPath, pageWidth - 120, 55, {
+      width: 75,
+      height: 95
+    });
+    doc.rect(pageWidth - 120, 55, 75, 95).stroke();
+  }
+
+  /* ========= STUDENT INFORMATION (TWO SEPARATE TABLES) ========= */
+  let y = 170;
+  const tableGap = 12;
+  const tableWidth = (pageWidth - left * 2 - tableGap) / 2;
+  const rowH = 22;
+
+  const drawRow = (x, y, label, value) => {
+    doc.rect(x, y, tableWidth, rowH).stroke();
+    doc.moveTo(x + 120, y).lineTo(x + 120, y + rowH).stroke();
+    doc.font("Helvetica-Bold").fontSize(9).text(label, x + 6, y + 6);
+    doc.font("Helvetica").fontSize(9).text(value, x + 126, y + 6);
+  };
+
+  const leftTable = [
+    ["Name", result.student_name],
+    ["Class", result.class_name],
+    ["Academic Session", session],
+    ["Term", cleanTerm],
+    ["Average", result.average]
+  ];
+
+  const rightTable = [
+    [
+      "Attendance",
+      result.attendance
+        ? `${result.attendance.present}/${result.attendance.total}`
+        : "-"
+    ],
+    ["Total School Days", result.attendance?.total || "-"],
+    ["Class Highest", result.class_highest || "-"],
+    ["Class Lowest", result.class_lowest || "-"],
+    ["Next Term Begins", result.next_term_date || "-"]
+  ];
+
+  leftTable.forEach((r, i) =>
+    drawRow(left, y + i * rowH, r[0], r[1])
+  );
+
+  rightTable.forEach((r, i) =>
+    drawRow(left + tableWidth + tableGap, y + i * rowH, r[0], r[1])
+  );
+
+  y += Math.max(leftTable.length, rightTable.length) * rowH + 25;
+
+   /* ========= ACADEMIC PERFORMANCE TABLE ========= */
+  const cols = [
+    { title: "Subject", width: 150 },
+    { title: "CA", width: 35 },
+    { title: "Exam", width: 40 },
+    { title: "Total", width: 40 },
+    { title: "Max", width: 35 },
+    { title: "Min", width: 35 },
+    { title: "Class Avg", width: 50 },
+    { title: "Grade", width: 40 },
+    { title: "Remark", width: 90 }
+  ];
+
+  const drawTableHeader = () => {
+    let x = left;
+    doc.font("Helvetica-Bold").fontSize(9);
+    cols.forEach(c => {
+      doc.rect(x, y, c.width, 20).stroke();
+      doc.text(c.title, x + 3, y + 6);
+      x += c.width;
+    });
+    y += 20;
+  };
+
+  drawTableHeader();
+  doc.font("Helvetica").fontSize(9);
+
+  for (const s of result.subjects) {
+    if (y > pageHeight - 120) {
+      doc.addPage();
+      y = 60;
+      drawTableHeader();
+    }
+
+    let x = left;
+    const row = [
+      s.subject,
+      s.ca,
+      s.exam,
+      s.total,
+      s.max_score,
+      s.min_score,
+      s.class_average,
+      s.grade,
+      s.remark
+    ];
+
+    row.forEach((cell, i) => {
+      doc.rect(x, y, cols[i].width, 18).stroke();
+      doc.text(cell ?? "-", x + 3, y + 5, { width: cols[i].width - 6 });
+      x += cols[i].width;
+    });
+
+    y += 18;
+  }
+  /* ========= GRADE RANKING ========= */
+  doc.rect(left, y, pageWidth - left * 2, 22).stroke();
+  doc.font("Helvetica-Bold").fontSize(9).text(
+    "GRADE RANKING: A = 70–100 | B = 60–69 | C = 50–59 | D = 45–49 | E = 40–44 | F = 0–39",
+    left,
+    y + 6,
+    { width: pageWidth - left * 2, align: "center" }
+  );
+
+  y += 35;
+
+  /* ========= STAFF & COMMENT (VERTICAL ORDER) ========= */
+  const staffBlockHeight = 120;
+  if (y + staffBlockHeight > pageHeight - 60) {
+    doc.addPage();
+    y = 60;
+  }
+
+  const fullWidth = pageWidth - left * 2;
+
+  // Head of School
+  doc.rect(left, y, fullWidth, rowH).stroke();
+  doc.moveTo(left + 150, y).lineTo(left + 150, y + rowH).stroke();
+  doc.font("Helvetica-Bold").text("Head of School", left + 6, y + 6);
+  doc.font("Helvetica").text("Mrs. A. O. Lawal", left + 156, y + 6);
+
+  y += rowH;
+
+  // Class Teacher
+  doc.rect(left, y, fullWidth, rowH).stroke();
+  doc.moveTo(left + 150, y).lineTo(left + 150, y + rowH).stroke();
+  doc.font("Helvetica-Bold").text("Class Teacher", left + 6, y + 6);
+  doc.font("Helvetica").text(result.class_teacher || "-", left + 156, y + 6);
+
+  y += rowH + 6;
+
+  // Comment
+  doc.rect(left, y, fullWidth, 55).stroke();
+  doc.font("Helvetica-Bold").text("Teacher’s Comment", left + 6, y + 6);
+  doc.font("Helvetica").fontSize(9).text(
+    result.teacher_comment || "______________________________",
+    left + 6,
+    y + 22,
+    { width: fullWidth - 12 }
+  );
+
+  doc.end();
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+////////////////////////////////////////////////
+
+
+
+/////KEV72MyT
 app.listen(port, (err) => {
   if (err) {
     console.error('Server startup error:', err);

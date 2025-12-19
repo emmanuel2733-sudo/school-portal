@@ -105,6 +105,18 @@
           <p class="text-center text-muted fs-3 py-5">No students found in <%= class_name %></p>
         <% } else { %>
           <div class="table-responsive">
+            <div class="row mb-4">
+  <div class="col-md-4">
+    <label class="form-label fw-bold">Total School Days</label>
+    <input type="number" id="totalDays" class="form-control" min="1">
+  </div>
+
+  <div class="col-md-4">
+    <label class="form-label fw-bold">Next Term Begins</label>
+    <input type="date" id="nextTermDate" class="form-control">
+  </div>
+</div>
+
             <table class="table table-hover align-middle">
               <thead>
                 <tr>

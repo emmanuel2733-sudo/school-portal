@@ -2,48 +2,248 @@
 <html lang="en" data-theme="light">
 <head>
   <meta charset="UTF-8">
-  <title>Download Result</title>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+  <title>Download Result • LYTEBRIDGE ACADEMY</title>
+
+  <!-- Fonts & Bootstrap -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <style>
+    :root {
+      --pink: #ff6b9d;
+      --purple: #7b5cff;
+      --green: #50c878;
+      --bg: #fdf5e6;
+      --card: #ffffff;
+      --text: #333;
+      --border: #ffe0ec;
+      --shadow: 0 8px 20px rgba(255,107,157,0.18);
+    }
+
+    [data-theme="dark"] {
+      --bg: #121212;
+      --card: #1e1e1e;
+      --text: #e0e0e0;
+      --border: #333;
+      --shadow: 0 8px 20px rgba(0,0,0,0.5);
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      transition: 0.3s ease;
+    }
+
+    /* NAV HEADER */
+    .top-bar {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      background: var(--card);
+      padding: 18px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: var(--shadow);
+      border-bottom: 1px solid var(--border);
+      z-index: 1000;
+    }
+
+    .school-name {
+      font-size: 1.8rem;
+      font-weight: 800;
+      background: linear-gradient(90deg, var(--pink), var(--purple));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .top-controls {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .theme-toggle {
+      width: 48px;
+      height: 26px;
+      background: var(--border);
+      border-radius: 50px;
+      position: relative;
+      border: none;
+      cursor: pointer;
+    }
+
+    .theme-toggle::before {
+      content: "";
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      width: 20px;
+      height: 20px;
+      background: linear-gradient(135deg, var(--pink), var(--purple));
+      border-radius: 50%;
+      transition: 0.3s ease;
+    }
+
+    [data-theme="dark"] .theme-toggle::before {
+      transform: translateX(22px);
+    }
+
+    .back-btn {
+      padding: 8px 18px;
+      border-radius: 50px;
+      font-weight: 600;
+      border: 2px solid var(--pink);
+      background: transparent;
+      color: var(--text);
+      text-decoration: none;
+      transition: 0.3s;
+    }
+
+    .back-btn:hover {
+      background: var(--pink);
+      color: white;
+    }
+
+    /* MAIN CARD */
+    .main {
+      margin-top: 120px;
+      display: flex;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .result-card {
+      background: var(--card);
+      width: 100%;
+      max-width: 600px;
+      border-radius: 20px;
+      padding: 36px;
+      box-shadow: var(--shadow);
+      border-top: 6px solid var(--pink);
+    }
+
+    .title {
+      text-align: center;
+      font-size: 2rem;
+      font-weight: 800;
+      margin-bottom: 30px;
+      background: linear-gradient(90deg, var(--pink), var(--purple));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    label {
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+
+    .form-control, .form-select {
+      padding: 12px 14px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+    }
+
+    .form-control:focus, .form-select:focus {
+      border-color: var(--purple);
+      box-shadow: 0 0 0 0.15rem rgba(123,92,255,0.25);
+    }
+
+    .submit-btn {
+      background: linear-gradient(135deg, var(--pink), var(--purple));
+      border: none;
+      color: white;
+      padding: 14px 48px;
+      font-size: 1.1rem;
+      font-weight: 700;
+      border-radius: 50px;
+      transition: 0.3s;
+    }
+
+    .submit-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 25px rgba(123,92,255,0.4);
+    }
+
+    .note {
+      text-align: center;
+      margin-top: 18px;
+      font-size: 0.9rem;
+      color: var(--green);
+      font-weight: 600;
+    }
+  </style>
 </head>
 
 <body>
 
-<!-- NAV HEADER -->
+<!-- NAV -->
 <div class="top-bar">
   <div class="school-name">LYTEBRIDGE ACADEMY</div>
   <div class="top-controls">
     <button class="theme-toggle" id="theme-toggle"></button>
-    <a href="/student/dashboard" class="btn btn-outline-primary">Back</a>
+    <a href="/dashboard" class="back-btn">Back to Dashboard</a>
   </div>
 </div>
 
-<div class="container mt-5 pt-5">
-  <h3 class="mb-4 text-center">Download Result Sheet</h3>
+<!-- CONTENT -->
+<div class="main">
+  <div class="result-card">
+    <div class="title">Download Result Sheet</div>
 
-  <form method="GET" action="/student/results/preview">
-    <div class="row g-3">
-      <div class="col-md-6">
-        <label class="form-label">Academic Session</label>
-        <input type="text" name="session" class="form-control" placeholder="2024/2025" required>
-      </div>
+<form method="GET" action="/student/results/preview">
 
-      <div class="col-md-6">
-        <label class="form-label">Result Type</label>
-        <select name="term" class="form-select" required>
-          <option value="">Select</option>
-          <option value="first">First Term</option>
-          <option value="second">Second Term</option>
-          <option value="third">Third Term</option>
-          <option value="annual">Annual Result</option>
-        </select>
-      </div>
+  <div class="mb-3">
+    <label>Academic Session</label>
+    <input
+      type="text"
+      name="session"
+      class="form-control"
+      value="<%= session %>"
+      readonly
+    >
+  </div>
+
+  <div class="mb-4">
+    <label>Result Type</label>
+    <select name="term" class="form-select" required>
+      <option value="">Select Term</option>
+
+      <% terms.forEach(t => { %>
+        <option value="<%= t.name %>"><%= t.name %></option>
+      <% }) %>
+
+      <option value="Annual">Annual Result</option>
+    </select>
+  </div>
+
+  <div class="text-center">
+    <button class="submit-btn">Search Result</button>
+  </div>
+
+</form>
+
+
+    <div class="note">
+      📌 Results are available only when the term is completed
     </div>
-
-    <div class="text-center mt-4">
-      <button class="btn btn-primary px-5">Search Result</button>
-    </div>
-  </form>
+  </div>
 </div>
+
+<script>
+  const toggle = document.getElementById("theme-toggle");
+  const html = document.documentElement;
+  const saved = localStorage.getItem("theme") || "light";
+  html.setAttribute("data-theme", saved);
+
+  toggle.onclick = () => {
+    const next = html.getAttribute("data-theme") === "dark" ? "light" : "dark";
+    html.setAttribute("data-theme", next);
+    localStorage.setItem("theme", next);
+  };
+</script>
 
 </body>
 </html>
