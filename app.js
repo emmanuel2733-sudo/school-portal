@@ -488,24 +488,39 @@ const termId = termRow[0].id;
 // ================= ATTENDANCE (FINAL FIX) =================
 const attendanceRow = await query(`
   SELECT 
-    ta.days_present,
-    ts.total_school_days,
-    ts.next_term_begins
+    ta.days_present
   FROM term_attendance ta
   LEFT JOIN term_settings ts 
-    ON ts.term = ta.term_id
+    ON ts.term_id = ta.term_id
   WHERE ta.student_id = ?
     AND ta.term_id = ?
   LIMIT 1
 `, [studentId, termId]);
 
+// ================= TERM SETTINGS (FIXED - NO DEPENDENCY ON ATTENDANCE) =================
+const settingsRow = await query(`
+  SELECT 
+    total_school_days,
+    next_term_begins
+  FROM term_settings
+  WHERE term_id = ?
+  LIMIT 1
+`, [termId]);
+
+console.log('🟡 attendanceRow:', attendanceRow);
+console.log('🟢 settingsRow:', settingsRow);
+
 const attendance = {
   present: attendanceRow[0]?.days_present ?? null,
-  total: attendanceRow[0]?.total_school_days ?? null
+  total: settingsRow[0]?.total_school_days ?? null
 };
 
 const next_term_date =
-  attendanceRow[0]?.next_term_begins ?? null;
+  settingsRow[0]?.next_term_begins ?? null;
+
+console.log('🟣 attendance object:', attendance);
+console.log('🔵 next_term_date:', next_term_date);
+
 
 
 
@@ -732,6 +747,29 @@ if (user.role === 'teacher') {
     ? rows.map(r => r.name).join(', ')
     : null;
 }
+// === FETCH CLASS FOR STUDENT ===
+let studentClass = null;
+
+if (user.role === 'student') {
+  const row = await new Promise((resolve, reject) => {
+    db.get(`
+      SELECT cl.name AS class_name
+      FROM student_enrollments se
+      JOIN courses co ON se.course_id = co.id
+      JOIN classes cl ON co.class_id = cl.id
+      WHERE se.student_id = ?
+      ORDER BY se.id DESC
+      LIMIT 1
+    `, [user.id], (err, row) => {
+      if (err) reject(err);
+      else resolve(row);
+    });
+  });
+
+  studentClass = row ? row.class_name : null;
+}
+
+
 
     // SAVE FULL USER + CLASS TO SESSION
     req.session.user = {
@@ -746,8 +784,10 @@ if (user.role === 'teacher') {
       photo: user.photo || 'default-photo.jpg',
       role: user.role,
       status: user.status,
-      classTeacherOf: classTeacherOf        // THIS LINE FIXES EVERYTHING!
+      classTeacherOf: classTeacherOf,       // THIS LINE FIXES EVERYTHING!
+     class: studentClass
     };
+console.log('🟢 Session user saved:', req.session.user);
 
     // Keep old session variables (for backward compatibility)
     req.session.userId = user.id;
@@ -4498,71 +4538,63 @@ app.get('/teacher/attendance', isTeacher, async (req, res) => {
 
 
 // SAVE ATTENDANCE
-app.post('/teacher/attendance/save', isTeacher, async (req, res) => {
+app.post('/teacher/attendance/save-all', isTeacher, async (req, res) => {
   try {
-    const { studentId, daysPresent } = req.body;
+    const { data, meta } = req.body;
     const termId = req.session.currentTermId;
 
     if (!termId) {
-      return res.json({ success: false, message: 'No active term' });
+      return res.status(400).json({ success: false, message: 'No active term' });
     }
 
-    await query(`
-      INSERT INTO term_attendance (student_id, term_id, days_present)
-      VALUES (?, ?, ?)
-      ON CONFLICT(student_id, term_id) DO UPDATE SET
-        days_present = excluded.days_present
-    `, [studentId, termId, parseInt(daysPresent) || 0]);
+    // 1️⃣ Save attendance
+    for (const row of data) {
+      await query(`
+        INSERT INTO term_attendance (student_id, term_id, days_present)
+        VALUES (?, ?, ?)
+        ON CONFLICT(student_id, term_id)
+        DO UPDATE SET days_present = excluded.days_present
+      `, [row.studentId, termId, row.daysPresent]);
+    }
 
-    res.json({ success: true });
+    // 2️⃣ Save term settings (FIXED)
+// 🔹 get class_id from teacher session
+const className = req.session.user.classTeacherOf;
+
+const cls = await query(
+  `SELECT id FROM classes WHERE name = ?`,
+  [className]
+);
+
+if (!cls.length) {
+  throw new Error('Class not found for attendance settings');
+}
+
+const classId = cls[0].id;
+
+// 🔹 save term settings correctly
+await query(`
+  INSERT INTO term_settings (class_id, term_id, total_school_days, next_term_begins)
+  VALUES (?, ?, ?, ?)
+  ON CONFLICT(class_id, term_id) DO UPDATE SET
+    total_school_days = excluded.total_school_days,
+    next_term_begins = excluded.next_term_begins
+`, [
+  classId,
+  termId,
+  meta.totalSchoolDays || null,
+  meta.nextTermBegins || null
+]);
+
+
+
+    res.json({ success: true, message: 'Attendance saved successfully' });
 
   } catch (err) {
-    console.error('Save attendance error:', err);
-    res.json({ success: false });
+    console.error('Attendance save error:', err);
+    res.status(500).json({ success: false, message: 'Attendance save failed' });
   }
 });
-
-
-app.post('/teacher/attendance/settings', isTeacher, async (req, res) => {
-  try {
-    const { totalDays, nextTermBegins } = req.body;
-    const className = req.session.user.classTeacherOf;
-    const termId = req.session.currentTermId;
-
-    if (!className || !termId) {
-      return res.json({ success: false });
-    }
-
-    const cls = await query(
-      `SELECT id FROM classes WHERE name = ?`,
-      [className]
-    );
-
-    if (!cls.length) {
-      return res.json({ success: false });
-    }
-
-    const classId = cls[0].id;
-
-    await query(`
-      INSERT INTO term_settings (class_id, term_id, total_school_days, next_term_begins)
-      VALUES (?, ?, ?, ?)
-      ON CONFLICT(class_id, term_id) DO UPDATE SET
-        total_school_days = excluded.total_school_days,
-        next_term_begins = excluded.next_term_begins
-    `, [classId, termId, totalDays, nextTermBegins]);
-
-    res.json({ success: true });
-
-  } catch (err) {
-    console.error('Settings save error:', err);
-    res.json({ success: false });
-  }
-});
-
-
-
-
 
 // ————————————————————————————————
 // ADMIN: Re-enroll ALL students for the CURRENT TERM (global)
@@ -7087,47 +7119,34 @@ app.get('/teacher/question-bank/:course_id/:class_id/ai-image', (req, res) => {
   });
 });
 ///////////////////////////////////////////////////////////////////
-app.get("/student/results/download", isStudent, async (req, res) => {
+app.get('/student/results/download', isStudent, async (req, res) => {
   try {
-    const studentId = req.session.userId;
-
-    // 1️⃣ Get current academic year
-    const yearRow = await query(`
-      SELECT id, year
+    // all academic years
+    const years = await query(`
+      SELECT year
       FROM academic_years
-      WHERE current = 1
-      LIMIT 1
+      ORDER BY year DESC
     `);
 
-    if (!yearRow.length) {
-      return res.render("student_download_result", {
-        session: "",
-        terms: []
-      });
-    }
-
-    const yearId = yearRow[0].id;
-    const session = yearRow[0].year;
-
-    // 2️⃣ Get ALL terms for this year (completed OR not)
+    // completed terms only
     const terms = await query(`
       SELECT name
       FROM terms
-      WHERE year_id = ?
-      ORDER BY term_number
-    `, [yearId]);
+      WHERE is_completed = 1
+      ORDER BY id
+    `);
 
-    // 3️⃣ Render page with REQUIRED variables
-    res.render("student_download_result", {
-      session,
+    res.render('student_download_result', {
+      years,
       terms
     });
 
   } catch (err) {
-    console.error("Download result page error:", err);
-    res.redirect("/dashboard");
+    console.error('Result download load error:', err);
+    res.redirect('/dashboard');
   }
 });
+
 
 app.get("/student/results/preview", isStudent, async (req, res) => {
   const { session, term } = req.query;
@@ -7420,6 +7439,205 @@ req.session.currentTermName = currentTermRow[0].name;
   doc.end();
 });
 
+app.get('/student/results/terms', isStudent, async (req, res) => {
+  try {
+    const { session } = req.query;
+
+    const rows = await query(`
+      SELECT DISTINCT t.name
+      FROM terms t
+      JOIN academic_years ay ON ay.id = t.year_id
+      WHERE ay.year = ?
+        AND (t.is_completed = 1 OR t.is_current = 1)
+        AND t.name IN ('First Term', 'Second Term', 'Third Term')
+      ORDER BY t.term_number
+    `, [session]);
+
+    res.json(rows.map(r => r.name));
+
+  } catch (err) {
+    console.error('Load terms error:', err);
+    res.json([]);
+  }
+});
+
+
+app.get('/teacher/announcements', isTeacher, async (req, res) => {
+  const className = req.session.user.classTeacherOf;
+
+  const announcements = await query(`
+    SELECT *
+    FROM announcements
+    WHERE class_name = ?
+    ORDER BY created_at DESC
+  `, [className]);
+
+  res.render('teacher_announcements', {
+    announcements,
+    classTeacherOf: className
+  });
+});
+
+app.get('/teacher/announcements/new', isTeacher, async (req, res) => {
+  res.render('teacher_create_announcement', {
+    classTeacherOf: req.session.user?.classTeacherOf || null
+  });
+});
+
+
+app.post('/teacher/announcements', isTeacher, async (req, res) => {
+  try {
+    const { title, body } = req.body;
+
+    const className = req.session.user.classTeacherOf;
+
+    if (!className) {
+      return res.redirect('/teacher/announcements?error=No+class+assigned');
+    }
+
+    await query(`
+      INSERT INTO announcements (title, body, class_name, created_at)
+      VALUES (?, ?, ?, datetime('now'))
+    `, [title, body, className]);
+
+    console.log('✅ Announcement saved for class:', className);
+
+    res.redirect('/teacher/announcements?success=created');
+
+  } catch (err) {
+    console.error('Create announcement error:', err);
+    res.redirect('/teacher/announcements?error=failed');
+  }
+});
+
+
+app.get('/student/announcements', isStudent, async (req, res) => {
+  const studentClass = req.session.user.class;
+
+  console.log('📣 Student class:', studentClass);
+
+  if (!studentClass) {
+    return res.render('student_announcements', {
+      announcements: []
+    });
+  }
+
+  const announcements = await query(`
+    SELECT title, body, created_at
+    FROM announcements
+    WHERE class_name = ?
+    ORDER BY created_at DESC
+  `, [studentClass]);
+
+  console.log('📣 Announcements found:', announcements.length);
+
+  res.render('student_announcements', { announcements });
+});
+
+app.get('/teacher/announcements/:id/edit', isTeacher, async (req, res) => {
+  const { id } = req.params;
+
+  const rows = await query(`
+    SELECT id, title, body
+    FROM announcements
+    WHERE id = ?
+  `, [id]);
+
+  if (!rows.length) {
+    return res.redirect('/teacher/announcements');
+  }
+
+  res.render('teacher_edit_announcement', {
+    announcement: rows[0]
+  });
+});
+
+app.get('/teacher/announcements/:id/edit', isTeacher, async (req, res) => {
+  const { id } = req.params;
+
+  const rows = await query(`
+    SELECT id, title, body
+    FROM announcements
+    WHERE id = ?
+  `, [id]);
+
+  if (!rows.length) {
+    return res.redirect('/teacher/announcements');
+  }
+
+  res.render('teacher_edit_announcement', {
+    announcement: rows[0]
+  });
+});
+
+app.post('/teacher/announcements/:id/edit', isTeacher, async (req, res) => {
+  const { id } = req.params;
+  const { title, body } = req.body;
+
+  await query(`
+    UPDATE announcements
+    SET title = ?, body = ?
+    WHERE id = ?
+  `, [title, body, id]);
+
+  res.redirect('/teacher/announcements?success=updated');
+});
+
+app.post('/teacher/announcements/:id/delete', isTeacher, async (req, res) => {
+  const { id } = req.params;
+
+  await query(`
+    DELETE FROM announcements
+    WHERE id = ?
+  `, [id]);
+
+  res.redirect('/teacher/announcements?success=deleted');
+});
+
+
+// app.post('/admin/set-current-term/:termId', async (req, res) => {
+//   try {
+//     const termId = req.params.termId;
+
+//     // 1️⃣ Get the academic year of the new term
+//     const term = await get(
+//       'SELECT year_id FROM terms WHERE id = ?',
+//       [termId]
+//     );
+//     if (!term) {
+//       return res.redirect('/admin/academic-years?error=Term+not+found');
+//     }
+
+//     // 2️⃣ Mark previous current term as completed
+//     await runQuery(`
+//       UPDATE terms
+//       SET is_current = 0,
+//           is_completed = 1
+//       WHERE is_current = 1
+//         AND year_id = ?
+//     `, [term.year_id]);
+
+//     // 3️⃣ Set new current term
+//     await runQuery(`
+//       UPDATE terms
+//       SET is_current = 1
+//       WHERE id = ?
+//     `, [termId]);
+
+//     // 4️⃣ Sync academic_years
+//     await runQuery(`
+//       UPDATE academic_years
+//       SET current_term_id = ?
+//       WHERE id = ?
+//     `, [termId, term.year_id]);
+
+//     res.redirect('/admin/academic-years?success=Current+term+updated');
+
+//   } catch (err) {
+//     console.error('Set current term error:', err);
+//     res.redirect('/admin/academic-years?error=Failed+to+set+term');
+//   }
+// });
 
 
 
@@ -7447,6 +7665,10 @@ req.session.currentTermName = currentTermRow[0].name;
 
 
 /////KEV72MyT
+
+
+
+
 app.listen(port, (err) => {
   if (err) {
     console.error('Server startup error:', err);

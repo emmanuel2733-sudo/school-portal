@@ -147,47 +147,47 @@
   </div>
 
   <script>
-    document.getElementById('saveAllBtn').addEventListener('click', async function() {
-      const btn = this;
-      if (btn.disabled) return;
-      btn.disabled = true;
-      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+document.getElementById('saveAllBtn').addEventListener('click', async function() {
+  const btn = this;
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
 
-      const inputs = document.querySelectorAll('.days-input');
-      const data = [];
+  const inputs = document.querySelectorAll('.days-input');
+  const data = [];
 
-      inputs.forEach(input => {
-        const id = input.dataset.id;
-        const val = input.value.trim();
-        if (val !== '' && !isNaN(val)) {
-          data.push({ studentId: id, daysPresent: parseInt(val) });
-        }
+  inputs.forEach(input => {
+    if (input.value !== '') {
+      data.push({
+        studentId: input.dataset.id,
+        daysPresent: parseInt(input.value)
       });
+    }
+  });
 
-      try {
-        const res = await fetch('/teacher/attendance/save-all', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(data)
-        });
+  const totalSchoolDays = document.getElementById('totalDays').value;
+  const nextTermBegins = document.getElementById('nextTermDate').value;
 
-        if (res.ok) {
-          document.querySelectorAll('tr[data-id]').forEach(row => {
-            row.classList.add('saved-row');
-          });
-          setTimeout(() => {
-            document.querySelectorAll('tr[data-id]').forEach(row => {
-              row.classList.remove('saved-row');
-            });
-          }, 2000);
-        }
-      } catch (err) {
-        alert('Save failed. Please check your connection.');
-      } finally {
-        btn.disabled = false;
-        btn.innerHTML = '<i class="fas fa-save"></i>';
-      }
+  try {
+    const res = await fetch('/teacher/attendance/save-all', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        data,
+        meta: { totalSchoolDays, nextTermBegins }
+      })
     });
+
+    const result = await res.json();
+    alert(result.message);
+
+  } catch (err) {
+    alert('Save failed');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fas fa-save"></i>';
+  }
+});
+
   </script>
 </body>
 </html>

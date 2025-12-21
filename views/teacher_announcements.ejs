@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Announcements</title>
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css"/>
+
+  <style>
+    body {
+      background: #f8fafc;
+      font-family: 'Segoe UI', sans-serif;
+    }
+
+    /* NAVBAR */
+    .navbar {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 1000;
+      background: white;
+      padding: 1.2rem 0;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+      border-bottom: 1px solid #e2e8f0;
+    }
+
+    .navbar-brand {
+      font-weight: 800;
+      font-size: 1.8rem;
+      color: #1a202c;
+    }
+
+    .back-btn {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      background: #6366f1;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.4rem;
+      text-decoration: none;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.15);
+      transition: 0.3s;
+    }
+
+    .back-btn:hover {
+      background: #4f46e5;
+      transform: scale(1.1);
+    }
+
+    .content {
+      margin-top: 110px;
+      padding: 40px 20px;
+    }
+
+    .announce-card {
+      background: white;
+      border-radius: 16px;
+      padding: 30px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+      border: 1px solid #e2e8f0;
+      margin-bottom: 20px;
+    }
+
+    .create-btn {
+      background: linear-gradient(135deg,#f56565,#e53e3e);
+      color: white;
+      font-weight: 700;
+      padding: 14px 30px;
+      border-radius: 12px;
+      text-decoration: none;
+      box-shadow: 0 8px 25px rgba(229,62,62,0.35);
+    }
+
+    .create-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 30px rgba(229,62,62,0.45);
+    }
+  </style>
+</head>
+
+<body>
+
+<!-- TEACHER NAVBAR -->
+<nav class="navbar">
+  <div class="container-fluid px-4">
+    <a class="navbar-brand" href="/dashboard">School Portal</a>
+
+    <div class="d-flex align-items-center gap-3">
+      <% if (classTeacherOf) { %>
+        <div style="
+          background: linear-gradient(135deg,#ff6b9d,#ff8ab3);
+          color:white;
+          padding:10px 24px;
+          border-radius:50px;
+          font-weight:700;
+          box-shadow:0 5px 15px rgba(255,107,157,0.4);
+        ">
+          Class Teacher — <%= classTeacherOf %>
+        </div>
+      <% } %>
+
+      <a href="/dashboard" class="back-btn" title="Back">
+        <i class="fas fa-arrow-left"></i>
+      </a>
+    </div>
+  </div>
+</nav>
+
+<!-- CONTENT -->
+<div class="content container">
+
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 style="font-weight:800;">Class Announcements</h2>
+
+    <a href="/teacher/announcements/new" class="create-btn">
+      <i class="fas fa-plus"></i> Create Announcement
+    </a>
+  </div>
+
+  <% if (announcements.length === 0) { %>
+    <p class="text-muted">No announcements created yet.</p>
+  <% } %>
+
+<% announcements.forEach(a => { %>
+  <div class="announce-card">
+
+    <div class="d-flex justify-content-between align-items-start">
+      <div>
+        <h5 style="font-weight:700;"><%= a.title %></h5>
+        <p style="margin-top:10px;"><%= a.body %></p>
+
+        <small class="text-muted">
+          Posted on <%= new Date(a.created_at).toLocaleString() %>
+        </small>
+      </div>
+
+      <!-- ACTION BUTTONS -->
+      <div class="d-flex gap-2">
+        <!-- EDIT -->
+        <a href="/teacher/announcements/<%= a.id %>/edit"
+           class="btn btn-sm btn-outline-primary">
+          <i class="fas fa-edit"></i>
+        </a>
+
+        <!-- DELETE -->
+        <form method="POST"
+              action="/teacher/announcements/<%= a.id %>/delete"
+              onsubmit="return confirm('Delete this announcement?');">
+          <button class="btn btn-sm btn-outline-danger">
+            <i class="fas fa-trash"></i>
+          </button>
+        </form>
+      </div>
+    </div>
+
+  </div>
+<% }) %>
+
+
+</div>
+
+</body>
+</html>

@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Edit Announcement</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+
+<body style="background:#f8fafc;">
+
+<div class="container" style="max-width:700px;margin-top:120px;">
+  <h2 style="font-weight:800;margin-bottom:30px;">Edit Announcement</h2>
+
+  <form method="POST" action="/teacher/announcements/<%= announcement.id %>/edit">
+
+    <div class="mb-4">
+      <label class="form-label fw-bold">Title</label>
+      <input type="text"
+             name="title"
+             class="form-control"
+             value="<%= announcement.title %>"
+             required>
+    </div>
+
+    <div class="mb-4">
+      <label class="form-label fw-bold">Announcement</label>
+      <textarea name="body"
+                rows="6"
+                class="form-control"
+                required><%= announcement.body %></textarea>
+    </div>
+
+    <div class="d-flex gap-3">
+      <button class="btn btn-primary btn-lg">
+        <i class="fas fa-save"></i> Update
+      </button>
+
+      <a href="/teacher/announcements" class="btn btn-secondary btn-lg">
+        Cancel
+      </a>
+    </div>
+
+  </form>
+</div>
+
+</body>
+</html>

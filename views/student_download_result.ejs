@@ -195,29 +195,26 @@
 
 <form method="GET" action="/student/results/preview">
 
-  <div class="mb-3">
-    <label>Academic Session</label>
-    <input
-      type="text"
-      name="session"
-      class="form-control"
-      value="<%= session %>"
-      readonly
-    >
-  </div>
+ <div class="mb-3">
+  <label>Academic Session</label>
+  <select name="session" class="form-select" required>
+    <option value="">Select Academic Session</option>
 
-  <div class="mb-4">
-    <label>Result Type</label>
-    <select name="term" class="form-select" required>
-      <option value="">Select Term</option>
+    <% years.forEach(y => { %>
+      <option value="<%= y.year %>"><%= y.year %></option>
+    <% }) %>
 
-      <% terms.forEach(t => { %>
-        <option value="<%= t.name %>"><%= t.name %></option>
-      <% }) %>
+  </select>
+</div>
 
-      <option value="Annual">Annual Result</option>
-    </select>
-  </div>
+
+<div class="mb-4">
+  <label>Result Type</label>
+  <select name="term" id="termSelect" class="form-select" required>
+    <option value="">Select Term</option>
+  </select>
+</div>
+
 
   <div class="text-center">
     <button class="submit-btn">Search Result</button>
@@ -244,6 +241,30 @@
     localStorage.setItem("theme", next);
   };
 </script>
+<script>
+  const sessionSelect = document.querySelector('select[name="session"]');
+  const termSelect = document.getElementById('termSelect');
+
+  sessionSelect.addEventListener('change', async () => {
+    termSelect.innerHTML = '<option value="">Loading…</option>';
+
+    const res = await fetch(`/student/results/terms?session=${sessionSelect.value}`);
+    const terms = await res.json();
+
+    termSelect.innerHTML = '<option value="">Select Term</option>';
+
+    terms.forEach(t => {
+      const opt = document.createElement('option');
+      opt.value = t;
+      opt.textContent = t;
+      termSelect.appendChild(opt);
+    });
+
+    // annual
+    termSelect.appendChild(new Option('Annual Result', 'Annual'));
+  });
+</script>
+
 
 </body>
 </html>

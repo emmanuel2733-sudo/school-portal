@@ -505,6 +505,7 @@ db.run(`DELETE FROM term_settings`, err => {
 
 
 
+
 // Run once on startup
 ensureDefaultClasses();
 });
