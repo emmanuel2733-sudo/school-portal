@@ -7178,58 +7178,50 @@ app.get('/student/results/download', isStudent, async (req, res) => {
 
 
 app.get("/student/results/preview", isStudent, async (req, res) => {
-  const { session, term } = req.query;
-  const studentId = req.session.userId;
-  // 🔹 Load current term (ID + name)
-const currentTermRow = await query(`
-  SELECT id, name 
-  FROM terms 
-  WHERE is_current = 1 
-  LIMIT 1
-`);
+  try {
+    const { session, term } = req.query;
+    const studentId = req.session.user.id;
 
-if (!currentTermRow.length) {
-  return res.render("result_not_found");
-}
+    const currentTermRow = await query(`
+      SELECT id, name
+      FROM terms
+      WHERE is_current = 1
+      LIMIT 1
+    `);
 
-// Keep session consistent for result functions
-req.session.currentTermId = currentTermRow[0].id;
-req.session.currentTermName = currentTermRow[0].name;
+    if (!currentTermRow.length) {
+      return res.render("result_not_found");
+    }
 
+    req.session.currentTermId = currentTermRow[0].id;
+    req.session.currentTermName = currentTermRow[0].name;
 
-  // 🔧 Normalize term
-  let cleanTerm = term?.toLowerCase();
+    let cleanTerm = term?.toLowerCase() || "";
+    if (cleanTerm.includes("annual")) cleanTerm = "Annual";
+    else if (cleanTerm.includes("first")) cleanTerm = "First Term";
+    else if (cleanTerm.includes("second")) cleanTerm = "Second Term";
+    else if (cleanTerm.includes("third")) cleanTerm = "Third Term";
 
-  if (cleanTerm.includes("annual")) {
-    cleanTerm = "Annual";
-  } else if (cleanTerm.includes("first")) {
-    cleanTerm = "First Term";
-  } else if (cleanTerm.includes("second")) {
-    cleanTerm = "Second Term";
-  } else if (cleanTerm.includes("third")) {
-    cleanTerm = "Third Term";
+    const result =
+      cleanTerm === "Annual"
+        ? await getCompletedAnnualResult(studentId, session)
+        : await getCompletedTermResult(studentId, session, cleanTerm);
+
+    if (!result) {
+      return res.render("result_not_found");
+    }
+
+    res.render("student_result_preview", {
+      result
+      // ❌ NO baseUrl
+    });
+
+  } catch (err) {
+    console.error("Result preview error:", err);
+    res.render("result_not_found");
   }
-
-  let result;
-  if (cleanTerm === "Annual") {
-    result = await getCompletedAnnualResult(studentId, session);
-  } else {
-    result = await getCompletedTermResult(studentId, session, cleanTerm);
-  }
-
-  if (!result) {
-    return res.render("result_not_found");
-  }
-const baseUrl =
-  process.env.NODE_ENV === 'production'
-    ? 'https://your-app-name.up.railway.app'
-    : 'http://localhost:3001';
-
-  res.render("student_result_preview", { 
-    result,
-  baseUrl
-  });
 });
+
 
 app.get("/student/results/pdf", isStudent, async (req, res) => {
   const { session, term } = req.query;
@@ -7284,29 +7276,36 @@ req.session.currentTermName = currentTermRow[0].name;
 
   /* ========= WATERMARK (PAGE 1 ONLY) ========= */
   const logoPath = path.join(__dirname, "public/assets/school-logo.png");
-  if (fs.existsSync(logoPath)) {
-    doc.opacity(0.05).image(logoPath, 120, 260, { width: 350 }).opacity(1);
-  }
+ try {
+      if (fs.existsSync(logoPath)) {
+        doc.opacity(0.05).image(logoPath, 120, 260, { width: 350 }).opacity(1);
+      }
+    } catch (e) {
+      console.error("Watermark logo error:", e);
+    }
 
   /* ========= HEADER ========= */
-  if (fs.existsSync(logoPath)) {
-  doc.image(logoPath, left, 40, { width: 70 });
-}
+     try {
+      if (fs.existsSync(logoPath)) {
+        doc.image(logoPath, left, 40, { width: 70 });
+      }
+    } catch (e) {
+      console.error("Header logo error:", e);
+    }
 
+    doc
+      .font("Helvetica-Bold")
+      .fontSize(17)
+      .text("LYTEBRIDGE ACADEMY", 0, 45, { align: "center" });
 
-  doc
-    .font("Helvetica-Bold")
-    .fontSize(17)
-    .text("LYTEBRIDGE ACADEMY", 0, 45, { align: "center" });
-
-  doc
-    .font("Helvetica")
-    .fontSize(10)
-    .text("Academic Excellence & Character", { align: "center" })
-    .text(
-      "call: +234 (0) 9136806652 | email: lytebridgeacademy@gmail.com",
-      { align: "center" }
-    );
+    doc
+      .font("Helvetica")
+      .fontSize(10)
+      .text("Academic Excellence & Character", { align: "center" })
+      .text(
+        "call: +234 (0) 9136806652 | email: lytebridgeacademy@gmail.com",
+        { align: "center" }
+      );
 
   doc
     .moveDown(0.5)
