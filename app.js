@@ -155,6 +155,7 @@ function initializeAcademicYear(start, end) {
 }
 app.use('/uploads', express.static(path.join(__dirname, 'public/uploads')));
 app.use(express.static('public'));
+app.use(express.static(path.join(__dirname, 'public')));
 app.use('/assets', express.static(path.join(__dirname, 'public/assets')));
 // === MULTER: SAVE TO TEMP ===
 const upload = multer({
@@ -289,8 +290,6 @@ const uploadWebcam = multer({
 });
 
 app.use('/uploads/question_bank', express.static('uploads/question_bank'));
-app.use(express.static(path.join(__dirname, 'public')));
-
 
 
 ////////////////////////////////////////////////////////////
@@ -7213,7 +7212,6 @@ app.get("/student/results/preview", isStudent, async (req, res) => {
 
     res.render("student_result_preview", {
       result
-      // ❌ NO baseUrl
     });
 
   } catch (err) {
@@ -7285,13 +7283,9 @@ req.session.currentTermName = currentTermRow[0].name;
     }
 
   /* ========= HEADER ========= */
-     try {
-      if (fs.existsSync(logoPath)) {
-        doc.image(logoPath, left, 40, { width: 70 });
-      }
-    } catch (e) {
-      console.error("Header logo error:", e);
-    }
+     if (fs.existsSync(logoPath)) {
+    doc.image(logoPath, doc.page.margins.left, 40, { width: 70 });
+  }
 
     doc
       .font("Helvetica-Bold")
