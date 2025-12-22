@@ -867,10 +867,20 @@
               <i class="fas fa-book"></i>
               <span>Topics & Lessons</span>
             </a>
-<a href="/student/announcements" class="menu-link">
+<a href="/student/announcements" class="menu-link position-relative">
   <i class="fas fa-bullhorn"></i>
   <span>Announcements</span>
+
+  <% if (typeof unreadCount !== 'undefined' && unreadCount > 0) { %>
+
+    <span
+      class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
+      style="font-size:0.7rem;">
+      <%= unreadCount %>
+    </span>
+  <% } %>
 </a>
+
 
 
             <a href="/student/e-library" class="menu-link">

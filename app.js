@@ -289,6 +289,7 @@ const uploadWebcam = multer({
 });
 
 app.use('/uploads/question_bank', express.static('uploads/question_bank'));
+app.use(express.static(path.join(__dirname, 'public')));
 
 
 
@@ -933,6 +934,19 @@ if (role === 'student') {
   const studentId = userId;
 
   try {
+    // 🔔 UNREAD ANNOUNCEMENTS COUNT
+const unreadResult = await query(`
+  SELECT COUNT(DISTINCT a.id) AS count
+  FROM announcements a
+  LEFT JOIN announcement_reads ar
+    ON ar.announcement_id = a.id
+    AND ar.student_id = ?
+  WHERE ar.id IS NULL
+     OR datetime(a.updated_at) > datetime(ar.last_seen_at)
+`, [studentId]);
+
+const unreadAnnouncements = unreadResult[0]?.count || 0;
+
     // === YOUR ORIGINAL WORKING CODE (KEEP THIS) ===
     const infoResult = await query(`
       SELECT DISTINCT
@@ -977,6 +991,20 @@ if (role === 'student') {
       enrolledCourses = coursesResult.map(row => row.course_name);
     }
     // === END OF NEW PART ===
+  const unreadRows = await query(`
+  SELECT COUNT(DISTINCT a.id) AS count
+  FROM announcements a
+  LEFT JOIN announcement_reads ar
+    ON a.id = ar.announcement_id
+   AND ar.student_id = ?
+  WHERE a.class_name = ?
+    AND (ar.last_seen_at IS NULL
+      OR datetime(a.updated_at) > datetime(ar.last_seen_at))
+`, [studentId, studentClass]);
+
+const unreadCount = unreadRows[0]?.count || 0;
+
+
 
     res.render('student_dashboard', {
       user: {
@@ -987,6 +1015,7 @@ if (role === 'student') {
       cleanTermDisplay,
       sessionYear,
       enrolledCourses,           // ← ONLY THIS LINE IS NEW!
+      unreadCount,
       successMsg: req.query.success || null,
       errorMsg: req.query.error || null
     });
@@ -7191,8 +7220,15 @@ req.session.currentTermName = currentTermRow[0].name;
   if (!result) {
     return res.render("result_not_found");
   }
+const baseUrl =
+  process.env.NODE_ENV === 'production'
+    ? 'https://your-app-name.up.railway.app'
+    : 'http://localhost:3001';
 
-  res.render("student_result_preview", { result });
+  res.render("student_result_preview", { 
+    result,
+  baseUrl
+  });
 });
 
 app.get("/student/results/pdf", isStudent, async (req, res) => {
@@ -7253,7 +7289,10 @@ req.session.currentTermName = currentTermRow[0].name;
   }
 
   /* ========= HEADER ========= */
+  if (fs.existsSync(logoPath)) {
   doc.image(logoPath, left, 40, { width: 70 });
+}
+
 
   doc
     .font("Helvetica-Bold")
@@ -7466,7 +7505,7 @@ app.get('/teacher/announcements', isTeacher, async (req, res) => {
   const className = req.session.user.classTeacherOf;
 
   const announcements = await query(`
-    SELECT *
+    SELECT id, title, body, created_at
     FROM announcements
     WHERE class_name = ?
     ORDER BY created_at DESC
@@ -7477,6 +7516,7 @@ app.get('/teacher/announcements', isTeacher, async (req, res) => {
     classTeacherOf: className
   });
 });
+
 
 app.get('/teacher/announcements/new', isTeacher, async (req, res) => {
   res.render('teacher_create_announcement', {
@@ -7512,87 +7552,139 @@ app.post('/teacher/announcements', isTeacher, async (req, res) => {
 
 
 app.get('/student/announcements', isStudent, async (req, res) => {
-  const studentClass = req.session.user.class;
+  try {
+    const studentId = req.session.user.id;        // ✅ FIX
+    const studentClass = req.session.user.class;  // already correct
 
-  console.log('📣 Student class:', studentClass);
+    console.log('📣 Student class:', studentClass);
 
-  if (!studentClass) {
-    return res.render('student_announcements', {
-      announcements: []
+    if (!studentClass) {
+      return res.render('student_announcements', {
+        announcements: [],
+        unreadCount: 0
+      });
+    }
+
+    // 1️⃣ Fetch announcements (WITH id)
+    const announcements = await query(`
+      SELECT id, title, body, created_at
+      FROM announcements
+      WHERE class_name = ?
+      ORDER BY created_at DESC
+    `, [studentClass]);
+
+    console.log('📣 Announcements found:', announcements.length);
+
+    // 2️⃣ Mark announcements as read FOR THIS STUDENT
+    const now = new Date().toISOString();
+
+    for (const a of announcements) {
+      await query(`
+        INSERT INTO announcement_reads
+          (announcement_id, student_id, last_seen_at)
+        VALUES (?, ?, ?)
+        ON CONFLICT(announcement_id, student_id)
+        DO UPDATE SET last_seen_at = excluded.last_seen_at
+      `, [a.id, studentId, now]);
+    }
+
+    // 3️⃣ Count unread announcements (for bell icon)
+    const unreadRows = await query(`
+  SELECT COUNT(*) AS count
+  FROM announcements a
+  LEFT JOIN announcement_reads ar
+    ON a.id = ar.announcement_id
+   AND ar.student_id = ?
+  WHERE a.class_name = ?
+    AND ar.last_seen_at IS NULL
+`, [studentId, studentClass]);
+
+const unreadCount = unreadRows[0]?.count || 0;
+
+
+    // 4️⃣ Render page
+    res.render('student_announcements', {
+      announcements,
+      unreadCount
+    });
+
+  } catch (err) {
+    console.error('Load student announcements error:', err);
+    res.render('student_announcements', {
+      announcements: [],
+      unreadCount: 0
     });
   }
-
-  const announcements = await query(`
-    SELECT title, body, created_at
-    FROM announcements
-    WHERE class_name = ?
-    ORDER BY created_at DESC
-  `, [studentClass]);
-
-  console.log('📣 Announcements found:', announcements.length);
-
-  res.render('student_announcements', { announcements });
 });
+
 
 app.get('/teacher/announcements/:id/edit', isTeacher, async (req, res) => {
-  const { id } = req.params;
+  try {
+    const { id } = req.params;
+    const className = req.session.user.classTeacherOf;
 
-  const rows = await query(`
-    SELECT id, title, body
-    FROM announcements
-    WHERE id = ?
-  `, [id]);
+    const rows = await query(`
+      SELECT id, title, body
+      FROM announcements
+      WHERE id = ? AND class_name = ?
+    `, [id, className]);
 
-  if (!rows.length) {
-    return res.redirect('/teacher/announcements');
+    if (!rows.length) {
+      return res.redirect('/teacher/announcements?error=notfound');
+    }
+
+    res.render('teacher_edit_announcement', {
+      announcement: rows[0],
+      classTeacherOf: className
+    });
+
+  } catch (err) {
+    console.error(err);
+    res.redirect('/teacher/announcements?error=failed');
   }
-
-  res.render('teacher_edit_announcement', {
-    announcement: rows[0]
-  });
 });
 
-app.get('/teacher/announcements/:id/edit', isTeacher, async (req, res) => {
-  const { id } = req.params;
-
-  const rows = await query(`
-    SELECT id, title, body
-    FROM announcements
-    WHERE id = ?
-  `, [id]);
-
-  if (!rows.length) {
-    return res.redirect('/teacher/announcements');
-  }
-
-  res.render('teacher_edit_announcement', {
-    announcement: rows[0]
-  });
-});
 
 app.post('/teacher/announcements/:id/edit', isTeacher, async (req, res) => {
-  const { id } = req.params;
-  const { title, body } = req.body;
+  try {
+    const { id } = req.params;
+    const { title, body } = req.body;
+    const className = req.session.user.classTeacherOf;
 
-  await query(`
-    UPDATE announcements
-    SET title = ?, body = ?
-    WHERE id = ?
-  `, [title, body, id]);
+    await query(`
+      UPDATE announcements
+      SET title = ?, body = ?, updated_at = CURRENT_TIMESTAMP
+      WHERE id = ? AND class_name = ?
+    `, [title, body, id, className]);
 
-  res.redirect('/teacher/announcements?success=updated');
+    res.redirect('/teacher/announcements?success=updated');
+
+  } catch (err) {
+    console.error(err);
+    res.redirect('/teacher/announcements?error=failed');
+  }
 });
+
 
 app.post('/teacher/announcements/:id/delete', isTeacher, async (req, res) => {
-  const { id } = req.params;
+  try {
+    const { id } = req.params;
+    const className = req.session.user.classTeacherOf;
 
-  await query(`
-    DELETE FROM announcements
-    WHERE id = ?
-  `, [id]);
+    await query(`
+      DELETE FROM announcements
+      WHERE id = ? AND class_name = ?
+    `, [id, className]);
 
-  res.redirect('/teacher/announcements?success=deleted');
+    res.redirect('/teacher/announcements?success=deleted');
+
+  } catch (err) {
+    console.error(err);
+    res.redirect('/teacher/announcements?error=failed');
+  }
 });
+
+
 
 
 // app.post('/admin/set-current-term/:termId', async (req, res) => {
