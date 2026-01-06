@@ -1,0 +1,51 @@
+<h3>Behaviour Assessment — <%= student.name %></h3>
+
+<form method="POST">
+  <table class="table table-bordered text-center">
+    <thead>
+      <tr>
+        <th>Behaviour</th>
+        <th>Rate (1–5)</th>
+        <th>Behaviour</th>
+        <th>Rate (1–5)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Handwriting</td>
+        <td><input name="handwriting" value="<%= behaviour.handwriting || '' %>" /></td>
+        <td>Punctuality</td>
+        <td><input name="punctuality" value="<%= behaviour.punctuality || '' %>" /></td>
+      </tr>
+      <tr>
+        <td>Initiative</td>
+        <td><input name="initiative" value="<%= behaviour.initiative || '' %>" /></td>
+        <td>Obedience</td>
+        <td><input name="obedience" value="<%= behaviour.obedience || '' %>" /></td>
+      </tr>
+      <tr>
+        <td>Honesty</td>
+        <td><input name="honesty" value="<%= behaviour.honesty || '' %>" /></td>
+        <td>Neatness</td>
+        <td><input name="neatness" value="<%= behaviour.neatness || '' %>" /></td>
+      </tr>
+      <tr>
+        <td>Attentiveness</td>
+        <td><input name="attentiveness" value="<%= behaviour.attentiveness || '' %>" /></td>
+        <td>Respect</td>
+        <td><input name="respect" value="<%= behaviour.respect || '' %>" /></td>
+      </tr>
+      <tr>
+        <td>Attitude</td>
+        <td><input name="attitude" value="<%= behaviour.attitude || '' %>" /></td>
+        <td>Creativity</td>
+        <td><input name="creativity" value="<%= behaviour.creativity || '' %>" /></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <label>Class Teacher’s Comment</label>
+  <textarea name="teacher_comment"><%= behaviour.teacher_comment || '' %></textarea>
+
+  <button class="btn btn-success">Save Behaviour</button>
+</form>

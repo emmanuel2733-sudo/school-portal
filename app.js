@@ -606,6 +606,17 @@ console.log('🔵 next_term_date:', next_term_date);
   const average =
     (subjects.reduce((s, r) => s + r.total, 0) / subjects.length).toFixed(2);
 
+const behaviour = await get(`
+  SELECT handwriting, neatness, punctuality, attentiveness,
+         initiative, respect, obedience, attitude,
+         honesty, creativity
+  FROM student_behaviours
+  WHERE student_id = ?
+    AND term_id = ?
+    AND academic_year_id = ?
+`, [studentId, termId, academicYearId]);
+
+
   // ================= FINAL RESULT =================
   return {
     student_name: studentName,
@@ -621,10 +632,10 @@ console.log('🔵 next_term_date:', next_term_date);
     class_lowest: classStats[0]?.lowest?.toFixed(2) || '-',
     class_average: classStats[0]?.class_average?.toFixed(2) || '-',
     attendance,
-    next_term_date
+    next_term_date,
+    behaviour
   };
 }
-
 
 async function getCompletedAnnualResult(studentId, academicYear) {
 
@@ -3722,7 +3733,7 @@ app.get('/admin/analytics', (req, res) => {
   const gradeCounts = { A: 0, B: 0, C: 0, D: 0, F: 0, 'No Grade': 0 };
   let totalGrades = 0;
   let overallAvgScore = 0;
-  db.all(`
+  db.all(`s
     SELECT COALESCE(g.grade, 'No Grade') as grade,
            COUNT(g.id) as count,
            AVG(g.score) as avg_score_for_grade
@@ -7187,6 +7198,7 @@ app.get("/student/results/preview", isStudent, async (req, res) => {
       WHERE is_current = 1
       LIMIT 1
     `);
+    
 
     if (!currentTermRow.length) {
       return res.render("result_not_found");
@@ -7206,6 +7218,8 @@ app.get("/student/results/preview", isStudent, async (req, res) => {
         ? await getCompletedAnnualResult(studentId, session)
         : await getCompletedTermResult(studentId, session, cleanTerm);
 
+
+        
     if (!result) {
       return res.render("result_not_found");
     }
@@ -7431,8 +7445,38 @@ req.session.currentTermName = currentTermRow[0].name;
     { width: pageWidth - left * 2, align: "center" }
   );
 
-  y += 35;
+ y += 40;
 
+doc.font("Helvetica-Bold").fontSize(11)
+  .text("BEHAVIOUR RATING", left, y);
+
+y += 10;
+
+const behaviourRows = [
+  ["Handwriting", result.behaviour?.handwriting],
+  ["Neatness", result.behaviour?.neatness],
+  ["Punctuality", result.behaviour?.punctuality],
+  ["Attentiveness", result.behaviour?.attentiveness],
+  ["Initiative", result.behaviour?.initiative],
+  ["Respect", result.behaviour?.respect],
+  ["Obedience", result.behaviour?.obedience],
+  ["Attitude", result.behaviour?.attitude],
+  ["Honesty", result.behaviour?.honesty],
+  ["Creativity", result.behaviour?.creativity]
+];
+
+behaviourRows.forEach(([label, value]) => {
+  doc.rect(left, y, 250, 20).stroke();
+  doc.rect(left + 250, y, 60, 20).stroke();
+
+  doc.font("Helvetica").fontSize(9)
+     .text(label, left + 5, y + 6)
+     .text(value ?? "-", left + 265, y + 6);
+
+  y += 20;
+});
+
+  
   /* ========= STAFF & COMMENT (VERTICAL ORDER) ========= */
   const staffBlockHeight = 120;
   if (y + staffBlockHeight > pageHeight - 60) {
@@ -7674,6 +7718,121 @@ app.post('/teacher/announcements/:id/delete', isTeacher, async (req, res) => {
   } catch (err) {
     console.error(err);
     res.redirect('/teacher/announcements?error=failed');
+  }
+});
+
+app.get('/teacher/behaviour', isTeacher, async (req, res) => {
+  try {
+    const teacherId = req.session.user.id;
+
+    const rows = await query(`
+      SELECT DISTINCT
+        u.id AS student_id,
+        u.name AS student_name,
+        cl.name AS class_name
+      FROM classes cl
+      JOIN courses co ON co.class_id = cl.id
+      JOIN student_enrollments se ON se.course_id = co.id
+      JOIN users u ON u.id = se.student_id
+      JOIN terms t ON t.id = se.term_id
+      WHERE cl.class_teacher_id = ?
+        AND t.is_current = 1
+      ORDER BY u.name
+    `, [teacherId]);
+
+    res.render('teacher_behaviour', {
+      students: rows,
+      classTeacherOf: req.session.user.classTeacherOf
+    });
+
+  } catch (err) {
+    console.error('Load behaviour page error:', err);
+    res.redirect('/dashboard?error=behaviour_failed');
+  }
+});
+
+
+
+
+app.post('/teacher/behaviour', isTeacher, async (req, res) => {
+  try {
+    const ratings = req.body.ratings;
+    const teacherId = req.session.user.id;
+
+    if (!ratings) {
+      return res.redirect('/teacher/behaviour?error=empty');
+    }
+
+    // ✅ GET CURRENT TERM ID (SAME WAY AS ATTENDANCE)
+    const termRow = await query(`
+      SELECT current_term_id
+      FROM academic_years
+      WHERE current = 1
+      LIMIT 1
+    `);
+
+    if (!termRow.length || !termRow[0].current_term_id) {
+      throw new Error('No active term found');
+    }
+
+    const termId = termRow[0].current_term_id;
+
+    // ✅ SAVE EACH STUDENT’S BEHAVIOUR
+    for (const studentId in ratings) {
+      const b = ratings[studentId];
+
+      await query(`
+        INSERT INTO student_behaviours (
+          student_id,
+          term_id,
+          handwriting,
+          neatness,
+          punctuality,
+          attentiveness,
+          initiative,
+          respect,
+          obedience,
+          attitude,
+          honesty,
+          creativity,
+          teacher_id
+        )
+        VALUES (?,?,?,?,?,?,?,?,?,?,?,?)
+        ON CONFLICT(student_id, term_id)
+        DO UPDATE SET
+          handwriting = excluded.handwriting,
+          neatness = excluded.neatness,
+          punctuality = excluded.punctuality,
+          attentiveness = excluded.attentiveness,
+          initiative = excluded.initiative,
+          respect = excluded.respect,
+          obedience = excluded.obedience,
+          attitude = excluded.attitude,
+          honesty = excluded.honesty,
+          creativity = excluded.creativity,
+          teacher_id = excluded.teacher_id
+      `, [
+        studentId,
+        termId,
+        b.handwriting,
+        b.neatness,
+        b.punctuality,
+        b.attentiveness,
+        b.initiative,
+        b.respect,
+        b.obedience,
+        b.attitude,
+        b.honesty,
+        b.creativity,
+        teacherId
+      ]);
+    }
+
+    res.redirect('/teacher/behaviour?success=1');
+
+  } catch (err) {
+    console.error('Save behaviour error:', err);
+    res.redirect('/teacher/behaviour?error=failed');
   }
 });
 

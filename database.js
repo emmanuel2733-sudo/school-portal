@@ -61,6 +61,31 @@ const db = new sqlite3.Database(dbPath, (err) => {
     });
   }
 });
+db.run(`
+  CREATE TABLE IF NOT EXISTS student_behaviours (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    student_id INTEGER NOT NULL,
+    term_id INTEGER NOT NULL,
+    academic_year_id INTEGER NOT NULL,
+
+    handwriting INTEGER,
+    neatness INTEGER,
+    punctuality INTEGER,
+    attentiveness INTEGER,
+    initiative INTEGER,
+    respect INTEGER,
+    obedience INTEGER,
+    attitude INTEGER,
+    honesty INTEGER,
+    creativity INTEGER,
+
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+
+    UNIQUE(student_id, term_id, academic_year_id)
+  )
+`, () => console.log("student_behaviours table ready"));
+
 
 // PROMISIFIED QUERY — FIXED FOR YOUR DB (100% WORKING)
 // ──────────────────────────────────────────────────────────────

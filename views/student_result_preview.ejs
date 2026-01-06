@@ -233,6 +233,30 @@
   </tr>
 </table>
 
+<h4 class="mt-4">Behaviour Rating</h4>
+
+<table class="table table-bordered text-center">
+  <thead>
+    <tr>
+      <th>Trait</th>
+      <th>Score</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% if (result.behaviour) { %>
+      <% Object.entries(result.behaviour).forEach(([k, v]) => { %>
+        <tr>
+          <td><%= k.replace('_',' ').toUpperCase() %></td>
+          <td><%= v ?? '-' %></td>
+        </tr>
+      <% }) %>
+    <% } else { %>
+      <tr><td colspan="2">No behaviour record</td></tr>
+    <% } %>
+  </tbody>
+</table>
+
+
 
 <table class="table table-bordered mt-3">
   <tr>
